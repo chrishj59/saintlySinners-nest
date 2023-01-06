@@ -51,13 +51,61 @@ export class EdcService {
   ) {}
   logger = new Logger('EdcService');
 
+  public async getProductIds(): Promise<EDC_PRODUCT[]> {
+    const ids = this.productRepository.find({ select: ['id'] });
+    return ids;
+  }
+  public async getProducts(): Promise<EDC_PRODUCT[]> {
+    let products: EDC_PRODUCT[];
+    try {
+      const query = this.productRepository.createQueryBuilder('edc_product');
+      products = await query
+        .leftJoinAndSelect('edc_product.images', 'images')
+        .leftJoinAndSelect('edc_product.variants', 'variants')
+        .leftJoinAndSelect('edc_product.defaultCategory', 'defaultCategory')
+        .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
+        .leftJoinAndSelect('edc_product.restrictions', 'restrictions')
+        .leftJoinAndSelect('edc_product.properties', 'properties')
+        .leftJoinAndSelect('properties.values', 'prop-values')
+        .leftJoinAndSelect('edc_product.brand', 'brand')
+        .leftJoinAndSelect('edc_product.bullets', 'bullets')
+        .leftJoinAndSelect('edc_product.price', 'price')
+        .leftJoinAndSelect('edc_product.batteryInfo', 'batteryInfo')
+        // .andWhere('edc_product.id = :prodId', { prodId: id })
+        .getMany();
+    } catch (e) {
+      this.logger.error(`Error loading single products`);
+      this.logger.error(JSON.stringify(e));
+      throw new BadRequestException(`Could not load product wi`);
+    }
+    return products;
+  }
+
   public async getProductSingle(dto: ProductIdDto): Promise<EDC_PRODUCT> {
     const { id } = dto;
+    const query = this.productRepository.createQueryBuilder('edc_product');
+    let product: EDC_PRODUCT;
+    try {
+      product = await query
+        .leftJoinAndSelect('edc_product.images', 'images')
+        .leftJoinAndSelect('edc_product.variants', 'variants')
+        .leftJoinAndSelect('edc_product.defaultCategory', 'defaultCategory')
+        .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
+        .leftJoinAndSelect('edc_product.restrictions', 'restrictions')
+        .leftJoinAndSelect('edc_product.properties', 'properties')
+        .leftJoinAndSelect('properties.values', 'prop-values')
+        .leftJoinAndSelect('edc_product.brand', 'brand')
+        .leftJoinAndSelect('edc_product.bullets', 'bullets')
+        .leftJoinAndSelect('edc_product.price', 'price')
+        .leftJoinAndSelect('edc_product.batteryInfo', 'batteryInfo')
+        .andWhere('edc_product.id = :prodId', { prodId: id })
+        .getOne();
+    } catch (e) {
+      this.logger.error(`Error loading single product for id ${id}`);
+      this.logger.error(JSON.stringify(e));
+      throw new BadRequestException(`Could not load product wi`);
+    }
 
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['restrictions', 'properties', 'variants'],
-    });
     if (product) {
       return product;
     } else {

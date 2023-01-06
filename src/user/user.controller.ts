@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Req, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { UserService } from './user.service';
@@ -18,5 +18,12 @@ export class UserController {
       file.buffer,
       file.originalname,
     );
+  }
+
+  @Get('/fuseAuthUser')
+  public async getUser(): // @Query() dto: BrandIdDto,
+  Promise<any> {
+    //Promise<EDC_PRODUCT[] | ResponseMessageDto>
+    return { user: { email: 'fusionTest@btinternet.com' } };
   }
 }

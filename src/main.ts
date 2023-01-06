@@ -9,6 +9,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1');
+  const configService = app.get(ConfigService);
   app.useGlobalPipes(
     new ValidationPipe({
       transformOptions: {
@@ -17,7 +18,13 @@ async function bootstrap() {
     }),
   );
   app.use(cookieParser());
-
+  // app.use(
+  //   session({
+  //     secret: configService.get('EXPRESS_SESSION_KEY'),
+  //     resave: false,
+  //     saveUninitialized: false,
+  //   }),
+  // );
   //app.use(csurf())
   const corsOptions = {
     origin: ['http://localhost:3000'],
@@ -25,7 +32,7 @@ async function bootstrap() {
     credentials: true,
   };
   app.enableCors(corsOptions);
-  const configService = app.get(ConfigService);
+  //const configService = app.get(ConfigService);
   const port = configService.get('PORT');
 
   config.update({

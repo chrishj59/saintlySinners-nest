@@ -56,13 +56,6 @@ export class EDC_PRODUCT extends BaseEntity {
   @ManyToOne(() => EDC_BATTERY, (battery) => battery)
   batteryInfo: EDC_BATTERY;
 
-  // @ManyToMany(() => EDC_VARIANT)
-  // @JoinTable({
-  //   name: 'product_variant',
-  //   joinColumn: { name: 'product_id', referencedColumnName: 'id' },
-  //   inverseJoinColumn: { name: 'variant_id', referencedColumnName: 'id' },
-  // })
-  // variants: EDC_VARIANT;
   @ManyToOne(() => EDC_NEW_CATEGORY, (cat) => cat.defaultProducts)
   defaultCategory: EDC_NEW_CATEGORY;
 

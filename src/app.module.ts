@@ -4,12 +4,14 @@ import * as Joi from 'joi';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthzModule } from './authz/authz.module';
+import { BrandModule } from './brand/brand.module';
 import { DatabaseModule } from './database/database.module';
 import { EdcModule } from './edc/edc.module';
+import { ItemsModule } from './items/items.module';
+import { ProductFilesService } from './product-files/product-files.service';
 import { RemoteFilesModule } from './remote-files/remote-files.module';
 import { UserModule } from './user/user.module';
-import { ProductFilesService } from './product-files/product-files.service';
-import { BrandModule } from './brand/brand.module';
 
 @Module({
   imports: [
@@ -33,6 +35,9 @@ import { BrandModule } from './brand/brand.module';
     UserModule,
     RemoteFilesModule,
     BrandModule,
+    AuthzModule,
+    ItemsModule,
+    //ProductModule,
   ],
 
   controllers: [AppController],
