@@ -138,13 +138,14 @@ export class BrandService {
     const brandId = Number(dto.id);
     console.log(brandId);
 
-    const query = await this.producRepo.createQueryBuilder('edc_product');
+    const query = this.producRepo.createQueryBuilder('edc_product');
     let products: EDC_PRODUCT[];
     try {
       products = await query
         .leftJoinAndSelect('edc_product.images', 'images')
         .leftJoinAndSelect('edc_product.variants', 'variants')
         .leftJoinAndSelect('edc_product.defaultCategory', 'defaultCategory')
+        .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
         .andWhere('edc_product.brandId = :brandid', { brandid: brandId })
         .getMany();
       console.log('get one product full');
@@ -153,6 +154,12 @@ export class BrandService {
       console.log('get products error');
       console.log(e);
     }
+    products = products.map((p) => {
+      if (!p.defaultCategory) {
+        p.defaultCategory = p.newCategories[0];
+      }
+      return p;
+    });
 
     // const products = await this.producRepo
     //   .createQueryBuilder('edc_product')

@@ -3,9 +3,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinTable,
   ManyToMany,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
@@ -14,9 +15,16 @@ import { EDC_PRODUCT } from './edc-product';
 import { EDC_PROP_VALUE } from './edc-prop-value';
 
 @Entity('edc_property')
+@Index(['propertyId', 'productId'])
 export class EDC_PROPERTY extends BaseEntity {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ nullable: true })
+  propertyId: number;
+
+  @Column({ nullable: true })
+  productId: number;
 
   @Column({ name: 'prop-title', type: 'varchar' })
   propTitle: string;
@@ -31,6 +39,10 @@ export class EDC_PROPERTY extends BaseEntity {
 
   @ManyToMany(() => EDC_PRODUCT)
   products: EDC_PRODUCT[];
+
+  // @ManyToOne(() => EDC_PRODUCT, (prod) => prod.properties)
+  // @JoinColumn({ name: 'productId', referencedColumnName: 'id' })
+  // products: EDC_PRODUCT[];
 
   @CreateDateColumn()
   createdDate: Date;

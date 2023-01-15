@@ -190,22 +190,26 @@ export class EdcService {
     if (dto.properties) {
       const propsArray = dto.properties[0]['prop'];
       for (const prop of propsArray) {
-        const propId = Number(prop['propid'][0]);
+        const propId = prop['propid'][0];
         let propDB = await this.propRepository.findOne({
-          where: { id: propId },
+          where: { propertyId: propId, productId: id },
         });
 
         if (!propDB) {
           propDB = new EDC_PROPERTY();
-          propDB.id = propId;
+          propDB.propertyId = propId;
+          propDB.productId = id;
           propDB.propTitle = prop['property'][0];
-          propDB.values;
+          //propDB.values;
+          console.log('propDB');
+          console.log(propDB);
           propDB = await this.propRepository.save(propDB, { reload: true });
         }
         /**
          * check to see if values need updating
          */
         let valuesArray: EDC_PROP_VALUE[] = [];
+        console.log('properties values');
         for (const val of prop['values'][0]['value']) {
           let valId = Number(val['id']); //
           if (isNaN(valId)) {
@@ -398,6 +402,7 @@ export class EdcService {
       reload: true,
     });
     console.log('after save product');
+
     /*******
      * files
      *

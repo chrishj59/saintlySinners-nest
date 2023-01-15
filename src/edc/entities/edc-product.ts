@@ -73,6 +73,7 @@ export class EDC_PRODUCT extends BaseEntity {
     joinColumn: { name: 'product_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'property_id', referencedColumnName: 'id' },
   })
+  // @OneToMany((_type) => EDC_PROPERTY, (prop) => prop.products)
   properties: EDC_PROPERTY[];
 
   @OneToMany((_type) => EDC_VARIANT, (variant) => variant.edcProd)
