@@ -12,6 +12,8 @@ import { ItemsModule } from './items/items.module';
 import { ProductFilesService } from './product-files/product-files.service';
 import { RemoteFilesModule } from './remote-files/remote-files.module';
 import { UserModule } from './user/user.module';
+import { CommonModule } from './common/common.module';
+import { VendorModule } from './vendor/vendor.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { UserModule } from './user/user.module';
     BrandModule,
     AuthzModule,
     ItemsModule,
+    CommonModule,
+    VendorModule,
     //ProductModule,
   ],
 
