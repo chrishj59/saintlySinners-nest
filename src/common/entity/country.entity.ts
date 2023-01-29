@@ -4,11 +4,13 @@ import {
   CreateDateColumn,
   Entity,
   ManyToMany,
+  OneToMany,
   PrimaryColumn,
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
 
+import { DeliveryCharge } from './delivery-charges.entity';
 import { LangIso639 } from './iso_639_lang.entity';
 
 @Entity({ name: 'country_geo' })
@@ -83,6 +85,9 @@ export class Country extends BaseEntity {
 
   @ManyToMany(() => LangIso639, (lang) => lang)
   languages: LangIso639[];
+
+  @OneToMany(() => DeliveryCharge, (charge) => charge)
+  deliveryCharges: DeliveryCharge[];
 
   @CreateDateColumn()
   createdDate: Date;
