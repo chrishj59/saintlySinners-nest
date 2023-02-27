@@ -8,7 +8,6 @@ import { Repository } from 'typeorm';
 
 import { EDC_PRODUCT_FILE } from '../remote-files/entity/productFile.entity';
 import { EdcProductNewDto } from './dtos/add-product.dto';
-import { ProductIdDto } from './dtos/product-id.dto';
 import { EDC_BATTERY } from './entities/edc-battery';
 import { EDC_BRAND } from './entities/edc-brand';
 import { EDC_NEW_CATEGORY } from './entities/edc-new-category.entity';
@@ -81,8 +80,9 @@ export class EdcService {
     return products;
   }
 
-  public async getProductSingle(dto: ProductIdDto): Promise<EDC_PRODUCT> {
-    const { id } = dto;
+  public async getProductSingle(id: number): Promise<EDC_PRODUCT> {
+    //const { id } = dto;
+
     const query = this.productRepository.createQueryBuilder('edc_product');
     let product: EDC_PRODUCT;
     try {

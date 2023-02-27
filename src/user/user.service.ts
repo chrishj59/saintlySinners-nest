@@ -1,8 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
+import { StripeService } from 'src/stripe/stripe.service';
 import { Repository } from 'typeorm';
 
+import { CreateUserDto } from './dtos/create-user.dto';
 import { User } from './entity/user.entity';
 
 @Injectable()
@@ -11,8 +13,22 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private readonly filesService: RemoteFilesService,
+    private stripeService: StripeService,
   ) {}
 
+  async create(userData: CreateUserDto) {
+    const stripeCustomer = await this.stripeService.createCustomer(
+      userData.name,
+      userData.email,
+    );
+
+    const newUser = await this.userRepository.create({
+      ...userData,
+      stripeCustomerId: stripeCustomer.id,
+    });
+    await this.userRepository.save(newUser);
+    return newUser;
+  }
   allUsers = async (): Promise<User[]> => {
     return await this.userRepository.find();
   };

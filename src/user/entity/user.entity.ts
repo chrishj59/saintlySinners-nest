@@ -1,5 +1,12 @@
 import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
-import { BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('User')
 export class User extends BaseEntity {
@@ -24,4 +31,7 @@ export class User extends BaseEntity {
     nullable: true,
   })
   public avatar?: PublicFile;
+
+  @Column()
+  public stripeCustomerId: string;
 }

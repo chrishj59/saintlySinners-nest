@@ -24,4 +24,29 @@ export class ItemsService {
     const newItem = await this.itemRepository.save(Item, { reload: true });
     return newItem;
   }
+
+  public async find(id: number): Promise<Item> {
+    return await this.itemRepository.findOne({ where: { id } });
+  }
+
+  public async update(updatedItem: Item) {
+    const { affected } = await this.itemRepository.update(
+      { id: updatedItem.id },
+      updatedItem,
+    );
+
+    if (!affected || affected === 0) {
+      throw new Error('No record found to update');
+    }
+  }
+
+  public async delete(id: number) {
+    const { affected } = await this.itemRepository.delete({ id: id });
+
+    if (affected) {
+      return;
+    }
+
+    throw new Error('No record found to delete');
+  }
 }

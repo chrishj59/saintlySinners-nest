@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
 
+import { FindOneNumberParams } from '../utils/findOneParamString';
 import { EdcProductNewDto } from './dtos/add-product.dto';
-import { ProductIdDto } from './dtos/product-id.dto';
 import { EdcService } from './edc.service';
 import { EDC_PRODUCT } from './entities/edc-product';
 
@@ -20,8 +20,8 @@ export class EdcController {
   }
 
   @Get('/product/:id')
-  async getProduct(@Param() dto: ProductIdDto): Promise<any> {
-    return this.edcService.getProductSingle(dto);
+  async getProduct(@Param() { id }: FindOneNumberParams): Promise<any> {
+    return this.edcService.getProductSingle(parseInt(id));
   }
 
   @Get('/product')
