@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
+import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 
 import { FindOneNumberParams } from '../utils/findOneParamString';
 import { EdcProductNewDto } from './dtos/add-product.dto';
+import { EdcOrderDto } from './dtos/edc-order.dto';
 import { EdcService } from './edc.service';
 import { EDC_PRODUCT } from './entities/edc-product';
 
@@ -13,6 +15,14 @@ export class EdcController {
   public edcRoot() {
     return 'edc root';
   }
+
+  @Post('/order')
+  async saveOrder(@Body() dto: EdcOrderDto): Promise<ResponseMessageDto> {
+    return await this.edcService.saveOrder(dto);
+  }
+
+  @Post('/customerOrder')
+  async saveCustomerOrder() {}
 
   @Post('/product')
   async saveProduct(@Body() dto: EdcProductNewDto) {

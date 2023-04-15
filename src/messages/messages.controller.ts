@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, Req, UseGuards } from '@nestjs/common';
 import { AuthorizationGuard } from 'src/authorisation/authorisation.guard';
 import { Message } from 'src/common/interfaces/message.interface';
 import { MessagesService } from 'src/messages/messages.service';
@@ -15,8 +15,12 @@ export class MessagesController {
 
   @UseGuards(AuthorizationGuard)
   @Get('protected')
-  async getProtected(): Promise<Message> {
+  async getProtected(@Req() req): Promise<Message> {
     this.logger.log('get protected called');
+    console.log(req.auth.payload);
+    //console.log(req.auth.header);
+    //console.log(req.auth.token);
+
     return this.messagesService.getProtectedMessage();
   }
 

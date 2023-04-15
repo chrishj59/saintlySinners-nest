@@ -1,15 +1,17 @@
+import { ORDER } from 'src/order/entity/order.entity';
 import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
 import {
   BaseEntity,
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity('User')
-export class User extends BaseEntity {
+export class USER extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,4 +36,7 @@ export class User extends BaseEntity {
 
   @Column()
   public stripeCustomerId: string;
+
+  @OneToMany(() => ORDER, (ord: ORDER) => ord.customer)
+  orders: ORDER[];
 }

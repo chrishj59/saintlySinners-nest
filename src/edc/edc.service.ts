@@ -1,6 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AxiosError } from 'axios';
+import { catchError, firstValueFrom } from 'rxjs';
+import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { ProductRestrictionEnum } from 'src/enums/product-restriction.enum';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
@@ -8,6 +12,7 @@ import { Repository } from 'typeorm';
 
 import { EDC_PRODUCT_FILE } from '../remote-files/entity/productFile.entity';
 import { EdcProductNewDto } from './dtos/add-product.dto';
+import { EdcOrderDto } from './dtos/edc-order.dto';
 import { EDC_BATTERY } from './entities/edc-battery';
 import { EDC_BRAND } from './entities/edc-brand';
 import { EDC_NEW_CATEGORY } from './entities/edc-new-category.entity';
@@ -17,6 +22,7 @@ import { EDC_PRODUCT_RESTRICTION } from './entities/edc-product-restrictions.ent
 import { EDC_PROP_VALUE } from './entities/edc-prop-value';
 import { EDC_PROPERTY } from './entities/edc-property';
 import { EDC_VARIANT } from './entities/edc-variant';
+import { EdcOrderInterface } from './interfaces/edc-order.interface';
 
 interface ProductImage {
   image: Blob;
@@ -47,6 +53,7 @@ export class EdcService {
 
     private readonly filesService: RemoteFilesService,
     private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
   ) {}
   logger = new Logger('EdcService');
 
@@ -447,5 +454,57 @@ export class EdcService {
 
   async addPrivateFile(userId: number, imageBuffer: Buffer, filename: string) {
     return this.filesService.uploadProductFile(imageBuffer, userId, filename);
+  }
+
+  async saveOrder(dto: EdcOrderDto): Promise<ResponseMessageDto> {
+    const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
+    const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
+    const order: EdcOrderInterface = {
+      orderdetails: {
+        customerdetails: {
+          email: edcEmail,
+          apikey: edcApiKey,
+          output: 'advanced',
+        },
+        receiver: {
+          name: dto.name,
+          street: dto.street,
+          postalcode: dto.postalcode,
+          house_nr: dto.house_nr,
+          city: dto.city,
+          country: dto.country,
+          phone: dto.phone,
+          own_ordernumber: dto.own_ordernumber,
+          consumer_amount: dto.consumer_amount,
+          consumer_amount_currency: dto.consumer_amount_currency,
+          attachment: dto.attachment,
+        },
+        products: dto.products,
+      },
+    };
+
+    const xml2js = require('xml2js');
+    const builder = new xml2js.Builder({
+      explicitArray: true,
+      mergeAttrs: true,
+    });
+    const xmlOutput = builder.buildObject(order);
+    const url = require('url');
+    const params = new url.URLSearchParams({
+      data: xmlOutput,
+    });
+    const { data } = await firstValueFrom(
+      this.httpService.post(process.env.EDC_ORDER_URL, params.toString()).pipe(
+        catchError((error: AxiosError) => {
+          this.logger.error(error.response.data);
+          throw 'An error happened!';
+        }),
+      ),
+    );
+
+    return {
+      status: MessageStatusEnum.SUCCESS,
+      message: `save order edc service  xml ${data.result}`,
+    };
   }
 }

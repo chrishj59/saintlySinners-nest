@@ -1,0 +1,40 @@
+<!-- <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+ <orderdetails>
+<customerdetails>
+
+     <apikey>7651320RK8RD972HR966Z40752DDKZKK</apikey>
+  <output>Adcanced</output>
+  </customerdetails>
+  <receiver>
+    <name>Test Person</name>
+  <street>Test street</street>
+    <postalcode>9641KS</postalcode>
+   <city>Test city</city>
+     <country>1</country>
+     <phone>+31567234939</phone>
+   </receiver>
+   <products>
+     <artnr>05633310000</artnr>
+     <artnr>05633310001</artnr>
+   </products>
+ </orderdetails> -->
+
+ <?xml version="1.0" encoding="UTF-8" standalone="yes"?> <orderdetails> <customerdetails>
+<email>testaccount@edc-internet.nl</email>
+ <apikey>7651320RK8RD972HR966Z40752DDKZKK</apikey> <output>advanced</output>
+</customerdetails>
+<receiver>
+<name>Test Person</name>
+<street>Test street</street> 
+<house_nr>6</house_nr> 
+<postalcode>9641KS</postalcode>
+<city>Test city</city>
+ <country>1</country> 
+ <phone>+31567234939</phone>
+</receiver> 
+<products>
+  <artnr>05633310000</artnr> 
+<artnr>05633310000</artnr> 
+<artnr>cadeau</artnr>
+</products>
+</orderdetails>

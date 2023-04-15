@@ -5,13 +5,13 @@ import { StripeService } from 'src/stripe/stripe.service';
 import { Repository } from 'typeorm';
 
 import { CreateUserDto } from './dtos/create-user.dto';
-import { User } from './entity/user.entity';
+import { USER } from './entity/user.entity';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    @InjectRepository(USER)
+    private userRepository: Repository<USER>,
     private readonly filesService: RemoteFilesService,
     private stripeService: StripeService,
   ) {}
@@ -29,7 +29,7 @@ export class UserService {
     await this.userRepository.save(newUser);
     return newUser;
   }
-  allUsers = async (): Promise<User[]> => {
+  allUsers = async (): Promise<USER[]> => {
     return await this.userRepository.find();
   };
   async getById(id: string) {

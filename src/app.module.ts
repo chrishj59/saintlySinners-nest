@@ -11,12 +11,13 @@ import { CommonModule } from './common/common.module';
 import { DatabaseModule } from './database/database.module';
 import { EdcModule } from './edc/edc.module';
 import { ItemsModule } from './items/items.module';
+import { MessagesModule } from './messages/messages.module';
+import { OrderModule } from './order/order.module';
 import { ProductFilesService } from './product-files/product-files.service';
 import { RemoteFilesModule } from './remote-files/remote-files.module';
 import { StripeModule } from './stripe/stripe.module';
 import { UserModule } from './user/user.module';
 import { VendorModule } from './vendor/vendor.module';
-import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -39,6 +40,8 @@ import { MessagesModule } from './messages/messages.module';
         CLIENT_ORIGIN_URL: Joi.string(),
         ISSUER_BASE_URL: Joi.string(),
         AUDIENCE: Joi.string(),
+        EDC_ACCOUNT_EMAIL: Joi.string(),
+        EDC_ACCOUNT_API_KEY: Joi.string(),
       }),
     }),
     EdcModule,
@@ -53,6 +56,7 @@ import { MessagesModule } from './messages/messages.module';
     ChargeModule,
     AuthorisationModule,
     MessagesModule,
+    OrderModule,
     //ProductModule,
   ],
 

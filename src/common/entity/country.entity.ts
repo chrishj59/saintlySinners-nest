@@ -83,6 +83,9 @@ export class Country extends BaseEntity {
   @Column()
   emojiu: string;
 
+  @Column({ name: 'edc_code', type: 'smallint', nullable: true })
+  edcCountryCode: number;
+
   @ManyToMany(() => LangIso639, (lang) => lang)
   languages: LangIso639[];
 
