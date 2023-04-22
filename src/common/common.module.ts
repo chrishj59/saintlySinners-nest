@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Vendor } from 'src/vendor/entity/vendor.entity';
+import { PRODUCT_VENDOR } from 'src/vendor/entity/vendor.entity';
 
 import { CommonController } from './common.controller';
 import { CommonService } from './common.service';
@@ -22,10 +22,11 @@ import { LangIso639 } from './entity/iso_639_lang.entity';
       CountryLangMap,
       DeliveryCharge,
       DeliveryCourier,
-      Vendor,
+      PRODUCT_VENDOR,
     ]),
   ],
   controllers: [CommonController],
   providers: [CommonService],
+  exports: [CommonService],
 })
 export class CommonModule {}

@@ -8,11 +8,11 @@ import { AuthorisationModule } from './authorisation/authorisation.module';
 import { BrandModule } from './brand/brand.module';
 import { ChargeModule } from './charge/charge.module';
 import { CommonModule } from './common/common.module';
+import { CustomerOrderModule } from './customer-order/customer-order.module';
 import { DatabaseModule } from './database/database.module';
 import { EdcModule } from './edc/edc.module';
 import { ItemsModule } from './items/items.module';
 import { MessagesModule } from './messages/messages.module';
-import { OrderModule } from './order/order.module';
 import { ProductFilesService } from './product-files/product-files.service';
 import { RemoteFilesModule } from './remote-files/remote-files.module';
 import { StripeModule } from './stripe/stripe.module';
@@ -56,7 +56,8 @@ import { VendorModule } from './vendor/vendor.module';
     ChargeModule,
     AuthorisationModule,
     MessagesModule,
-    OrderModule,
+    CustomerOrderModule,
+
     //ProductModule,
   ],
 

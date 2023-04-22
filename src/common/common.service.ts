@@ -4,7 +4,7 @@ import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { Repository } from 'typeorm';
 
 import { ResponseMessageDto } from '../dtos/response-message-dto';
-import { Vendor } from '../vendor/entity/vendor.entity';
+import { PRODUCT_VENDOR } from '../vendor/entity/vendor.entity';
 import { CountryDto } from './dtos/country.dto';
 import { CourierDto } from './dtos/courier.dto';
 import { DeliveryChargeDto } from './dtos/deliveryCharge.dto';
@@ -20,8 +20,8 @@ export class CommonService {
     private countryRepository: Repository<Country>,
     @InjectRepository(DeliveryCourier)
     private courierRepository: Repository<DeliveryCourier>,
-    @InjectRepository(Vendor)
-    private vendorRepository: Repository<Vendor>,
+    @InjectRepository(PRODUCT_VENDOR)
+    private vendorRepository: Repository<PRODUCT_VENDOR>,
     @InjectRepository(DeliveryCharge)
     private delChargeRepository: Repository<DeliveryCharge>,
   ) {}
@@ -129,6 +129,12 @@ export class CommonService {
   public async getCountryNames(): Promise<Country[]> {
     return await this.countryRepository.find({
       select: ['id', 'name', 'emoji'],
+    });
+  }
+
+  public async getEdcCountry(edcCountryCode: number): Promise<Country> {
+    return await this.countryRepository.findOne({
+      where: { edcCountryCode },
     });
   }
   public async getCourier(): Promise<DeliveryCourier[]> {

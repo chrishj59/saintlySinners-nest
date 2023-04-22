@@ -10,6 +10,7 @@ import { ProductRestrictionEnum } from 'src/enums/product-restriction.enum';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
 import { Repository } from 'typeorm';
 
+import { CommonService } from '../common/common.service';
 import { EDC_PRODUCT_FILE } from '../remote-files/entity/productFile.entity';
 import { EdcProductNewDto } from './dtos/add-product.dto';
 import { EdcOrderDto } from './dtos/edc-order.dto';
@@ -54,6 +55,7 @@ export class EdcService {
     private readonly filesService: RemoteFilesService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly commonService: CommonService,
   ) {}
   logger = new Logger('EdcService');
 
@@ -457,6 +459,22 @@ export class EdcService {
   }
 
   async saveOrder(dto: EdcOrderDto): Promise<ResponseMessageDto> {
+    // const country: Country = await this.commonService.getEdcCountry(
+    //   dto.country,
+    // );
+
+    // const orderDto: CustomerOrderDto = {
+    //   orderDate: new Date(),
+    //   name: dto.name,
+    //   houseNUmber: dto.house_nr,
+    //   street: dto.street,
+    //   town: dto.city,
+    //   county: dto.county,
+    //   countryEdc: dto.country,
+    //   countryId: country.id,
+    // };
+    // const customerOrder = await this.customerOrderService.saveOrder(orderDto);
+
     const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
     const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
     const order: EdcOrderInterface = {

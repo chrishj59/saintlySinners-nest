@@ -1,4 +1,4 @@
-import { ORDER } from 'src/order/entity/order.entity';
+import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
 import {
   BaseEntity,
@@ -34,9 +34,9 @@ export class USER extends BaseEntity {
   })
   public avatar?: PublicFile;
 
-  @Column()
+  @Column({ name: 'stripe_customer_id' })
   public stripeCustomerId: string;
 
-  @OneToMany(() => ORDER, (ord: ORDER) => ord.customer)
-  orders: ORDER[];
+  @OneToMany(() => CUSTOMER_ORDER, (order: CUSTOMER_ORDER) => order.customer)
+  orders: CUSTOMER_ORDER;
 }

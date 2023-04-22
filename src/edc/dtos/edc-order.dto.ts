@@ -10,6 +10,7 @@ export class Products {
   @IsString()
   artnr: string[];
 }
+
 export class EdcOrderDto {
   @IsString()
   name: string;
@@ -34,6 +35,10 @@ export class EdcOrderDto {
   @IsOptional()
   @IsString()
   state: string;
+
+  @IsOptional()
+  @IsString()
+  county?: string;
 
   @IsEnum(EdcCountryEnum)
   country: EdcCountryEnum;

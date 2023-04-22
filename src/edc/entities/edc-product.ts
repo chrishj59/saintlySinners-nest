@@ -1,8 +1,10 @@
+import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 import { EDC_PRODUCT_FILE } from 'src/remote-files/entity/productFile.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -184,6 +186,14 @@ export class EDC_PRODUCT extends BaseEntity {
   @Column({ name: 'battery-required', type: 'boolean', nullable: true })
   batteryRequired: boolean;
 
+  @OneToMany(
+    () => CUSTOMER_ORDER_LINE,
+    (line: CUSTOMER_ORDER_LINE) => line.edcProduct,
+  )
+  orderLines: CUSTOMER_ORDER_LINE[];
+
+  @DeleteDateColumn()
+  deletedOn: Date;
   @CreateDateColumn()
   createdDate: Date;
   @UpdateDateColumn()

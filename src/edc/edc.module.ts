@@ -1,6 +1,7 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from 'src/common/common.module';
 import { EDC_PRODUCT_FILE } from 'src/remote-files/entity/productFile.entity';
 import { RemoteFilesModule } from 'src/remote-files/remote-files.module';
 
@@ -38,6 +39,8 @@ import { EDC_VARIANT } from './entities/edc-variant';
     ]),
     RemoteFilesModule,
     HttpModule,
+
+    CommonModule,
   ],
   providers: [EdcService],
   controllers: [EdcController],

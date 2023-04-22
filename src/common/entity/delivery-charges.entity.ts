@@ -1,5 +1,5 @@
 import { Exclude } from 'class-transformer';
-import { Vendor } from 'src/vendor/entity/vendor.entity';
+import { PRODUCT_VENDOR } from 'src/vendor/entity/vendor.entity';
 import {
   BaseEntity,
   Column,
@@ -21,9 +21,9 @@ export class DeliveryCharge extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Vendor, (vendor) => vendor.deliveryCharges)
+  @ManyToOne(() => PRODUCT_VENDOR, (vendor) => vendor.deliveryCharges)
   @JoinColumn({ name: 'vendor_id', referencedColumnName: 'id' })
-  vendor: Vendor;
+  vendor: PRODUCT_VENDOR;
 
   @ManyToOne(() => Country, (country) => country)
   @JoinColumn({ name: 'country_id' })

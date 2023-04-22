@@ -1,0 +1,38 @@
+import { EDC_PRODUCT } from 'src/edc/entities/edc-product';
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+  VersionColumn,
+} from 'typeorm';
+
+import { CUSTOMER_ORDER } from './customerOrder.entity';
+
+@Entity('customer_order_line')
+export class CUSTOMER_ORDER_LINE extends BaseEntity {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
+
+  @Column({ name: 'quantity' })
+  quantity: number;
+
+  @ManyToOne(() => CUSTOMER_ORDER, (order: CUSTOMER_ORDER) => order.lines)
+  order: CUSTOMER_ORDER;
+
+  @ManyToOne(() => EDC_PRODUCT, (prod: EDC_PRODUCT) => prod.orderLines)
+  edcProduct: EDC_PRODUCT;
+
+  @Column({ name: 'amount' })
+  amount: string;
+
+  @CreateDateColumn()
+  createdDate: Date;
+  @UpdateDateColumn()
+  updatedDate: Date;
+  @VersionColumn()
+  version: number;
+}

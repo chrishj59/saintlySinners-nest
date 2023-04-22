@@ -1,3 +1,4 @@
+import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 import {
   BaseEntity,
   Column,
@@ -91,6 +92,9 @@ export class Country extends BaseEntity {
 
   @OneToMany(() => DeliveryCharge, (charge) => charge)
   deliveryCharges: DeliveryCharge[];
+
+  @OneToMany(() => CUSTOMER_ORDER, (order: CUSTOMER_ORDER) => order.country)
+  orders: CUSTOMER_ORDER;
 
   @CreateDateColumn()
   createdDate: Date;

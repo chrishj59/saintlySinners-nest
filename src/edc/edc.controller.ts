@@ -21,9 +21,6 @@ export class EdcController {
     return await this.edcService.saveOrder(dto);
   }
 
-  @Post('/customerOrder')
-  async saveCustomerOrder() {}
-
   @Post('/product')
   async saveProduct(@Body() dto: EdcProductNewDto) {
     return this.edcService.saveProduct(dto);
