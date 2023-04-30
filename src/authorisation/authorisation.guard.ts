@@ -23,12 +23,13 @@ export class AuthorizationGuard implements CanActivate {
     const validateAccessToken = promisify(auth());
 
     try {
-      console.log('canActivate request');
+      console.log('AuthorizationGuard canActivate request');
       //console.log(request);
       await validateAccessToken(request, response);
-
+      console.log('after validateAccessToken');
       return true;
     } catch (error) {
+      console.log(`Auth error: ${error}`);
       if (error instanceof InvalidTokenError) {
         throw new UnauthorizedException('Bad credentials');
       }

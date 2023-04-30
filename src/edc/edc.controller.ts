@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, Post, UseGuards } from '@nestjs/common';
+import { AuthorizationGuard } from 'src/authorisation/authorisation.guard';
+import { PermissionsGuard } from 'src/authorisation/permissions.guard';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 
 import { FindOneNumberParams } from '../utils/findOneParamString';
@@ -6,6 +8,7 @@ import { EdcProductNewDto } from './dtos/add-product.dto';
 import { EdcOrderDto } from './dtos/edc-order.dto';
 import { EdcService } from './edc.service';
 import { EDC_PRODUCT } from './entities/edc-product';
+import { EdcPermissions } from './enums/Edc.permissions';
 
 @Controller()
 export class EdcController {
@@ -21,6 +24,8 @@ export class EdcController {
     return await this.edcService.saveOrder(dto);
   }
 
+  @UseGuards(PermissionsGuard([EdcPermissions.CREATE_ADMIN]))
+  @UseGuards(AuthorizationGuard)
   @Post('/product')
   async saveProduct(@Body() dto: EdcProductNewDto) {
     return this.edcService.saveProduct(dto);

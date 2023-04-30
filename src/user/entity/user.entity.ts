@@ -1,14 +1,5 @@
 import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
-import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
-import {
-  BaseEntity,
-  Column,
-  Entity,
-  JoinColumn,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('User')
 export class USER extends BaseEntity {
@@ -27,12 +18,12 @@ export class USER extends BaseEntity {
   @Column({ name: 'family_name' })
   familyName: string;
 
-  @JoinColumn()
-  @OneToOne(() => PublicFile, {
-    eager: true,
-    nullable: true,
-  })
-  public avatar?: PublicFile;
+  // @JoinColumn()
+  // @OneToOne(() => PublicFile, {
+  //   eager: true,
+  //   nullable: true,
+  // })
+  // public avatar?: PublicFile;
 
   @Column({ name: 'stripe_customer_id' })
   public stripeCustomerId: string;

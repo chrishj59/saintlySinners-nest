@@ -1,5 +1,6 @@
 import { type } from 'os';
 import { Country } from 'src/common/entity/country.entity';
+import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
 import { USER } from 'src/user/entity/user.entity';
 import { PRODUCT_VENDOR } from 'src/vendor/entity/vendor.entity';
 import {
@@ -11,6 +12,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   VersionColumn,
@@ -93,6 +95,13 @@ export class CUSTOMER_ORDER extends BaseEntity {
     (line: CUSTOMER_ORDER_LINE) => line.order,
   )
   orderLines: CUSTOMER_ORDER_LINE[];
+
+  @JoinColumn()
+  @OneToOne(() => PublicFile, {
+    eager: true,
+    nullable: true,
+  })
+  public invoicePdf?: PublicFile;
 
   @DeleteDateColumn()
   deletedOn: Date;

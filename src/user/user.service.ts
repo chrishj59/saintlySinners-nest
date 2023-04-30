@@ -43,35 +43,35 @@ export class UserService {
     );
   }
 
-  async addAvatar(userId: string, imageBuffer: Buffer, filename: string) {
-    const user = await this.getById(userId);
-    if (user.avatar) {
-      await this.userRepository.update(userId, {
-        ...user,
-        avatar: null,
-      });
-      await this.filesService.deletePublicFile(user.avatar.id);
-    }
-    const avatar = await this.filesService.uploadPublicFile(
-      imageBuffer,
-      filename,
-    );
-    await this.userRepository.update(userId, {
-      ...user,
-      avatar,
-    });
-    return avatar;
-  }
+  // async addAvatar(userId: string, imageBuffer: Buffer, filename: string) {
+  //   const user = await this.getById(userId);
+  //   if (user.avatar) {
+  //     await this.userRepository.update(userId, {
+  //       ...user,
+  //       avatar: null,
+  //     });
+  //     await this.filesService.deletePublicFile(user.avatar.id);
+  //   }
+  //   const avatar = await this.filesService.uploadPublicFile(
+  //     imageBuffer,
+  //     filename,
+  //   );
+  //   await this.userRepository.update(userId, {
+  //     ...user,
+  //     avatar,
+  //   });
+  //   return avatar;
+  // }
 
-  async deleteAvatar(userId: string) {
-    const user = await this.getById(userId);
-    const fileId = user.avatar?.id;
-    if (fileId) {
-      await this.userRepository.update(userId, {
-        ...user,
-        avatar: null,
-      });
-      await this.filesService.deletePublicFile(fileId);
-    }
-  }
+  // async deleteAvatar(userId: string) {
+  //   const user = await this.getById(userId);
+  //   const fileId = user.avatar?.id;
+  //   if (fileId) {
+  //     await this.userRepository.update(userId, {
+  //       ...user,
+  //       avatar: null,
+  //     });
+  //     await this.filesService.deletePublicFile(fileId);
+  //   }
+  // }
 }

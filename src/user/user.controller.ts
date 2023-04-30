@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Req, UploadedFiles, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get } from '@nestjs/common';
 
 import { UserService } from './user.service';
 
@@ -7,18 +6,18 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post('avatar')
-  @UseInterceptors(FileInterceptor('file'))
-  async addAvatar(
-    @Req() request: any,
-    @UploadedFiles() file: Express.Multer.File,
-  ) {
-    return this.userService.addAvatar(
-      request.user.id,
-      file.buffer,
-      file.originalname,
-    );
-  }
+  // @Post('avatar')
+  // @UseInterceptors(FileInterceptor('file'))
+  // async addAvatar(
+  //   @Req() request: any,
+  //   @UploadedFiles() file: Express.Multer.File,
+  // ) {
+  //   return this.userService.addAvatar(
+  //     request.user.id,
+  //     file.buffer,
+  //     file.originalname,
+  //   );
+  // }
 
   @Get('/fuseAuthUser')
   public async getUser(): // @Query() dto: BrandIdDto,

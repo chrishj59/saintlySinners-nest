@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import PDFDocument from 'pdfkit';
 import { Country } from 'src/common/entity/country.entity';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
@@ -129,4 +130,9 @@ export class CustomerOrderService {
       };
     }
   }
+  private createPDF(order: CUSTOMER_ORDER) {
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  }
+
+  private generateHeader(doc: PDFKit.PDFDocument) {}
 }

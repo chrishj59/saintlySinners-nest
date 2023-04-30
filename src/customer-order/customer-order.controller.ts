@@ -16,4 +16,9 @@ export class CustomerOrderController {
   async saveOrder(@Body() dto: CustomerOrderDto): Promise<ResponseMessageDto> {
     return await this.customerService.saveOrder(dto);
   }
+
+  @Post('/customerInvoice')
+  async createInvoicePdf() {
+    return '/customerInvoice called';
+  }
 }
