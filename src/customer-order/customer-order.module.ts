@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Country } from 'src/common/entity/country.entity';
 import { EDC_PRODUCT } from 'src/edc/entities/edc-product';
+import { RemoteFilesModule } from 'src/remote-files/remote-files.module';
 import { USER } from 'src/user/entity/user.entity';
 import { PRODUCT_VENDOR } from 'src/vendor/entity/vendor.entity';
 
@@ -20,6 +21,7 @@ import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
       Country,
       USER,
     ]),
+    RemoteFilesModule,
   ],
 
   controllers: [CustomerOrderController],

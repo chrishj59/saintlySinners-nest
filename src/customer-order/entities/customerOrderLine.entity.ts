@@ -26,8 +26,20 @@ export class CUSTOMER_ORDER_LINE extends BaseEntity {
   @ManyToOne(() => EDC_PRODUCT, (prod: EDC_PRODUCT) => prod.orderLines)
   edcProduct: EDC_PRODUCT;
 
-  @Column({ name: 'amount' })
-  amount: string;
+  @Column({ name: 'amount', type: 'double precision' })
+  price: string;
+
+  @Column({ name: 'amount', type: 'double precision' })
+  lineTotal: string;
+
+  @Column({ name: 'product_ref' })
+  prodRef: string;
+
+  @Column({ name: 'description' })
+  description: string;
+
+  @Column({ name: 'vat_rate', type: 'double precision' })
+  vatRate: number;
 
   @CreateDateColumn()
   createdDate: Date;

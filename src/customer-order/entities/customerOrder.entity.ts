@@ -1,6 +1,6 @@
 import { type } from 'os';
 import { Country } from 'src/common/entity/country.entity';
-import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
+import { CUSTOMER_INVOICE_PDF } from 'src/remote-files/entity/customerInvoiceFile.entity';
 import { USER } from 'src/user/entity/user.entity';
 import { PRODUCT_VENDOR } from 'src/vendor/entity/vendor.entity';
 import {
@@ -9,6 +9,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Generated,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -20,10 +21,14 @@ import {
 
 import { CUSTOMER_ORDER_LINE } from './customerOrderLine.entity';
 
-@Entity({ name: 'order' })
+@Entity({ name: 'customer_order' })
 export class CUSTOMER_ORDER extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ name: 'order_number' })
+  @Generated('increment')
+  orderNumber: number;
 
   @ManyToOne(() => PRODUCT_VENDOR, (vendor) => vendor.orders)
   @JoinColumn({ name: 'vendor_id', referencedColumnName: 'id' })
@@ -96,12 +101,12 @@ export class CUSTOMER_ORDER extends BaseEntity {
   )
   orderLines: CUSTOMER_ORDER_LINE[];
 
-  @JoinColumn()
-  @OneToOne(() => PublicFile, {
+  @OneToOne(() => CUSTOMER_INVOICE_PDF, {
     eager: true,
     nullable: true,
   })
-  public invoicePdf?: PublicFile;
+  @JoinColumn()
+  public invoicePdf?: CUSTOMER_INVOICE_PDF;
 
   @DeleteDateColumn()
   deletedOn: Date;

@@ -60,7 +60,6 @@ export class Product {
   @IsArray()
   @ArrayNotEmpty()
   @ArrayMinSize(2)
-  @IsString()
   artnr: string[];
 }
 
@@ -94,6 +93,9 @@ export class CustomerOrderDto {
   @IsString()
   currencyCode: string;
 
-  @Type(() => Product)
-  products: Product;
+  // @Type(() => Product)
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMinSize(2)
+  products: string[];
 }
