@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Param,
+  Post,
+  StreamableFile,
+} from '@nestjs/common';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
+import { FindOneUUIDParams } from 'src/utils/findOneParamString';
 
 import { CustomerOrderService } from './customer-order.service';
 import { CustomerOrderDto } from './dtos/customerOrder.dto';
@@ -20,5 +29,19 @@ export class CustomerOrderController {
   @Post('/customerInvoice')
   async createInvoicePdf() {
     return '/customerInvoice called';
+  }
+
+  @Get('/customerOrder/:id')
+  async getCustomerOrder(@Param() { id }: FindOneUUIDParams): Promise<any> {
+    return `Called /customerOrder/ with ${id}`;
+  }
+
+  @Get('/customerInvoice/:id')
+  @Header('Content-Type', 'application/pdf')
+  async getCustomerInvoice(
+    @Param() { id }: FindOneUUIDParams,
+  ): Promise<StreamableFile> {
+    const pdfStream = await this.customerService.getCutomerOrder(id);
+    return new StreamableFile(pdfStream);
   }
 }

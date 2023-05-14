@@ -1,13 +1,16 @@
-import { IsNumberString } from '@nestjs/class-validator';
-import { IsString } from 'class-validator';
+import { IsNumberString, IsString, IsUUID } from '@nestjs/class-validator';
 
-class FindOneStringParams {
+export class FindOneStringParams {
   @IsString()
   id: string;
 }
 
 export class FindOneNumberParams {
   @IsNumberString()
+  id: string;
+}
+export class FindOneUUIDParams {
+  @IsUUID()
   id: string;
 }
 

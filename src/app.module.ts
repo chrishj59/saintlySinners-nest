@@ -1,5 +1,7 @@
+import { S3Client } from '@aws-sdk/client-s3';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AwsSdkModule } from 'aws-sdk-v3-nest';
 import * as Joi from 'joi';
 
 import { AppController } from './app.controller';
@@ -43,6 +45,10 @@ import { VendorModule } from './vendor/vendor.module';
         EDC_ACCOUNT_EMAIL: Joi.string(),
         EDC_ACCOUNT_API_KEY: Joi.string(),
       }),
+    }),
+    AwsSdkModule.register({
+      isGlobal: true,
+      client: new S3Client({}),
     }),
     EdcModule,
     DatabaseModule,

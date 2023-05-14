@@ -1,7 +1,12 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  ListBucketsCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectAws } from 'aws-sdk-v3-nest';
 import PDFDocument from 'pdfkit';
 import { Country } from 'src/common/entity/country.entity';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
@@ -16,6 +21,7 @@ import { CustomerOrderDto } from './dtos/customerOrder.dto';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
 
+//import { S3Client } from '@aws-sdk/client-s3';
 type prodLine = {
   artnr: string;
 };
@@ -27,6 +33,8 @@ type invLineType = {
   vat_rate: number;
   line_total: number;
 };
+
+const client = new S3Client({});
 @Injectable()
 export class CustomerOrderService {
   constructor(
@@ -39,7 +47,9 @@ export class CustomerOrderService {
     @InjectRepository(USER)
     private userRepo: Repository<USER>,
     @InjectRepository(CUSTOMER_ORDER)
-    private custRepo: Repository<CUSTOMER_ORDER>,
+    private custOrderRepo: Repository<CUSTOMER_ORDER>,
+    @InjectAws(S3Client)
+    private readonly s3: S3Client,
     private readonly configService: ConfigService,
     private readonly filesService: RemoteFilesService,
   ) {}
@@ -157,7 +167,7 @@ export class CustomerOrderService {
     } else {
       custOrder.customer = customer;
     }
-    const custOrderUpdated = await this.custRepo.save(custOrder, {
+    const custOrderUpdated = await this.custOrderRepo.save(custOrder, {
       reload: true,
     });
     if (custOrderUpdated) {
@@ -173,12 +183,35 @@ export class CustomerOrderService {
       };
     }
   }
-  private createPDF(order: CUSTOMER_ORDER) {
+  async getCutomerOrder(id: any): Promise<Uint8Array> {
+    const order = await this.custOrderRepo.findOne({
+      where: { id: id },
+      relations: ['invoicePdf'],
+    });
+    const listCommand = new ListBucketsCommand({});
+    const getCommand = new GetObjectCommand({
+      Bucket: process.env.AWS_INVOICE_BUCKET_NAME,
+      Key: order.invoicePdf.key,
+    });
+
+    try {
+      console.log('call client.send');
+      const res = await this.s3.send(getCommand);
+      const pdfDoc = res.Body.transformToByteArray();
+      return pdfDoc;
+    } catch (err) {
+      console.error(err);
+    }
+
+    return null;
+  }
+
+  private async createPDF(order: CUSTOMER_ORDER) {
     const client = new S3Client({});
     const PDFDocument = require('pdfkit');
     let buffers = [];
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    this.generateHeader(doc);
+    await this.generateHeader(doc);
     this.generateCustomerInformation(doc, order);
     this.generateInvoiceTable(doc, order);
     this.generateFooter(doc);
@@ -200,13 +233,22 @@ export class CustomerOrderService {
 
   private async generateHeader(doc: PDFKit.PDFDocument) {
     try {
-      // const response = await client.send(command);
+      const getCommand = new GetObjectCommand({
+        Bucket: 'saintly-sinners-public-bucket',
+        Key: 'dainis-graveris-y2cOf7SfeMI-unsplash.jpg',
+      });
+      console.log('call s3.send');
+      const response = await this.s3.send(getCommand);
+      console.log('after send');
       // const status =  response.$metadata.httpStatusCode;
       //this.logger.log(`read aws http status ${status}`);
       // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
-      //const pdf: Uint8Array = await response.Body.transformToByteArray();
-      // console.log('after get body');
-      //doc.image(pdf, 50, 45, { width: 50 });
+      const jpgBuffer: Uint8Array = await response.Body.transformToByteArray();
+      console.log(jpgBuffer instanceof Uint8Array); // true
+      console.log(`after get body ${jpgBuffer.byteLength}`);
+
+      //doc.image(jpgBuffer, 50, 45, { width: 50 });
+
       doc
         .fillColor('#444444')
         .fontSize(20)
@@ -220,7 +262,7 @@ export class CustomerOrderService {
         .moveDown();
     } catch (err) {
       this.logger.warn(`doc header err ${err}`);
-      console.error(`doc header err ${err}`);
+      //console.error(`doc header err ${err}`);
     }
   }
 
