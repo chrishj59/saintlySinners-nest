@@ -3,7 +3,12 @@ import {
   ListBucketsCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectAws } from 'aws-sdk-v3-nest';
@@ -20,6 +25,7 @@ import { EDC_PRODUCT } from '../edc/entities/edc-product';
 import { CustomerOrderDto } from './dtos/customerOrder.dto';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
+import { EdcOrderCreatedResponseDto } from 'src/dtos/edc-order-created.reponse.dto';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 type prodLine = {
@@ -59,7 +65,9 @@ export class CustomerOrderService {
 
   customerInformationTop = 200;
 
-  async saveOrder(dto: CustomerOrderDto): Promise<ResponseMessageDto> {
+  async saveOrder(
+    dto: CustomerOrderDto,
+  ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
@@ -68,12 +76,6 @@ export class CustomerOrderService {
       .createQueryBuilder('edc_product')
       .where('edc_product.artnr IN (:...artnr)', { artnr: dto.products })
       .getMany();
-    console.log(`num prods ${prods.length}`);
-    // prods.map((prod: EDC_PRODUCT) => {
-    //   this.logger.log(
-    //     `artnr ${prod.artnr} b2c ${prod.b2c} vat ${prod.vatRateUk}`,
-    //   );
-    // });
     const inv_lines: CUSTOMER_ORDER_LINE[] = [];
     let orderGoodsAmount: number = 0;
 
@@ -82,9 +84,7 @@ export class CustomerOrderService {
 
     let OrderPayable: number = 0;
     const _artnrs: string[] = dto.products;
-    console.log(`_artnrs: ${_artnrs}`);
     _artnrs.map((el) => {
-      console.log(`el ${el}`);
       const prod = prods.find((p: EDC_PRODUCT) => p.artnr === el);
       if (prod === undefined) {
         this.logger.warn(`could not find prod with artner: ${el}`);
@@ -167,14 +167,18 @@ export class CustomerOrderService {
     } else {
       custOrder.customer = customer;
     }
-    const custOrderUpdated = await this.custOrderRepo.save(custOrder, {
+    let custOrderUpdated = await this.custOrderRepo.save(custOrder, {
       reload: true,
     });
     if (custOrderUpdated) {
-      this.createPDF(custOrderUpdated);
+      this.logger.log('return after create PDF');
       return {
         status: MessageStatusEnum.SUCCESS,
-        message: custOrderUpdated.orderNumber.toString(),
+        orderMessage: {
+          orderNumber: custOrderUpdated.orderNumber,
+          orderId: custOrderUpdated.id,
+          //pdfid: custOrderUpdated.invoicePdf.key,
+        },
       };
     } else {
       return {
@@ -183,19 +187,36 @@ export class CustomerOrderService {
       };
     }
   }
-  async getCutomerOrder(id: any): Promise<Uint8Array> {
+
+  async getCustomerOrder(id: string): Promise<CUSTOMER_ORDER> {
+    try {
+      const order = await this.custOrderRepo.findOne({
+        where: { id: id },
+      });
+      if (order) {
+        return order;
+      } else {
+        throw new NotFoundException(`Order Number number ${id} is invalid `);
+      }
+    } catch (err) {
+      throw new BadRequestException(
+        `An unexpected error occurred loading order with id ${id} `,
+      );
+    }
+    return null;
+  }
+  async getCutomerInvoice(id: any): Promise<Uint8Array> {
     const order = await this.custOrderRepo.findOne({
       where: { id: id },
       relations: ['invoicePdf'],
     });
-    const listCommand = new ListBucketsCommand({});
+
     const getCommand = new GetObjectCommand({
       Bucket: process.env.AWS_INVOICE_BUCKET_NAME,
       Key: order.invoicePdf.key,
     });
 
     try {
-      console.log('call client.send');
       const res = await this.s3.send(getCommand);
       const pdfDoc = res.Body.transformToByteArray();
       return pdfDoc;
@@ -228,7 +249,10 @@ export class CustomerOrderService {
         order.id,
         fileName,
       );
+      //order = await this.custOrderRepo.findOne({ where: { id: order.id } });
+      //return order;
     });
+    //return order;
   }
 
   private async generateHeader(doc: PDFKit.PDFDocument) {
@@ -237,17 +261,8 @@ export class CustomerOrderService {
         Bucket: 'saintly-sinners-public-bucket',
         Key: 'dainis-graveris-y2cOf7SfeMI-unsplash.jpg',
       });
-      console.log('call s3.send');
       const response = await this.s3.send(getCommand);
-      console.log('after send');
-      // const status =  response.$metadata.httpStatusCode;
-      //this.logger.log(`read aws http status ${status}`);
-      // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
       const jpgBuffer: Uint8Array = await response.Body.transformToByteArray();
-      console.log(jpgBuffer instanceof Uint8Array); // true
-      console.log(`after get body ${jpgBuffer.byteLength}`);
-
-      //doc.image(jpgBuffer, 50, 45, { width: 50 });
 
       doc
         .fillColor('#444444')
@@ -262,7 +277,6 @@ export class CustomerOrderService {
         .moveDown();
     } catch (err) {
       this.logger.warn(`doc header err ${err}`);
-      //console.error(`doc header err ${err}`);
     }
   }
 
@@ -278,7 +292,6 @@ export class CustomerOrderService {
     doc: PDFKit.PDFDocument,
     order: CUSTOMER_ORDER,
   ) {
-    console.log('called generateCustomerInformation');
     doc.fillColor('#444444').fontSize(20).text('Invoice', 50, 160);
 
     // this.generateHr(doc, 185);

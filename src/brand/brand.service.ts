@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { title } from 'process';
 import { EDC_PRODUCT } from 'src/edc/entities/edc-product';
@@ -148,8 +153,6 @@ export class BrandService {
         .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
         .andWhere('edc_product.brandId = :brandid', { brandid: brandId })
         .getMany();
-      console.log('get one product full');
-      console.log(products);
     } catch (e) {
       console.log('get products error');
       console.log(e);

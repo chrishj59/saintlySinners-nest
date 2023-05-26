@@ -67,8 +67,9 @@ export class CustomerOrderDto {
   @IsNumber()
   vendorNumber: number;
 
+  @IsOptional()
   @IsString()
-  stripeSessionId: string;
+  stripeSessionId?: string;
 
   @IsBoolean()
   oneTimeCustomer: boolean;
@@ -96,6 +97,6 @@ export class CustomerOrderDto {
   // @Type(() => Product)
   @IsArray()
   @ArrayNotEmpty()
-  @ArrayMinSize(2)
+  @ArrayMinSize(1)
   products: string[];
 }

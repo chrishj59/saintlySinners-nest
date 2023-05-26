@@ -12,6 +12,8 @@ import { FindOneUUIDParams } from 'src/utils/findOneParamString';
 
 import { CustomerOrderService } from './customer-order.service';
 import { CustomerOrderDto } from './dtos/customerOrder.dto';
+import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
+import { EdcOrderCreatedResponseDto } from 'src/dtos/edc-order-created.reponse.dto';
 
 @Controller()
 export class CustomerOrderController {
@@ -22,7 +24,9 @@ export class CustomerOrderController {
     return 'order to be implemented';
   }
   @Post('/customerOrder')
-  async saveOrder(@Body() dto: CustomerOrderDto): Promise<ResponseMessageDto> {
+  async saveOrder(
+    @Body() dto: CustomerOrderDto,
+  ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
     return await this.customerService.saveOrder(dto);
   }
 
@@ -32,8 +36,10 @@ export class CustomerOrderController {
   }
 
   @Get('/customerOrder/:id')
-  async getCustomerOrder(@Param() { id }: FindOneUUIDParams): Promise<any> {
-    return `Called /customerOrder/ with ${id}`;
+  async getCustomerOrder(
+    @Param() { id }: FindOneUUIDParams,
+  ): Promise<CUSTOMER_ORDER> {
+    return await this.customerService.getCustomerOrder(id);
   }
 
   @Get('/customerInvoice/:id')
@@ -41,7 +47,7 @@ export class CustomerOrderController {
   async getCustomerInvoice(
     @Param() { id }: FindOneUUIDParams,
   ): Promise<StreamableFile> {
-    const pdfStream = await this.customerService.getCutomerOrder(id);
+    const pdfStream = await this.customerService.getCutomerInvoice(id);
     return new StreamableFile(pdfStream);
   }
 }

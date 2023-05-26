@@ -1,4 +1,5 @@
 import { type } from 'os';
+import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
 import { Country } from 'src/common/entity/country.entity';
 import { CUSTOMER_INVOICE_PDF } from 'src/remote-files/entity/customerInvoiceFile.entity';
 import { USER } from 'src/user/entity/user.entity';
@@ -40,8 +41,17 @@ export class CUSTOMER_ORDER extends BaseEntity {
   )
   lines: CUSTOMER_ORDER_LINE[];
 
-  @Column({ name: 'stripe_sesson' })
+  @Column({ name: 'stripe_sesson', nullable: true })
   stripeSession: string;
+
+  @Column({
+    name: 'order_status',
+    type: 'enum',
+    enum: edcOrderStatusEnum,
+    nullable: true,
+    default: edcOrderStatusEnum.PENDING,
+  })
+  orderStatus: edcOrderStatusEnum;
 
   @Column({ name: 'oneTimeCustomer', default: false })
   oneTimeCustomer: boolean;
