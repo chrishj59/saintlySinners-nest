@@ -44,6 +44,7 @@ import { VendorModule } from './vendor/vendor.module';
         AUDIENCE: Joi.string(),
         EDC_ACCOUNT_EMAIL: Joi.string(),
         EDC_ACCOUNT_API_KEY: Joi.string(),
+        SS_INV_URL: Joi.string(),
       }),
     }),
     AwsSdkModule.register({

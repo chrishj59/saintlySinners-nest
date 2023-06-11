@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
@@ -23,7 +23,9 @@ import { EDC_PRODUCT_RESTRICTION } from './entities/edc-product-restrictions.ent
 import { EDC_PROP_VALUE } from './entities/edc-prop-value';
 import { EDC_PROPERTY } from './entities/edc-property';
 import { EDC_VARIANT } from './entities/edc-variant';
+import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 import { EdcOrderInterface } from './interfaces/edc-order.interface';
+import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 
 interface ProductImage {
   image: Blob;
@@ -51,6 +53,8 @@ export class EdcService {
     private productFileRepository: Repository<EDC_PRODUCT_FILE>,
     @InjectRepository(EDC_BATTERY)
     private batteryRepository: Repository<EDC_BATTERY>,
+    @InjectRepository(CUSTOMER_ORDER)
+    private custOrderRepo: Repository<CUSTOMER_ORDER>,
 
     private readonly filesService: RemoteFilesService,
     private readonly httpService: HttpService,
@@ -210,15 +214,12 @@ export class EdcService {
           propDB.productId = id;
           propDB.propTitle = prop['property'][0];
           //propDB.values;
-          console.log('propDB');
-          console.log(propDB);
           propDB = await this.propRepository.save(propDB, { reload: true });
         }
         /**
          * check to see if values need updating
          */
         let valuesArray: EDC_PROP_VALUE[] = [];
-        console.log('properties values');
         for (const val of prop['values'][0]['value']) {
           let valId = Number(val['id']); //
           if (isNaN(valId)) {
@@ -391,17 +392,13 @@ export class EdcService {
       dto.measures[0]['weight'] && Number(dto.measures[0]['weight'][0]);
     prod.packaging =
       dto.measures[0]['packing'] && dto.measures[0]['packing'][0];
-    this.logger.log('variants to assign to product');
-    this.logger.log(JSON.stringify(variants));
     prod.variants = variants;
     prod.properties = properties;
     prod.material = dto.material && dto.material[0];
     prod.popularity = dto.popularity && Number(dto.popularity[0]);
     prod.countryCode = dto.country && dto.country[0];
     prod.bullets = bulletPoints;
-    console.log('restrictions start');
     prod.restrictions = restrictions;
-    console.log('restrictions end');
     prod.hsCode = dto.hscode && dto.hscode[0];
     prod.batteryRequired = batteryRequired;
     prod.newCategories = newCats;
@@ -423,7 +420,6 @@ export class EdcService {
       picsArray = dto.pics[0]['pic'];
       for (const url of dto.pics[0]['pic']) {
         const imageKey = url.substring(8, url.length).replaceAll('/', '_');
-        console.log(`imageKey: ${imageKey}`);
 
         let prodFile = await this.productFileRepository.findOne({
           where: { key: imageKey },
@@ -523,6 +519,69 @@ export class EdcService {
     return {
       status: MessageStatusEnum.SUCCESS,
       message: `save order edc service  xml ${data.result}`,
+    };
+  }
+
+  async sendOrder(id: string): Promise<ResponseMessageDto> {
+    const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
+    const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
+    const custOrder = await this.custOrderRepo.findOne({
+      where: {
+        id,
+      },
+      relations: ['orderLines', 'country'],
+    });
+    const prodIds = custOrder.orderLines.map(
+      (l: CUSTOMER_ORDER_LINE) => l.prodRef,
+    );
+    const pdfUrl = process.env.SS_INV_URL + custOrder.invoicePdf.key;
+    const order: EdcOrderInterface = {
+      orderdetails: {
+        customerdetails: {
+          email: edcEmail,
+          apikey: edcApiKey,
+          output: 'advanced',
+        },
+        receiver: {
+          name: custOrder.name,
+          street: custOrder.street,
+          postalcode: custOrder.postCode,
+          house_nr: custOrder.houseNumber,
+          city: custOrder.city,
+          country: custOrder.country.edcCountryCode,
+          phone: custOrder.telphone,
+          own_ordernumber: custOrder.orderNumber.toString(),
+          consumer_amount: custOrder.total.toString(),
+          consumer_amount_currency: custOrder.currencyCode,
+          attachment: pdfUrl,
+        },
+        products: { artnr: prodIds },
+      },
+    };
+    this.logger.warn(`order for edc ${JSON.stringify(order, null, 2)}`);
+    /** send the order to EDC */
+    const xml2js = require('xml2js');
+    const builder = new xml2js.Builder({
+      explicitArray: true,
+      mergeAttrs: true,
+    });
+    const xmlOutput = builder.buildObject(order);
+    const url = require('url');
+    const params = new url.URLSearchParams({
+      data: xmlOutput,
+    });
+    const { data } = await firstValueFrom(
+      this.httpService.post(process.env.EDC_ORDER_URL, params.toString()).pipe(
+        catchError((error: AxiosError) => {
+          this.logger.error(error.response.data);
+          throw 'An error happened!';
+        }),
+      ),
+    );
+    console.log(`EDC order response ${JSON.stringify(data, null, 2)}`);
+    return {
+      status: MessageStatusEnum.SUCCESS,
+      message: `send order to EDC called with ${data.result}`,
     };
   }
 }

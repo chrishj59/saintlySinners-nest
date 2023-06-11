@@ -54,6 +54,8 @@ export class CustomerOrderService {
     private userRepo: Repository<USER>,
     @InjectRepository(CUSTOMER_ORDER)
     private custOrderRepo: Repository<CUSTOMER_ORDER>,
+    @InjectRepository(CUSTOMER_ORDER_LINE)
+    private custOrderLineRepo: Repository<CUSTOMER_ORDER_LINE>,
     @InjectAws(S3Client)
     private readonly s3: S3Client,
     private readonly configService: ConfigService,
@@ -68,6 +70,8 @@ export class CustomerOrderService {
   async saveOrder(
     dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
+    this.logger.warn(`save order called with ${JSON.stringify(dto, null, 2)}`);
+
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
@@ -164,13 +168,28 @@ export class CustomerOrderService {
       custOrder.zip = dto.customer.zip;
       custOrder.telphone = dto.customer.telphone;
       custOrder.country = country;
+      custOrder.orderLines = inv_lines;
     } else {
       custOrder.customer = customer;
     }
     let custOrderUpdated = await this.custOrderRepo.save(custOrder, {
       reload: true,
     });
+    this.logger.warn(
+      `custOrderUpdated house number: ${custOrderUpdated.houseNumber}`,
+    );
+    // const updatedLine = await this.custOrderLineRepo.save(inv_lines[0], {
+    //   reload: true,
+    // });
     if (custOrderUpdated) {
+      // inv_lines.map(async (l: CUSTOMER_ORDER_LINE) => {
+      //   //l.order = custOrderUpdated;
+      //   const updatedLine = await this.custOrderLineRepo.save(l, {
+      //     reload: true,
+      //   });
+      //   this.logger.log(`line item ${JSON.stringify(updatedLine, null, 2)}`);
+      // });
+      await this.createPDF(custOrderUpdated);
       this.logger.log('return after create PDF');
       return {
         status: MessageStatusEnum.SUCCESS,

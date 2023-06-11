@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Logger, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthorizationGuard } from 'src/authorisation/authorisation.guard';
 import { PermissionsGuard } from 'src/authorisation/permissions.guard';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 
-import { FindOneNumberParams } from '../utils/findOneParamString';
+import {
+  FindOneNumberParams,
+  FindOneUUIDParams,
+  FindOneStringParams,
+} from '../utils/findOneParamString';
 import { EdcProductNewDto } from './dtos/add-product.dto';
 import { EdcOrderDto } from './dtos/edc-order.dto';
 import { EdcService } from './edc.service';
@@ -22,6 +34,13 @@ export class EdcController {
   @Post('/order')
   async saveOrder(@Body() dto: EdcOrderDto): Promise<ResponseMessageDto> {
     return await this.edcService.saveOrder(dto);
+  }
+
+  @Post('/order/:id')
+  async sendEdcOrder(
+    @Param() { id }: FindOneStringParams,
+  ): Promise<ResponseMessageDto> {
+    return this.edcService.sendOrder(id);
   }
 
   @UseGuards(PermissionsGuard([EdcPermissions.CREATE_ADMIN]))

@@ -19,6 +19,8 @@ import { EDC_PRODUCT_RESTRICTION } from './entities/edc-product-restrictions.ent
 import { EDC_PROP_VALUE } from './entities/edc-prop-value';
 import { EDC_PROPERTY } from './entities/edc-property';
 import { EDC_VARIANT } from './entities/edc-variant';
+import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
+import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { EDC_VARIANT } from './entities/edc-variant';
       EDC_PRODUCT_BULLET,
       EDC_PRODUCT_RESTRICTION,
       EDC_NEW_CATEGORY,
+      CUSTOMER_ORDER,
     ]),
     RemoteFilesModule,
     HttpModule,

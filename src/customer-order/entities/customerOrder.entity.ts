@@ -106,8 +106,11 @@ export class CUSTOMER_ORDER extends BaseEntity {
   customer: USER;
 
   @OneToMany(
-    () => CUSTOMER_ORDER_LINE,
+    (_type) => CUSTOMER_ORDER_LINE,
     (line: CUSTOMER_ORDER_LINE) => line.order,
+    {
+      cascade: ['insert', 'update', 'remove'],
+    },
   )
   orderLines: CUSTOMER_ORDER_LINE[];
 

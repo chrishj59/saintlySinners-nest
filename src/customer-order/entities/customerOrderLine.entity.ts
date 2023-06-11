@@ -26,7 +26,7 @@ export class CUSTOMER_ORDER_LINE extends BaseEntity {
   @ManyToOne(() => EDC_PRODUCT, (prod: EDC_PRODUCT) => prod.orderLines)
   edcProduct: EDC_PRODUCT;
 
-  @Column({ name: 'amount', type: 'double precision' })
+  @Column({ name: 'unit_price', type: 'double precision' })
   price: string;
 
   @Column({ name: 'amount', type: 'double precision' })

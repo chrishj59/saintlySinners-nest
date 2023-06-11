@@ -15,14 +15,10 @@ export class BrandController {
   public async getBrands(
     @Query() dto: BrandCatDto,
   ): Promise<BrandDto[] | BrandDto> {
-    console.log('category');
-
     if (!dto.catLevel) {
       dto.catLevel = 6;
     }
 
-    console.log(`dto.catLeel ${dto.catLevel}`);
-    console.log(dto);
     return await this.brandService.getBrand(dto);
   }
 
