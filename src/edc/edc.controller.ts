@@ -40,6 +40,7 @@ export class EdcController {
   async sendEdcOrder(
     @Param() { id }: FindOneStringParams,
   ): Promise<ResponseMessageDto> {
+    this.logger.warn('sendEdcOrder called');
     return this.edcService.sendOrder(id);
   }
 

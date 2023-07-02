@@ -3,12 +3,14 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
 } from '@nestjs/class-validator';
 import { Type } from 'class-transformer';
+import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
 
 class Customer {
   @IsOptional()
@@ -99,4 +101,52 @@ export class CustomerOrderDto {
   @ArrayNotEmpty()
   @ArrayMinSize(1)
   products: string[];
+}
+
+export class EditCustomerOrderDto {
+  @IsOptional()
+  @IsNumber()
+  vendorNumber: number;
+
+  @IsOptional()
+  @IsString()
+  stripeSession: string;
+
+  @IsOptional()
+  @IsBoolean()
+  oneTimeCustomer: boolean;
+
+  // @IsOptional()
+  // // @Type(() => Customer)
+  // customer: string;
+
+  @IsOptional()
+  @IsString()
+  customerId: string;
+
+  @IsOptional()
+  @IsNumber()
+  goodsValue: number;
+
+  @IsOptional()
+  @IsNumber()
+  tax: number;
+
+  @IsOptional()
+  @IsNumber()
+  total: number;
+
+  @IsOptional()
+  @IsString()
+  currencyCode: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMinSize(1)
+  products: string[];
+
+  @IsOptional()
+  @IsEnum(edcOrderStatusEnum)
+  orderStatus: edcOrderStatusEnum;
 }

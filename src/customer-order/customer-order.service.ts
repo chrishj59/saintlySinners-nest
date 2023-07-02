@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
   GetObjectCommand,
   ListBucketsCommand,
@@ -19,13 +20,17 @@ import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
 import { USER } from 'src/user/entity/user.entity';
 import { PRODUCT_VENDOR } from 'src/vendor/entity/vendor.entity';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 
 import { EDC_PRODUCT } from '../edc/entities/edc-product';
-import { CustomerOrderDto } from './dtos/customerOrder.dto';
+import {
+  CustomerOrderDto,
+  EditCustomerOrderDto,
+} from './dtos/customerOrder.dto';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
 import { EdcOrderCreatedResponseDto } from 'src/dtos/edc-order-created.reponse.dto';
+import { CustOrderUpdatedResponseDto } from 'src/dtos/cust-order-updated.response.dto';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 type prodLine = {
@@ -38,6 +43,10 @@ type invLineType = {
   price: number;
   vat_rate: number;
   line_total: number;
+};
+
+type GetCustomerOrderResponse = {
+  data: CUSTOMER_ORDER;
 };
 
 const client = new S3Client({});
@@ -224,6 +233,22 @@ export class CustomerOrderService {
     }
     return null;
   }
+
+  async updateCustomerOrder(
+    id: string,
+    custOrder: EditCustomerOrderDto,
+  ): Promise<CustOrderUpdatedResponseDto> {
+    const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
+    const resultstatus =
+      result.affected === 1
+        ? MessageStatusEnum.SUCCESS
+        : MessageStatusEnum.WARNING;
+    return {
+      status: resultstatus,
+      orderMessage: { orderId: id, rowsUpdated: result.affected },
+    };
+  }
+
   async getCutomerInvoice(id: any): Promise<Uint8Array> {
     const order = await this.custOrderRepo.findOne({
       where: { id: id },

@@ -1,5 +1,6 @@
 export enum edcOrderStatusEnum {
   'PENDING' = 0,
   'STRIPE_PAID' = 1,
-  'DELIVERED' = 2,
+  'EDC_ORDER_COMPLETE' = 2,
+  'DELIVERED' = 3,
 }
