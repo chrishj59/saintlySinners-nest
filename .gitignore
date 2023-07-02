@@ -2,6 +2,8 @@
 /dist
 /node_modules
 /postgres-data
+/postgres-data-15
+
 
 # Logs
 logs
