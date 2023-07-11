@@ -20,6 +20,7 @@ import { RemoteFilesModule } from './remote-files/remote-files.module';
 import { StripeModule } from './stripe/stripe.module';
 import { UserModule } from './user/user.module';
 import { VendorModule } from './vendor/vendor.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -45,6 +46,10 @@ import { VendorModule } from './vendor/vendor.module';
         EDC_ACCOUNT_EMAIL: Joi.string(),
         EDC_ACCOUNT_API_KEY: Joi.string(),
         SS_INV_URL: Joi.string(),
+        SMTP_USER: Joi.string().required(),
+        GOOGLE_OAUTH_CLIENT_ID: Joi.string().required(),
+        GOOGLE_OAUTH_CLIENT_SECRET: Joi.string().required(),
+        GOOGLE_OAUTH_REFRESH_TOKEN: Joi.string().required(),
       }),
     }),
     AwsSdkModule.register({
@@ -64,6 +69,7 @@ import { VendorModule } from './vendor/vendor.module';
     AuthorisationModule,
     MessagesModule,
     CustomerOrderModule,
+    NotificationModule,
 
     //ProductModule,
   ],

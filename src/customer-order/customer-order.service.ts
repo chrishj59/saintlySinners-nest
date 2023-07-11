@@ -31,6 +31,7 @@ import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
 import { EdcOrderCreatedResponseDto } from 'src/dtos/edc-order-created.reponse.dto';
 import { CustOrderUpdatedResponseDto } from 'src/dtos/cust-order-updated.response.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 type prodLine = {
@@ -69,6 +70,7 @@ export class CustomerOrderService {
     private readonly s3: S3Client,
     private readonly configService: ConfigService,
     private readonly filesService: RemoteFilesService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   logger = new Logger('CustomerOrderService');
@@ -239,10 +241,25 @@ export class CustomerOrderService {
     custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
     const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
+
     const resultstatus =
       result.affected === 1
         ? MessageStatusEnum.SUCCESS
         : MessageStatusEnum.WARNING;
+    this.logger.log('get order number');
+    const orderUpdated = await this.custOrderRepo.findOne({
+      where: { id: id },
+    });
+    console.log(`orderUpdated ${JSON.stringify(orderUpdated)}`);
+    const email = process.env.ADMIN_EMAIL;
+    //const text: 'paid'
+    this.logger.log(`call notificationService.notifyEmail with ${email} `);
+    this.logger.log(`order number ${orderUpdated.orderNumber}`);
+
+    await this.notificationService.notifyEmail({
+      email,
+      text: `Payment received for order: ${orderUpdated.orderNumber} EDC payment due ${orderUpdated.vendTotalPayable}`,
+    });
     return {
       status: resultstatus,
       orderMessage: { orderId: id, rowsUpdated: result.affected },

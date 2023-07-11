@@ -26,6 +26,7 @@ import { EDC_VARIANT } from './entities/edc-variant';
 import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 import { EdcOrderInterface } from './interfaces/edc-order.interface';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
+import { EdcSaveOrderReponse } from './interfaces/edc-send-order-response';
 
 interface ProductImage {
   image: Blob;
@@ -578,10 +579,44 @@ export class EdcService {
         }),
       ),
     );
-    console.log(`EDC order response ${JSON.stringify(data, null, 2)}`);
+    const edcResponse: EdcSaveOrderReponse = data;
+    console.log(
+      `EDC order response edcResponse ${JSON.stringify(edcResponse, null, 2)}`,
+    );
+    const prodVat: number = edcResponse.products.reduce((accum, current) => {
+      return accum + parseFloat(current.vat);
+    }, 0);
+
+    this.logger.warn(`prodVat ${prodVat}`);
+    this.logger.warn(
+      `vathigh ${parseFloat(
+        parseFloat(edcResponse.vathigh).toFixed(2),
+      )} vatLow ${edcResponse.vatlow}`,
+    );
+    const vatTotal: number = parseFloat(
+      prodVat +
+        parseFloat(edcResponse.vathigh).toFixed(2) +
+        parseFloat(edcResponse.vatlow).toFixed(2),
+    );
+    this.logger.warn(
+      `vatTotal ${vatTotal} prod vat ${prodVat} vatHigh Num ${parseFloat(
+        edcResponse.vathigh,
+      ).toFixed(2)}`,
+    );
+    const updateParam = {
+      vendOrderNumber: edcResponse.ordernumber,
+      vendGoodCost: parseFloat(edcResponse.subtotal_excl_vat),
+      vendDelCost: parseFloat(edcResponse.shippingcosts_excl_vat),
+      vendTotalPayable: parseFloat(edcResponse.total_incl_vat),
+      vendVat: vatTotal,
+    };
+    this.logger.log(`cust order update params ${updateParam}`);
+    const updates = await this.custOrderRepo.update(id, updateParam);
+    this.logger.log(`Customer Order updates ${(await updates).affected}`);
+
     return {
       status: MessageStatusEnum.SUCCESS,
-      message: `send order to EDC called with ${data.result}`,
+      message: `send order to EDC called with ${edcResponse.result}`,
     };
   }
 }

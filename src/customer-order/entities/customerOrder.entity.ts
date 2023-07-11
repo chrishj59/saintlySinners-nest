@@ -121,6 +121,34 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @JoinColumn()
   public invoicePdf?: CUSTOMER_INVOICE_PDF;
 
+  @Column({
+    name: 'vendor-order-number',
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+  })
+  vendOrderNumber: string;
+
+  @Column({
+    name: 'vendor-goods-cost',
+    type: 'double precision',
+    nullable: true,
+  })
+  vendGoodCost: number;
+
+  @Column({
+    name: 'vendor-delivery_cost',
+    type: 'double precision',
+    nullable: true,
+  })
+  vendDelCost: number;
+
+  @Column({ name: 'vendor-vat', type: 'double precision', nullable: true })
+  vendVat: number;
+
+  @Column({ name: 'vendor-total', type: 'double precision', nullable: true })
+  vendTotalPayable: number;
+
   @DeleteDateColumn()
   deletedOn: Date;
   @CreateDateColumn()
