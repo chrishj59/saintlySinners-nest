@@ -304,7 +304,7 @@ export class CustomerOrderService {
   <p style="color: purple;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 300;
-  font-size: medium;">The elves have started to work on your and will be sending it on ${this.shippingDate(
+  font-size: medium;">The elves have started to work on your order and will be sending it on ${this.shippingDate(
     lines,
   )}</p>
   <p style="color: purple;
