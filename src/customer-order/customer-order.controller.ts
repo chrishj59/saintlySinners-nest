@@ -71,7 +71,7 @@ export class CustomerOrderController {
   async getCustomerInvoice(
     @Param() { id }: FindOneUUIDParams,
   ): Promise<StreamableFile> {
-    const pdfStream = await this.customerService.getCutomerInvoice(id);
+    const pdfStream = await this.customerService.getCustomerInvoice(id);
     return new StreamableFile(pdfStream);
   }
 }

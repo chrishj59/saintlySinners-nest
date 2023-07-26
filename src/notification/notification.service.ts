@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodmailer from 'nodemailer';
-import { NotifyEmailDto } from '../dtos/notify-email.dtos';
+import { InvoiceEmailDto, NotifyEmailDto } from '../dtos/notify-email.dtos';
 @Injectable()
 export class NotificationService {
   constructor(private readonly configService: ConfigService) {}
@@ -28,7 +28,27 @@ export class NotificationService {
     });
   }
 
-  async customerInvoiceEmail() {
+  async customerInvoiceEmail(
+    email: string,
+    subject: string,
+    html: string,
+    pdfData: Buffer,
+  ) {
+    this.logger.log(`called customerInvoiceEmail with ${email}`);
+
+    await this.transporter.sendMail({
+      from: this.configService.get('SMTP_USER'),
+      to: email,
+      subject,
+      html,
+      attachments: [
+        {
+          filename: 'Invoice.pdf',
+          contentType: 'application/pdf',
+          content: pdfData,
+        },
+      ],
+    });
     // TODO: send enail to customer
     // const mailOptions = {
     //   from: "XXXX",

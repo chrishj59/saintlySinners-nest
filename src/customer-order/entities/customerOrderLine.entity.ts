@@ -41,6 +41,15 @@ export class CUSTOMER_ORDER_LINE extends BaseEntity {
   @Column({ name: 'vat_rate', type: 'double precision' })
   vatRate: number;
 
+  @Column({ name: 'edc_stock_status', type: 'character', nullable: true })
+  edcStockStatus: string;
+
+  @Column({
+    name: 'arrival_week_nr',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
   @CreateDateColumn()
   createdDate: Date;
   @UpdateDateColumn()

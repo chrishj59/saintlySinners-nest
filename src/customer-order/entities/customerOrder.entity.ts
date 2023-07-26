@@ -89,6 +89,15 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({ name: 'telephone', type: 'varchar', length: 20, nullable: true })
   telphone: string;
 
+  @Column({
+    name: 'email',
+    type: 'varchar',
+    length: 254,
+    nullable: true,
+    default: '',
+  })
+  email: string;
+
   @Column({ name: 'goods_amount', type: 'double precision' })
   goodsValue: number;
 

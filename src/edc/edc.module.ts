@@ -5,7 +5,6 @@ import { CommonModule } from 'src/common/common.module';
 import { EDC_PRODUCT_FILE } from 'src/remote-files/entity/productFile.entity';
 import { RemoteFilesModule } from 'src/remote-files/remote-files.module';
 
-import { EdcController } from './edc.controller';
 import { EdcService } from './edc.service';
 import { EDC_BATTERY } from './entities/edc-battery';
 import { EDC_BRAND } from './entities/edc-brand';
@@ -21,6 +20,7 @@ import { EDC_PROPERTY } from './entities/edc-property';
 import { EDC_VARIANT } from './entities/edc-variant';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
+import { EdcController } from './edc.controller';
 
 @Module({
   imports: [
@@ -39,6 +39,7 @@ import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity
       EDC_PRODUCT_RESTRICTION,
       EDC_NEW_CATEGORY,
       CUSTOMER_ORDER,
+      CUSTOMER_ORDER_LINE,
     ]),
     RemoteFilesModule,
     HttpModule,

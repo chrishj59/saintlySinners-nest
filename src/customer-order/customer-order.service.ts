@@ -32,6 +32,11 @@ import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
 import { EdcOrderCreatedResponseDto } from 'src/dtos/edc-order-created.reponse.dto';
 import { CustOrderUpdatedResponseDto } from 'src/dtos/cust-order-updated.response.dto';
 import { NotificationService } from 'src/notification/notification.service';
+import { CUSTOMER_INVOICE_PDF } from 'src/remote-files/entity/customerInvoiceFile.entity';
+import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
+import { getDay } from 'date-fns';
+import { isAfter } from 'date-fns';
+import { format, add } from 'date-fns';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 type prodLine = {
@@ -178,6 +183,7 @@ export class CustomerOrderService {
       custOrder.postCode = dto.customer.postCode;
       custOrder.zip = dto.customer.zip;
       custOrder.telphone = dto.customer.telphone;
+      custOrder.email = dto.customer.email;
       custOrder.country = country;
       custOrder.orderLines = inv_lines;
     } else {
@@ -236,37 +242,128 @@ export class CustomerOrderService {
     return null;
   }
 
+  shippingDate(lines: CUSTOMER_ORDER_LINE[]): string {
+    let shipDate: Date = new Date();
+    this.logger.log(`init shipDate ${shipDate}`);
+    for (const line of lines) {
+      this.logger.log(`line.edcStockStatus ${line.edcStockStatus}`);
+      switch (line.edcStockStatus) {
+        case 'Y':
+          let checkDate = add(shipDate, { days: 1 });
+          this.logger.log(`init checkDate ${checkDate}`);
+          if (isAfter(shipDate, checkDate)) {
+            add(checkDate, { days: 1 });
+            this.logger.log(`checkDate is before shipDate set to ${checkDate}`);
+          }
+          const dayOfWeek = getDay(checkDate);
+          if (dayOfWeek === 0) {
+            shipDate = add(checkDate, { days: 1 });
+          } else if (dayOfWeek === 6) {
+            shipDate = add(checkDate, { days: 2 });
+          } else {
+            shipDate = checkDate;
+          }
+          break;
+        case 'N':
+          checkDate = add(shipDate, { days: 1 });
+          if (isAfter(shipDate, checkDate)) {
+            add(checkDate, { days: 1 });
+          }
+          if (dayOfWeek === 0) {
+            shipDate = add(checkDate, { days: 1 });
+          } else if (dayOfWeek === 6) {
+            shipDate = add(checkDate, { days: 2 });
+          } else {
+            shipDate = checkDate;
+          }
+      }
+      this.logger.log(`final shipDate ${format(shipDate, 'do MMMM yyyy')}`);
+      return format(shipDate, 'do MMMM yyyy');
+    }
+  }
+  invHtml(lines: CUSTOMER_ORDER_LINE[]): string {
+    const html = `<html> <style>
+    p {
+      color: purple;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 300;
+      font-size: medium;
+    }
+    h1 {
+      color: purple;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+  
+  <h1 style="color: purple;">Thank you for your puchase.</h1>
+  <p style="color: purple;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: medium;"
+  >Please find attached your invoice.</p>
+  <p style="color: purple;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: medium;">The elves have started to work on your and will be sending it on ${this.shippingDate(
+    lines,
+  )}</p>
+  <p style="color: purple;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: medium;">Enjoy Saintly Sinners</p>
+  </html>
+  `;
+    return html;
+  }
   async updateCustomerOrder(
     id: string,
     custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
+    this.logger.log(
+      `updateCustomerOrder called with id ${id}, custOrder ${JSON.stringify(
+        custOrder,
+      )}`,
+    );
     const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
 
     const resultstatus =
       result.affected === 1
         ? MessageStatusEnum.SUCCESS
         : MessageStatusEnum.WARNING;
-    this.logger.log('get order number');
     const orderUpdated = await this.custOrderRepo.findOne({
       where: { id: id },
+      relations: ['invoicePdf', 'orderLines'],
     });
     console.log(`orderUpdated ${JSON.stringify(orderUpdated)}`);
+    const invPdf = await this.getCustomerInvoice(id);
     const email = process.env.ADMIN_EMAIL;
     //const text: 'paid'
-    this.logger.log(`call notificationService.notifyEmail with ${email} `);
-    this.logger.log(`order number ${orderUpdated.orderNumber}`);
 
     await this.notificationService.notifyEmail({
       email,
       text: `Payment received for order: ${orderUpdated.orderNumber} EDC payment due ${orderUpdated.vendTotalPayable}`,
     });
+
+    //TODO: Call notofication service to send invoice to customer
+    const custEmail: string = orderUpdated.email;
+    const subject: string = 'Your SaintlySinners Invoice';
+
+    const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
+    const pdfBuffer = Buffer.from(invPdf);
+    await this.notificationService.customerInvoiceEmail(
+      custEmail,
+      subject,
+      body,
+      pdfBuffer,
+    );
+
     return {
       status: resultstatus,
       orderMessage: { orderId: id, rowsUpdated: result.affected },
     };
   }
 
-  async getCutomerInvoice(id: any): Promise<Uint8Array> {
+  async getCustomerInvoice(id: any): Promise<Uint8Array> {
     const order = await this.custOrderRepo.findOne({
       where: { id: id },
       relations: ['invoicePdf'],

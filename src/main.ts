@@ -54,18 +54,6 @@ async function bootstrap() {
   //const configService = app.get(ConfigService);
   const port = configService.get('PORT');
 
-  // config.update({
-  //   accessKeyId: configService.get('AWS_ACCESS_KEY_ID'),
-  //   secretAccessKey: configService.get('AWS_SECRET_ACCESS_KEY'),
-  //   region: configService.get('AWS_REGION'),
-  // });
-
-  //   Issue sent to auth0 8/2/2023
-  // app.use(jwtCheck);
-  // app.get('/authorized', function (req, res) {
-  //     res.send('Secured Resource');
-  // });
-
   await app.listen(port);
 }
 bootstrap();

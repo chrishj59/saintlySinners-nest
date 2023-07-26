@@ -158,6 +158,8 @@ export class BrandService {
       console.log(e);
     }
     products = products.map((p) => {
+      const nlvat = 1 + p.vatRateNl / 100;
+      p.b2c = parseFloat((p.b2c * nlvat).toFixed(2));
       if (!p.defaultCategory) {
         p.defaultCategory = p.newCategories[0];
       }

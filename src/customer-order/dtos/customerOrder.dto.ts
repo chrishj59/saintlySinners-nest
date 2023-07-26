@@ -3,6 +3,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -55,6 +56,9 @@ class Customer {
   @IsOptional()
   @IsString()
   telphone: string;
+
+  @IsEmail()
+  email: string;
 }
 
 export class Product {

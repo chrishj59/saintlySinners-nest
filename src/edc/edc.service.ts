@@ -1,5 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios, { AxiosError } from 'axios';
@@ -27,6 +32,7 @@ import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity
 import { EdcOrderInterface } from './interfaces/edc-order.interface';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 import { EdcSaveOrderReponse } from './interfaces/edc-send-order-response';
+import { Product } from 'src/customer-order/dtos/customerOrder.dto';
 
 interface ProductImage {
   image: Blob;
@@ -56,6 +62,8 @@ export class EdcService {
     private batteryRepository: Repository<EDC_BATTERY>,
     @InjectRepository(CUSTOMER_ORDER)
     private custOrderRepo: Repository<CUSTOMER_ORDER>,
+    @InjectRepository(CUSTOMER_ORDER_LINE)
+    private custOrdLineRepo: Repository<CUSTOMER_ORDER_LINE>,
 
     private readonly filesService: RemoteFilesService,
     private readonly httpService: HttpService,
@@ -86,6 +94,11 @@ export class EdcService {
         .leftJoinAndSelect('edc_product.batteryInfo', 'batteryInfo')
         // .andWhere('edc_product.id = :prodId', { prodId: id })
         .getMany();
+
+      for (const p of products) {
+        const vatRate = 1 + p.vatRateNl / 100;
+        p.b2c = p.b2c * vatRate;
+      }
     } catch (e) {
       this.logger.error(`Error loading single products`);
       this.logger.error(JSON.stringify(e));
@@ -114,6 +127,9 @@ export class EdcService {
         .leftJoinAndSelect('edc_product.batteryInfo', 'batteryInfo')
         .andWhere('edc_product.id = :prodId', { prodId: id })
         .getOne();
+      product.b2c = parseFloat(
+        (product.b2c * (1 + product.vatRateNl / 100)).toFixed(2),
+      );
     } catch (e) {
       this.logger.error(`Error loading single product for id ${id}`);
       this.logger.error(JSON.stringify(e));
@@ -456,6 +472,7 @@ export class EdcService {
   }
 
   async saveOrder(dto: EdcOrderDto): Promise<ResponseMessageDto> {
+    this.logger.log(`Save order called`);
     // const country: Country = await this.commonService.getEdcCountry(
     //   dto.country,
     // );
@@ -516,10 +533,13 @@ export class EdcService {
         }),
       ),
     );
+    this.logger.log(
+      `result from send order to EDC: ${JSON.stringify(data, null, 2)}`,
+    );
 
     return {
       status: MessageStatusEnum.SUCCESS,
-      message: `save order edc service  xml ${data.result}`,
+      message: `save order edc service  xml ${data}`,
     };
   }
 
@@ -610,9 +630,30 @@ export class EdcService {
       vendTotalPayable: parseFloat(edcResponse.total_incl_vat),
       vendVat: vatTotal,
     };
+
     this.logger.log(`cust order update params ${updateParam}`);
     const updates = await this.custOrderRepo.update(id, updateParam);
     this.logger.log(`Customer Order updates ${(await updates).affected}`);
+    console.log(
+      ` customer order lines 629: ${JSON.stringify(custOrder, null, 2)}`,
+    );
+    const products = edcResponse.products;
+    const custLines = custOrder.orderLines;
+    this.logger.log(
+      `products from edcResponse ${JSON.stringify(products, null, 2)}`,
+    );
+    for (const product of products) {
+      console.log(`product loop current ${JSON.stringify(product, null, 2)}`);
+      console.log(`custLines ${JSON.stringify(custLines, null, 2)}`);
+      const custLine = custLines.find((c) => c.prodRef === product.artnr);
+      custLine.edcStockStatus = product.stock;
+      const custUpdates = await this.custOrdLineRepo.update(custLine.id, {
+        edcStockStatus: product.stock,
+      });
+      this.logger.log(
+        `update cust Order line id ${custLine.id} with stock rows ${custUpdates.affected} `,
+      );
+    }
 
     return {
       status: MessageStatusEnum.SUCCESS,
