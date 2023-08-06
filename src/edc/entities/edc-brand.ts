@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 
 import { EDC_PRODUCT } from './edc-product';
+import { Exclude } from 'class-transformer';
 
 @Entity('edc_brand')
 export class EDC_BRAND extends BaseEntity {
@@ -33,13 +34,24 @@ export class EDC_BRAND extends BaseEntity {
   @Column({ type: 'integer', nullable: true, default: 6 })
   catLevel: number;
 
+  @Column({ name: 'aws_key', type: 'varchar', length: 30, nullable: true })
+  awsKey: string;
+
+  @Column({ name: 'on_home_page', type: 'boolean', default: false })
+  onHomePage: boolean;
+
   @OneToMany(() => EDC_PRODUCT, (product) => product.brand)
   products: EDC_PRODUCT[];
 
   @CreateDateColumn()
+  @Exclude()
   createdDate: Date;
+
+  @Exclude()
   @UpdateDateColumn()
   updatedDate: Date;
+
+  @Exclude()
   @VersionColumn()
   version: number;
 }

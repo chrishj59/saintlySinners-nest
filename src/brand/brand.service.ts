@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -48,7 +49,7 @@ export class BrandService {
     let data: EDC_BRAND[] | null;
     if (dto.id) {
       const brand = await this.brandRepo.findOne({
-        where: { id: Number(dto.id) },
+        where: { id: Number(dto.id), onHomePage: dto.onHomePage },
       });
       if (brand) {
         const brandDto = new BrandDto();
@@ -57,7 +58,8 @@ export class BrandService {
         brandDto.title = brand.title;
         brandDto.catDescription = brand.description;
         brandDto.catLevel = brand.catLevel;
-
+        brandDto.awsKey = brand.awsKey;
+        brandDto.onHomePage = brand.onHomePage;
         return brandDto;
       }
     }
@@ -69,6 +71,7 @@ export class BrandService {
               dto.category.toUpperCase() as keyof BrandCategoryEnum
             ],
           catLevel: LessThanOrEqual(dto.catLevel),
+          onHomePage: dto.onHomePage,
         },
 
         order: {
@@ -77,7 +80,10 @@ export class BrandService {
       });
     } else {
       data = await this.brandRepo.find({
-        where: { catLevel: LessThanOrEqual(dto.catLevel) },
+        where: {
+          catLevel: LessThanOrEqual(dto.catLevel),
+          onHomePage: dto.onHomePage,
+        },
         order: { title: 'ASC' },
       });
     }
@@ -89,12 +95,39 @@ export class BrandService {
       brandDto.title = b.title;
       brandDto.catDescription = b.description;
       brandDto.catLevel = b.catLevel;
+      brandDto.awsKey = b.awsKey;
+      brandDto.onHomePage = b.onHomePage;
 
       return brandDto;
     });
     return ret;
   }
 
+  public async addBrand(dto: BrandDto): Promise<EDC_BRAND> {
+    let brand: EDC_BRAND = new EDC_BRAND();
+    brand.awsKey = dto.awsKey;
+    brand.catLevel = dto.catLevel;
+    if (dto.categoryType) {
+      brand.categoryType =
+        BrandCategoryEnum[
+          dto.categoryType.toUpperCase() as keyof BrandCategoryEnum
+        ];
+    }
+    brand.description = dto.catDescription;
+    brand.id = dto.id;
+    brand.title = dto.title;
+    brand.onHomePage = dto.onHomePage;
+    brand.awsKey = dto.awsKey;
+    try {
+      brand = await this.brandRepo.save(brand, { reload: true });
+      return brand;
+    } catch (err) {
+      throw new InternalServerErrorException('Add Brand error', {
+        cause: err,
+        description: `Could not save brand with id ${dto.id}`,
+      });
+    }
+  }
   public async updateBrand(
     dto: BrandDto,
   ): Promise<BrandDto | ResponseMessageDto> {

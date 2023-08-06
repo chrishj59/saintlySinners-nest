@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 import { EDC_PRODUCT } from 'src/edc/entities/edc-product';
 
@@ -6,6 +15,7 @@ import { BrandService } from './brand.service';
 import { BrandCatDto } from './dtos/brand-cat.dto';
 import { BrandIdDto } from './dtos/brand-id.dto';
 import { BrandDto } from './dtos/brand.dto';
+import { EDC_BRAND } from 'src/edc/entities/edc-brand';
 
 @Controller()
 export class BrandController {
@@ -20,6 +30,12 @@ export class BrandController {
     }
 
     return await this.brandService.getBrand(dto);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('/brand')
+  public async addBrand(@Body() dto: BrandDto): Promise<EDC_BRAND> {
+    return await this.brandService.addBrand(dto);
   }
 
   @Put('/brand')

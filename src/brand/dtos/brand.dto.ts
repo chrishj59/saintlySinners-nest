@@ -1,4 +1,9 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from '@nestjs/class-validator';
 
 export class BrandDto {
   @IsNumber()
@@ -22,4 +27,12 @@ export class BrandDto {
   @IsOptional()
   @IsNumber()
   catLevel: number;
+
+  @IsOptional()
+  @IsString()
+  awsKey: string;
+
+  @IsOptional()
+  @IsBoolean()
+  onHomePage: boolean;
 }
