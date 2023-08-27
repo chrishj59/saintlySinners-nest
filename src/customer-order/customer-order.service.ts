@@ -86,8 +86,6 @@ export class CustomerOrderService {
   async saveOrder(
     dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
-    this.logger.warn(`save order called with ${JSON.stringify(dto, null, 2)}`);
-
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
@@ -192,22 +190,10 @@ export class CustomerOrderService {
     let custOrderUpdated = await this.custOrderRepo.save(custOrder, {
       reload: true,
     });
-    this.logger.warn(
-      `custOrderUpdated house number: ${custOrderUpdated.houseNumber}`,
-    );
-    // const updatedLine = await this.custOrderLineRepo.save(inv_lines[0], {
-    //   reload: true,
-    // });
+
     if (custOrderUpdated) {
-      // inv_lines.map(async (l: CUSTOMER_ORDER_LINE) => {
-      //   //l.order = custOrderUpdated;
-      //   const updatedLine = await this.custOrderLineRepo.save(l, {
-      //     reload: true,
-      //   });
-      //   this.logger.log(`line item ${JSON.stringify(updatedLine, null, 2)}`);
-      // });
       await this.createPDF(custOrderUpdated);
-      this.logger.log('return after create PDF');
+
       return {
         status: MessageStatusEnum.SUCCESS,
         orderMessage: {
@@ -244,16 +230,14 @@ export class CustomerOrderService {
 
   shippingDate(lines: CUSTOMER_ORDER_LINE[]): string {
     let shipDate: Date = new Date();
-    this.logger.log(`init shipDate ${shipDate}`);
+
     for (const line of lines) {
-      this.logger.log(`line.edcStockStatus ${line.edcStockStatus}`);
       switch (line.edcStockStatus) {
         case 'Y':
           let checkDate = add(shipDate, { days: 1 });
-          this.logger.log(`init checkDate ${checkDate}`);
+
           if (isAfter(shipDate, checkDate)) {
             add(checkDate, { days: 1 });
-            this.logger.log(`checkDate is before shipDate set to ${checkDate}`);
           }
           const dayOfWeek = getDay(checkDate);
           if (dayOfWeek === 0) {
@@ -277,7 +261,7 @@ export class CustomerOrderService {
             shipDate = checkDate;
           }
       }
-      this.logger.log(`final shipDate ${format(shipDate, 'do MMMM yyyy')}`);
+
       return format(shipDate, 'do MMMM yyyy');
     }
   }
@@ -319,11 +303,6 @@ export class CustomerOrderService {
     id: string,
     custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
-    this.logger.log(
-      `updateCustomerOrder called with id ${id}, custOrder ${JSON.stringify(
-        custOrder,
-      )}`,
-    );
     const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
 
     const resultstatus =
@@ -334,7 +313,6 @@ export class CustomerOrderService {
       where: { id: id },
       relations: ['invoicePdf', 'orderLines'],
     });
-    console.log(`orderUpdated ${JSON.stringify(orderUpdated)}`);
     const invPdf = await this.getCustomerInvoice(id);
     const email = process.env.ADMIN_EMAIL;
     //const text: 'paid'

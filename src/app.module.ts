@@ -21,6 +21,7 @@ import { StripeModule } from './stripe/stripe.module';
 import { UserModule } from './user/user.module';
 import { VendorModule } from './vendor/vendor.module';
 import { NotificationModule } from './notification/notification.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { NotificationModule } from './notification/notification.module';
     MessagesModule,
     CustomerOrderModule,
     NotificationModule,
+    CategoryModule,
 
     //ProductModule,
   ],

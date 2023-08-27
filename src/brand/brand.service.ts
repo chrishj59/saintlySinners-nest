@@ -43,9 +43,6 @@ export class BrandService {
   //   return ret;
   // }
   public async getBrand(dto: BrandCatDto): Promise<BrandDto[] | BrandDto> {
-    console.log('getBrand');
-    console.log(dto);
-
     let data: EDC_BRAND[] | null;
     if (dto.id) {
       const brand = await this.brandRepo.findOne({
@@ -174,7 +171,6 @@ export class BrandService {
     dto: BrandIdDto,
   ): Promise<EDC_PRODUCT[] | ResponseMessageDto> {
     const brandId = Number(dto.id);
-    console.log(brandId);
 
     const query = this.producRepo.createQueryBuilder('edc_product');
     let products: EDC_PRODUCT[];
@@ -187,28 +183,16 @@ export class BrandService {
         .andWhere('edc_product.brandId = :brandid', { brandid: brandId })
         .getMany();
     } catch (e) {
-      console.log('get products error');
-      console.log(e);
+      throw new BadRequestException(`Get products error ${e}`);
     }
     products = products.map((p) => {
-      const nlvat = 1 + p.vatRateNl / 100;
-      p.b2c = parseFloat((p.b2c * nlvat).toFixed(2));
+      p.b2c = parseFloat(p.b2c.toFixed(2));
       if (!p.defaultCategory) {
         p.defaultCategory = p.newCategories[0];
       }
       return p;
     });
 
-    // const products = await this.producRepo
-    //   .createQueryBuilder('edc_product')
-    //   //.leftJoinAndSelect('edc_product', 'images')
-    //   //.innerJoinAndSelect('edc_brand', 'b', 'b.id = :brandId', { brandId: 94 })
-    //   .where('edc_product.brandId = :brandid', { brandid: 94 })
-
-    //   .getMany();
-
-    console.log('brand');
-    console.log(products);
     if (products) {
       return products;
     } else {

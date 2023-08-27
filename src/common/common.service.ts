@@ -27,8 +27,6 @@ export class CommonService {
   ) {}
 
   public async addCountry(dto: CountryDto): Promise<Country> {
-    console.log('common service addCountry');
-    console.log(dto);
     const country = new Country();
     country.id = dto.id;
     country.capital = dto.capital;

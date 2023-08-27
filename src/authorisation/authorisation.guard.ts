@@ -7,7 +7,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
-import { auth, InvalidTokenError, UnauthorizedError } from 'express-oauth2-jwt-bearer';
+import {
+  auth,
+  InvalidTokenError,
+  UnauthorizedError,
+} from 'express-oauth2-jwt-bearer';
 import { promisify } from 'util';
 
 @Injectable()
@@ -19,17 +23,15 @@ export class AuthorizationGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
-    ///console.log(request);
+
     const validateAccessToken = promisify(auth());
 
     try {
-      console.log('AuthorizationGuard canActivate request');
-      //console.log(request);
       await validateAccessToken(request, response);
-      console.log('after validateAccessToken');
+
       return true;
     } catch (error) {
-      console.log(`Auth error: ${error}`);
+      console.warn(`Auth error: ${error}`);
       if (error instanceof InvalidTokenError) {
         throw new UnauthorizedException('Bad credentials');
       }

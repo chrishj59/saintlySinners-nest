@@ -11,9 +11,9 @@ import {
 } from 'typeorm';
 
 import { EDC_PRODUCT } from './edc-product';
-
+import { Exclude } from 'class-transformer';
 @Entity('edc-category')
-export class EDC_NEW_CATEGORY extends BaseEntity {
+export class EDC_CATEGORY extends BaseEntity {
   @PrimaryColumn({ name: 'id' })
   id: number;
 
@@ -26,10 +26,13 @@ export class EDC_NEW_CATEGORY extends BaseEntity {
   @ManyToMany(() => EDC_PRODUCT)
   products: EDC_PRODUCT[];
 
+  @Exclude()
   @CreateDateColumn()
   createdDate: Date;
+  @Exclude()
   @UpdateDateColumn()
   updatedDate: Date;
+  @Exclude()
   @VersionColumn()
   version: number;
 }

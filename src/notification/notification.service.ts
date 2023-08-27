@@ -19,7 +19,6 @@ export class NotificationService {
   });
 
   async notifyEmail({ email, text }: NotifyEmailDto) {
-    this.logger.log(`called notifyEmail with ${email} ${text}`);
     await this.transporter.sendMail({
       from: this.configService.get('SMTP_USER'),
       to: email,
@@ -34,8 +33,6 @@ export class NotificationService {
     html: string,
     pdfData: Buffer,
   ) {
-    this.logger.log(`called customerInvoiceEmail with ${email}`);
-
     await this.transporter.sendMail({
       from: this.configService.get('SMTP_USER'),
       to: email,

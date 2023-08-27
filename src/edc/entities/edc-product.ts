@@ -1,6 +1,7 @@
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 import { EDC_PRODUCT_FILE } from 'src/remote-files/entity/productFile.entity';
 import {
+  AfterLoad,
   BaseEntity,
   Column,
   CreateDateColumn,
@@ -15,11 +16,12 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
   VersionColumn,
+  VirtualColumn,
 } from 'typeorm';
 
 import { EDC_BATTERY } from './edc-battery';
 import { EDC_BRAND } from './edc-brand';
-import { EDC_NEW_CATEGORY } from './edc-new-category.entity';
+import { EDC_CATEGORY } from './edc-category.entity';
 import { EDC_PRICE } from './edc-price';
 import { EDC_PRODUCT_BULLET } from './edc-product-bullet-point.entity';
 import { EDC_PRODUCT_RESTRICTION } from './edc-product-restrictions.entity';
@@ -58,16 +60,16 @@ export class EDC_PRODUCT extends BaseEntity {
   @ManyToOne(() => EDC_BATTERY, (battery) => battery)
   batteryInfo: EDC_BATTERY;
 
-  @ManyToOne(() => EDC_NEW_CATEGORY, (cat) => cat.defaultProducts)
-  defaultCategory: EDC_NEW_CATEGORY;
+  @ManyToOne(() => EDC_CATEGORY, (cat) => cat.defaultProducts)
+  defaultCategory: EDC_CATEGORY;
 
-  @ManyToMany(() => EDC_NEW_CATEGORY)
+  @ManyToMany(() => EDC_CATEGORY)
   @JoinTable({
-    name: 'product_new-category',
+    name: 'edc_product_category',
     joinColumn: { name: 'product_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'new_category_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'category_id', referencedColumnName: 'id' },
   })
-  newCategories: EDC_NEW_CATEGORY[];
+  newCategories: EDC_CATEGORY[];
 
   @ManyToMany(() => EDC_PROPERTY)
   @JoinTable({
@@ -200,4 +202,9 @@ export class EDC_PRODUCT extends BaseEntity {
   updatedDate: Date;
   @VersionColumn()
   version: number;
+
+  @AfterLoad()
+  updateB2C() {
+    this.b2c = this.b2c * (1 + this.vatRateNl / 100);
+  }
 }

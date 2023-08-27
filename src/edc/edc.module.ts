@@ -10,7 +10,7 @@ import { EDC_BATTERY } from './entities/edc-battery';
 import { EDC_BRAND } from './entities/edc-brand';
 import { EDC_MATERIAL } from './entities/edc-material';
 import { EDC_MEASURE } from './entities/edc-measure';
-import { EDC_NEW_CATEGORY } from './entities/edc-new-category.entity';
+import { EDC_CATEGORY } from './entities/edc-category.entity';
 import { EDC_PRICE } from './entities/edc-price';
 import { EDC_PRODUCT } from './entities/edc-product';
 import { EDC_PRODUCT_BULLET } from './entities/edc-product-bullet-point.entity';
@@ -37,7 +37,7 @@ import { EdcController } from './edc.controller';
       EDC_PRODUCT_FILE,
       EDC_PRODUCT_BULLET,
       EDC_PRODUCT_RESTRICTION,
-      EDC_NEW_CATEGORY,
+      EDC_CATEGORY,
       CUSTOMER_ORDER,
       CUSTOMER_ORDER_LINE,
     ]),

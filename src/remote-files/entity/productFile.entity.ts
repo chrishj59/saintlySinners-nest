@@ -6,10 +6,10 @@ export class EDC_PRODUCT_FILE {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @Column({ name: 'aws-key' })
+  @Column({ name: 'aws-key', type: 'varchar', length: '100' })
   public key: string;
 
-  @Column({ name: 'location' })
+  @Column({ name: 'location', nullable: true })
   public location: string;
 
   @ManyToOne(() => EDC_PRODUCT, (product: EDC_PRODUCT) => product.images)

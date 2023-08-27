@@ -12,7 +12,6 @@ export class MessagesController {
   private logger = new Logger('messages controller');
   @Get('public')
   async getPublic(): Promise<Message> {
-    this.logger.log('get private called');
     return this.messagesService.getPublicMessage();
   }
 
@@ -20,11 +19,6 @@ export class MessagesController {
   @UseGuards(AuthorizationGuard)
   @Get('protected')
   async getProtected(@Req() req): Promise<Message> {
-    this.logger.log('get protected called with permissions');
-    console.log(req.auth.payload);
-    //console.log(req.auth.header);
-    //console.log(req.auth.token);
-
     return this.messagesService.getProtectedMessage();
   }
 

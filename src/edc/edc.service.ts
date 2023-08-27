@@ -21,7 +21,7 @@ import { EdcProductNewDto } from './dtos/add-product.dto';
 import { EdcOrderDto } from './dtos/edc-order.dto';
 import { EDC_BATTERY } from './entities/edc-battery';
 import { EDC_BRAND } from './entities/edc-brand';
-import { EDC_NEW_CATEGORY } from './entities/edc-new-category.entity';
+import { EDC_CATEGORY } from './entities/edc-category.entity';
 import { EDC_PRODUCT } from './entities/edc-product';
 import { EDC_PRODUCT_BULLET } from './entities/edc-product-bullet-point.entity';
 import { EDC_PRODUCT_RESTRICTION } from './entities/edc-product-restrictions.entity';
@@ -54,8 +54,8 @@ export class EdcService {
     private bulletpointRepository: Repository<EDC_PRODUCT_BULLET>,
     @InjectRepository(EDC_PRODUCT_RESTRICTION)
     private restrictionRepository: Repository<EDC_PRODUCT_RESTRICTION>,
-    @InjectRepository(EDC_NEW_CATEGORY)
-    private newCatRepository: Repository<EDC_NEW_CATEGORY>,
+    @InjectRepository(EDC_CATEGORY)
+    private catRepository: Repository<EDC_CATEGORY>,
     @InjectRepository(EDC_PRODUCT_FILE)
     private productFileRepository: Repository<EDC_PRODUCT_FILE>,
     @InjectRepository(EDC_BATTERY)
@@ -150,7 +150,6 @@ export class EdcService {
     const title = dto.title[0];
     const description = dto.description[0];
     const casecount = Number(dto.casecount[0]);
-    this.logger.log('Start of saveProduct with dto');
 
     const [day, month, year] = dto.date[0].split('-');
 
@@ -368,16 +367,17 @@ export class EdcService {
      * new Categories
      *
      */
-    let newCats: EDC_NEW_CATEGORY[] = [];
+    let newCats: EDC_CATEGORY[] = [];
+
     if (dto.new_categories) {
       for (const c of dto.new_categories[0]['category'][0]['cats']) {
         const catId = Number(c.id);
-        let cat = await this.newCatRepository.findOne({ where: { id: catId } });
+        let cat = await this.catRepository.findOne({ where: { id: catId } });
         if (!cat) {
-          cat = new EDC_NEW_CATEGORY();
+          cat = new EDC_CATEGORY();
           cat.id = catId;
-          cat.title = c.title;
-          cat = await this.newCatRepository.save(cat, { reload: true });
+          cat.title = c.title[0];
+          cat = await this.catRepository.save(cat, { reload: true });
         }
         newCats.push(cat);
       }
@@ -420,17 +420,15 @@ export class EdcService {
     prod.batteryRequired = batteryRequired;
     prod.newCategories = newCats;
     prod.batteryInfo = batteryInfo;
-    console.log('before save product');
     const updatedProd = await this.productRepository.save(prod, {
       reload: true,
     });
-    console.log('after save product');
 
     /*******
      * files
      *
      */
-    console.log('start of files');
+
     let picsArray: string[] = [];
 
     if (dto.pics) {
@@ -472,23 +470,6 @@ export class EdcService {
   }
 
   async saveOrder(dto: EdcOrderDto): Promise<ResponseMessageDto> {
-    this.logger.log(`Save order called`);
-    // const country: Country = await this.commonService.getEdcCountry(
-    //   dto.country,
-    // );
-
-    // const orderDto: CustomerOrderDto = {
-    //   orderDate: new Date(),
-    //   name: dto.name,
-    //   houseNUmber: dto.house_nr,
-    //   street: dto.street,
-    //   town: dto.city,
-    //   county: dto.county,
-    //   countryEdc: dto.country,
-    //   countryId: country.id,
-    // };
-    // const customerOrder = await this.customerOrderService.saveOrder(orderDto);
-
     const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
     const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
     const order: EdcOrderInterface = {
@@ -533,9 +514,6 @@ export class EdcService {
         }),
       ),
     );
-    this.logger.log(
-      `result from send order to EDC: ${JSON.stringify(data, null, 2)}`,
-    );
 
     return {
       status: MessageStatusEnum.SUCCESS,
@@ -579,7 +557,7 @@ export class EdcService {
         products: { artnr: prodIds },
       },
     };
-    this.logger.warn(`order for edc ${JSON.stringify(order, null, 2)}`);
+
     /** send the order to EDC */
     const xml2js = require('xml2js');
     const builder = new xml2js.Builder({
@@ -600,29 +578,17 @@ export class EdcService {
       ),
     );
     const edcResponse: EdcSaveOrderReponse = data;
-    console.log(
-      `EDC order response edcResponse ${JSON.stringify(edcResponse, null, 2)}`,
-    );
+
     const prodVat: number = edcResponse.products.reduce((accum, current) => {
       return accum + parseFloat(current.vat);
     }, 0);
 
-    this.logger.warn(`prodVat ${prodVat}`);
-    this.logger.warn(
-      `vathigh ${parseFloat(
-        parseFloat(edcResponse.vathigh).toFixed(2),
-      )} vatLow ${edcResponse.vatlow}`,
-    );
     const vatTotal: number = parseFloat(
       prodVat +
         parseFloat(edcResponse.vathigh).toFixed(2) +
         parseFloat(edcResponse.vatlow).toFixed(2),
     );
-    this.logger.warn(
-      `vatTotal ${vatTotal} prod vat ${prodVat} vatHigh Num ${parseFloat(
-        edcResponse.vathigh,
-      ).toFixed(2)}`,
-    );
+
     const updateParam = {
       vendOrderNumber: edcResponse.ordernumber,
       vendGoodCost: parseFloat(edcResponse.subtotal_excl_vat),
@@ -631,28 +597,16 @@ export class EdcService {
       vendVat: vatTotal,
     };
 
-    this.logger.log(`cust order update params ${updateParam}`);
     const updates = await this.custOrderRepo.update(id, updateParam);
-    this.logger.log(`Customer Order updates ${(await updates).affected}`);
-    console.log(
-      ` customer order lines 629: ${JSON.stringify(custOrder, null, 2)}`,
-    );
     const products = edcResponse.products;
     const custLines = custOrder.orderLines;
-    this.logger.log(
-      `products from edcResponse ${JSON.stringify(products, null, 2)}`,
-    );
+
     for (const product of products) {
-      console.log(`product loop current ${JSON.stringify(product, null, 2)}`);
-      console.log(`custLines ${JSON.stringify(custLines, null, 2)}`);
       const custLine = custLines.find((c) => c.prodRef === product.artnr);
       custLine.edcStockStatus = product.stock;
       const custUpdates = await this.custOrdLineRepo.update(custLine.id, {
         edcStockStatus: product.stock,
       });
-      this.logger.log(
-        `update cust Order line id ${custLine.id} with stock rows ${custUpdates.affected} `,
-      );
     }
 
     return {

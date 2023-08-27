@@ -41,7 +41,7 @@ export class RemoteFilesService {
 
     try {
       const response = await client.send(command);
-      console.log(response);
+
       const newFile = this.publicFilesRepository.create({
         key: key,
         //url: uploadResult.Location,
@@ -83,7 +83,7 @@ export class RemoteFilesService {
 
     try {
       const response = await client.send(command);
-      console.log(JSON.stringify(response));
+
       await this.publicFilesRepository.delete(fileId);
     } catch (err) {
       console.error(err);
@@ -110,7 +110,6 @@ export class RemoteFilesService {
     });
     try {
       const response = await client.send(command);
-      console.log(response);
     } catch (err) {
       console.error(err);
       await queryRunner.manager.delete(PublicFile, fileId);
@@ -175,7 +174,6 @@ export class RemoteFilesService {
   }
 
   async getLogo() {
-    this.logger.log('called getLogo');
     const client = new S3Client({});
     const key = `b0e2d522-39d7-458c-802f-df499c04b946-invoice-{order.id}.pdf`;
     const getCommand = new GetObjectCommand({
@@ -185,15 +183,13 @@ export class RemoteFilesService {
 
     try {
       const data = await client.send(getCommand);
-      this.logger.log(`in try block ${data.$metadata.httpStatusCode}`);
       // process data.
     } catch (error) {
       // error handling.
       const { requestId, cfId, extendedRequestId } = error.$$metadata;
-      this.logger.log({ requestId, cfId, extendedRequestId });
-      this.logger.log(`error name: ${error.name}`);
+      this.logger.warn({ requestId, cfId, extendedRequestId });
+      this.logger.warn(`error name: ${error.name}`);
     } finally {
-      this.logger.log('finally block');
     }
 
     this.logger.error(`after try-catch block`);
@@ -203,10 +199,6 @@ export class RemoteFilesService {
     orderId: string,
     filename: string,
   ) {
-    this.logger.log('called remotefile uploadCustomerPdfFile ');
-    this.logger.log(`orderID ${orderId}  fileNmae: ${filename}`);
-
-    this.logger.log(`buffer length : ${dataBuffer.byteLength}`);
     const client = new S3Client({});
     const key = `${filename}`;
     const putCommand = new PutObjectCommand({
