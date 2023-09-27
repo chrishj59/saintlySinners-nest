@@ -33,6 +33,10 @@ export class BrandDto {
   awsKey: string;
 
   @IsOptional()
+  @IsString()
+  awsImageFormat: string;
+
+  @IsOptional()
   @IsBoolean()
   onHomePage: boolean;
 }

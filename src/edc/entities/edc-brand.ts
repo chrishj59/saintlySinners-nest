@@ -37,6 +37,9 @@ export class EDC_BRAND extends BaseEntity {
   @Column({ name: 'aws_key', type: 'varchar', length: 30, nullable: true })
   awsKey: string;
 
+  @Column({ name: 'aws_format', type: 'varchar', length: 20, nullable: true })
+  awsImageFormat: string;
+
   @Column({ name: 'on_home_page', type: 'boolean', default: false })
   onHomePage: boolean;
 

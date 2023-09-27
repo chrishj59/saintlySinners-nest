@@ -56,6 +56,7 @@ export class BrandService {
         brandDto.catDescription = brand.description;
         brandDto.catLevel = brand.catLevel;
         brandDto.awsKey = brand.awsKey;
+        brandDto.awsImageFormat = brand.awsImageFormat;
         brandDto.onHomePage = brand.onHomePage;
         return brandDto;
       }
@@ -93,6 +94,7 @@ export class BrandService {
       brandDto.catDescription = b.description;
       brandDto.catLevel = b.catLevel;
       brandDto.awsKey = b.awsKey;
+      brandDto.awsImageFormat = b.awsImageFormat;
       brandDto.onHomePage = b.onHomePage;
 
       return brandDto;
@@ -115,6 +117,7 @@ export class BrandService {
     brand.title = dto.title;
     brand.onHomePage = dto.onHomePage;
     brand.awsKey = dto.awsKey;
+    brand.awsImageFormat = dto.awsImageFormat;
     try {
       brand = await this.brandRepo.save(brand, { reload: true });
       return brand;
@@ -144,11 +147,15 @@ export class BrandService {
         ];
     }
     brand.description = dto.catDescription;
+    brand.awsKey = dto.awsKey;
+    brand.onHomePage = dto.onHomePage;
+    brand.awsImageFormat = dto.awsImageFormat;
     brand = await this.brandRepo.save(brand, { reload: true });
     dto.id = brand.id;
     dto.catDescription = brand.description;
     dto.catLevel = brand.catLevel;
     dto.categoryType = brand.categoryType;
+
     const dtoRet = dto;
     return dtoRet;
   }
