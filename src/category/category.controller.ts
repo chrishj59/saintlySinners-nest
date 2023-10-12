@@ -1,8 +1,10 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
   Logger,
+  Put,
   Query,
   SerializeOptions,
   UseInterceptors,
@@ -22,7 +24,6 @@ export class CategoryController {
   constructor(private catService: CategoryService) {}
 
   logger = new Logger('Category controller');
-  //@UseInterceptors(ClassSerializerInterceptor)
 
   @Get('/category')
   public async allCategories(
@@ -30,6 +31,12 @@ export class CategoryController {
   ): Promise<EDC_CATEGORY[] | EDC_CATEGORY> {
     return this.catService.category(dto);
   }
+
+  @Put('/category/:id')
+  public async updateCategory(@Body() dto: CategoryDto) {
+    return this.catService.updateCategories(dto);
+  }
+
   @Get('/productByCategoryId')
   public async productByCategoryid(
     @Query() dto: CategoryIdDto,

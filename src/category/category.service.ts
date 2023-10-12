@@ -21,11 +21,36 @@ export class CategoryService {
   public async category(
     dto: CategoryDto,
   ): Promise<EDC_CATEGORY[] | EDC_CATEGORY> {
+    this.logger.log(`dto is ${JSON.stringify(dto, null, 2)}`);
     if (dto.id) {
-      // called for single brand
-      return await this.catRepo.findOne({ where: { id: dto.id } });
+      // called for single category
+      return await this.catRepo.findOne({
+        where: { id: dto.id },
+        relations: ['childCategories', 'childCategories.childCategories'],
+      });
+      //return cat; //await this.catRepo.findOne({ where: { id: dto.id } });
+    } else if (dto.menulevel) {
+      // called for top level menuItem
+      this.logger.log(`called menulevel option`);
+
+      return await this.catRepo.find({
+        where: { menulevel: dto.menulevel, onMenu: true },
+        relations: [
+          'childCategories',
+          'childCategories.childCategories',
+          'parentCategory',
+        ],
+      });
+    } else {
+      this.logger.log(`called all cats`);
+      return await this.catRepo.find({
+        relations: [
+          'childCategories',
+          'childCategories.childCategories',
+          'parentCategory',
+        ],
+      });
     }
-    return await this.catRepo.find();
   }
 
   public async getCategoryProducts(
@@ -65,6 +90,48 @@ export class CategoryService {
         status: MessageStatusEnum.WARNING,
         message: `Reached CategoryProducts for category id ${categoryid} but no products found`,
       };
+    }
+  }
+
+  public async updateCategories(
+    dto: CategoryDto,
+  ): Promise<EDC_CATEGORY | ResponseMessageDto> {
+    this.logger.log(`updateCategories dto ${JSON.stringify(dto, null, 2)}`);
+    try {
+      const categoryDB = await this.catRepo.findOne({ where: { id: dto.id } });
+      categoryDB.title = dto.title;
+      categoryDB.menulevel = dto.menulevel;
+      categoryDB.onMenu = dto.onMenu;
+      this.logger.log(`Started categoryDB`);
+      // get children from DTO.
+      let childCats: EDC_CATEGORY[] = [];
+      for (const item of dto.childCategories) {
+        const dbItem = await this.catRepo.findOne({ where: { id: item.id } });
+        dbItem.menulevel = item.menulevel;
+        dbItem.onMenu = item.onMenu;
+        childCats.push(dbItem);
+      }
+
+      categoryDB.childCategories = childCats;
+      this.logger.log(`after assign child cats`);
+      this.logger.log(`dto.parentCategory ${dto.parentCategory}`);
+      //Get parent from DTO
+      if (dto.parentCategory && dto.parentCategory.id) {
+        const p = await this.catRepo.findOne({
+          where: { id: dto.parentCategory.id },
+        });
+        categoryDB.parentCategory = p;
+      }
+      this.logger.log(
+        `categoryDB before save ${JSON.stringify(categoryDB, null, 2)}`,
+      );
+      const updated = await this.catRepo.save(categoryDB, { reload: true });
+      this.logger.log(
+        `categoryDB before after save ${JSON.stringify(categoryDB, null, 2)}`,
+      );
+      return updated;
+    } catch (err) {
+      throw new BadRequestException(`Could not update category: ${err}`);
     }
   }
 }

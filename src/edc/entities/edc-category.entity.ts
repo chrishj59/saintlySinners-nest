@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   Entity,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryColumn,
   UpdateDateColumn,
@@ -11,7 +12,7 @@ import {
 } from 'typeorm';
 
 import { EDC_PRODUCT } from './edc-product';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 @Entity('edc-category')
 export class EDC_CATEGORY extends BaseEntity {
   @PrimaryColumn({ name: 'id' })
@@ -25,6 +26,19 @@ export class EDC_CATEGORY extends BaseEntity {
 
   @ManyToMany(() => EDC_PRODUCT)
   products: EDC_PRODUCT[];
+
+  @ManyToOne(() => EDC_CATEGORY, (child) => child.parentCategory)
+  parentCategory: EDC_CATEGORY;
+
+  @Expose()
+  @OneToMany(() => EDC_CATEGORY, (child: EDC_CATEGORY) => child.parentCategory)
+  childCategories: EDC_CATEGORY[];
+
+  @Column({ name: 'on_menu', type: 'boolean', default: false })
+  onMenu: Boolean;
+
+  @Column({ name: 'menu_item_level', type: 'int2', nullable: true })
+  menulevel: number;
 
   @Exclude()
   @CreateDateColumn()
