@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { ILike } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios, { AxiosError } from 'axios';
@@ -33,6 +34,7 @@ import { EdcOrderInterface } from './interfaces/edc-order.interface';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 import { EdcSaveOrderReponse } from './interfaces/edc-send-order-response';
 import { Product } from 'src/customer-order/dtos/customerOrder.dto';
+import { EdcProductDto } from './dtos/product.dto';
 
 interface ProductImage {
   image: Blob;
@@ -613,5 +615,42 @@ export class EdcService {
       status: MessageStatusEnum.SUCCESS,
       message: `send order to EDC called with ${edcResponse.result}`,
     };
+  }
+
+  async productFiltered(search: EdcProductDto) {
+    this.logger.log(
+      `productFiltered called with search ${JSON.stringify(search, null, 2)}`,
+    );
+
+    const title = search.id;
+    try {
+      const products = await this.productRepository.find({
+        where: [
+          {
+            title: ILike(`%${title}%`),
+          },
+          {
+            description: ILike(`%${title}%`),
+          },
+        ],
+
+        relations: [
+          'images',
+          'variants',
+          'defaultCategory',
+          'newCategories',
+          'restrictions',
+          'brand',
+          'bullets',
+          'price',
+          'batteryInfo',
+        ],
+      });
+
+      return products;
+    } catch (err) {
+      this.logger.warn('Error getting products');
+      throw new BadRequestException('Error getting products');
+    }
   }
 }

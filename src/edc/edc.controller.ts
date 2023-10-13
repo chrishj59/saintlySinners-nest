@@ -5,6 +5,7 @@ import {
   Logger,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthorizationGuard } from 'src/authorisation/authorisation.guard';
@@ -21,6 +22,7 @@ import { EdcOrderDto } from './dtos/edc-order.dto';
 import { EdcService } from './edc.service';
 import { EDC_PRODUCT } from './entities/edc-product';
 import { EdcPermissions } from './enums/Edc.permissions';
+import { EdcProductDto } from './dtos/product.dto';
 
 @Controller()
 export class EdcController {
@@ -63,5 +65,10 @@ export class EdcController {
   @Get('/productId')
   async getProductId(): Promise<EDC_PRODUCT[]> {
     return this.edcService.getProductIds();
+  }
+
+  @Get('/productFiltered')
+  async getProductFiltered(@Query() id: EdcProductDto) {
+    return this.edcService.productFiltered(id);
   }
 }
