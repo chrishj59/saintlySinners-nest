@@ -322,7 +322,6 @@ export class CustomerOrderService {
       text: `Payment received for order: ${orderUpdated.orderNumber} EDC payment due ${orderUpdated.vendTotalPayable}`,
     });
 
-    //TODO: Call notofication service to send invoice to customer
     const custEmail: string = orderUpdated.email;
     const subject: string = 'Your SaintlySinners Invoice';
 
@@ -398,7 +397,13 @@ export class CustomerOrderService {
         Key: 'dainis-graveris-y2cOf7SfeMI-unsplash.jpg',
       });
       const response = await this.s3.send(getCommand);
-      const jpgBuffer: Uint8Array = await response.Body.transformToByteArray();
+      const byteArray: Uint8Array | undefined =
+        await response.Body.transformToByteArray();
+
+      //TODO: set image on invoice
+      // if(byteArray){
+      //   const buffer = Buffer.from(byteArray)
+      //   doc.image(buffer)
 
       doc
         .fillColor('#444444')
