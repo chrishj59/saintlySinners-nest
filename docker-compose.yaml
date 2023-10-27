@@ -24,17 +24,18 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
     ports:
       - 33066:5432
-  pgadmin:
-    container_name: pgadmin4
-    image: dpage/pgadmin4
-    restart: always
-    env_file:
-      - docker.env
-    # environment:
-    #   PGADMIN_DEFAULT_EMAIL: admin@admin.com
-    #   PGADMIN_DEFAULT_PASSWORD: root
-    ports:
-      - '5050:80'
+
+  # pgadmin:
+  #   container_name: pgadmin4
+  #   image: dpage/pgadmin4
+  #   restart: always
+  #   env_file:
+  #     - docker.env
+  #   # environment:
+  #   #   PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #   #   PGADMIN_DEFAULT_PASSWORD: root
+  #   ports:
+  #     - '5050:80'
 
   redis:
     image: redis
