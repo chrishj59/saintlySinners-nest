@@ -1,0 +1,2 @@
+CREATE SCHEMA ss;
+-- CREATE EXTENSION postgis;
