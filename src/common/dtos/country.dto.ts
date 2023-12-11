@@ -4,6 +4,7 @@ import { IsNumber } from 'class-validator';
 export class CountryDto {
   @IsNumber()
   id: number;
+
   @IsString()
   name: string;
 
@@ -62,4 +63,8 @@ export class CountryDto {
 
   @IsString()
   emojiu: string;
+
+  @IsOptional()
+  @IsNumber()
+  edcCountryCode: number;
 }

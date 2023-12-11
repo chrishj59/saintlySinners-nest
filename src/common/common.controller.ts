@@ -18,6 +18,7 @@ import { CourierDto } from './dtos/courier.dto';
 import { DeliveryChargeDto } from './dtos/deliveryCharge.dto';
 import { Country } from './entity/country.entity';
 import { DeliveryCourier } from './entity/delivery-courier.entity';
+import { CountryUpdateDTO } from './dtos/country-update.dto';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -63,6 +64,16 @@ export class CommonController {
   @Get('/countryName')
   public async getCountryNames(): Promise<Country[]> {
     return await this.commonService.getCountryNames();
+  }
+
+  @Get('/country')
+  public async getCountryAll(): Promise<Country[]> {
+    return await this.commonService.getCountries();
+  }
+
+  @Put('/country')
+  public async saveCountry(@Body() dto: CountryUpdateDTO): Promise<number> {
+    return this.commonService.saveCountry(dto);
   }
 
   @Get('/courier')

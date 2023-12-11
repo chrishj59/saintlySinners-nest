@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
 import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 import {
@@ -31,10 +32,15 @@ export class PRODUCT_VENDOR extends BaseEntity {
   // )
   // customerOrderLines: CustomerOrderLine[];
 
+  @Exclude()
   @CreateDateColumn()
   createdDate: Date;
+
+  @Exclude()
   @UpdateDateColumn()
   updatedDate: Date;
+
+  @Exclude()
   @VersionColumn()
   version: number;
 }

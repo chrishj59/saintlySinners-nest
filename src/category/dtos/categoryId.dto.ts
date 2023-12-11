@@ -1,4 +1,4 @@
-import { IsNumber } from '@nestjs/class-validator';
+import { IsNumber, IsOptional } from '@nestjs/class-validator';
 
 export class CategoryIdDto {
   @IsNumber()

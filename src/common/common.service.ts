@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { Repository } from 'typeorm';
@@ -12,6 +12,7 @@ import { Country } from './entity/country.entity';
 import { DeliveryCharge } from './entity/delivery-charges.entity';
 import { DeliveryCourier } from './entity/delivery-courier.entity';
 import DeliveryChargeNotFoundException from './exceptions/deliveryChargeNotFound.exception';
+import { CountryUpdateDTO } from './dtos/country-update.dto';
 
 @Injectable()
 export class CommonService {
@@ -26,6 +27,7 @@ export class CommonService {
     private delChargeRepository: Repository<DeliveryCharge>,
   ) {}
 
+  logger = new Logger('Common service');
   public async addCountry(dto: CountryDto): Promise<Country> {
     const country = new Country();
     country.id = dto.id;
@@ -128,6 +130,28 @@ export class CommonService {
     return await this.countryRepository.find({
       select: ['id', 'name', 'emoji'],
     });
+  }
+
+  public async getCountries(): Promise<Country[]> {
+    const countryList = await this.countryRepository.find({
+      order: { id: 'ASC' },
+    });
+    const countries = countryList.map((cntry: Country) => {
+      if (cntry.edcCountryCode === null) {
+        cntry.edcCountryCode = 0;
+      }
+      return cntry;
+    });
+
+    return countries;
+  }
+
+  public async saveCountry(dto: CountryUpdateDTO): Promise<number> {
+    const { affected } = await this.countryRepository.update(
+      { id: dto.id },
+      { edcCountryCode: dto.edcCountryCode },
+    );
+    return affected;
   }
 
   public async getEdcCountry(edcCountryCode: number): Promise<Country> {
