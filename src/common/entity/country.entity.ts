@@ -13,6 +13,7 @@ import {
 
 import { DeliveryCharge } from './delivery-charges.entity';
 import { LangIso639 } from './iso_639_lang.entity';
+import { Expose } from 'class-transformer';
 
 @Entity({ name: 'country_geo' })
 export class Country extends BaseEntity {
@@ -84,7 +85,8 @@ export class Country extends BaseEntity {
   @Column()
   emojiu: string;
 
-  @Column({ name: 'edc_code', type: 'smallint', nullable: true })
+  @Expose()
+  @Column({ name: 'edc_code', type: 'smallint', default: 0, nullable: true })
   edcCountryCode: number;
 
   @ManyToMany(() => LangIso639, (lang) => lang)

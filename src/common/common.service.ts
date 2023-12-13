@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 
 import { ResponseMessageDto } from '../dtos/response-message-dto';
 import { PRODUCT_VENDOR } from '../vendor/entity/vendor.entity';
@@ -146,6 +146,13 @@ export class CommonService {
     return countries;
   }
 
+  public async getCountriesEdc(): Promise<Country[]> {
+    const countries = await this.countryRepository.find({
+      where: { edcCountryCode: MoreThan(0) },
+    });
+    return countries;
+  }
+
   public async saveCountry(dto: CountryUpdateDTO): Promise<number> {
     const { affected } = await this.countryRepository.update(
       { id: dto.id },
@@ -159,6 +166,7 @@ export class CommonService {
       where: { edcCountryCode },
     });
   }
+
   public async getCourier(): Promise<DeliveryCourier[]> {
     return await this.courierRepository.find();
   }
