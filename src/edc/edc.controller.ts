@@ -33,17 +33,17 @@ export class EdcController {
     return 'edc root';
   }
 
-  @Post('/order')
-  async saveOrder(@Body() dto: EdcOrderDto): Promise<ResponseMessageDto> {
-    return await this.edcService.saveOrder(dto);
-  }
+  // @Post('/order')
+  // async saveOrder(@Body() dto: EdcOrderDto): Promise<ResponseMessageDto> {
+  //   return await this.edcService.saveOrder(dto);
+  // }
 
-  @Post('/order/:id')
-  async sendEdcOrder(
-    @Param() { id }: FindOneStringParams,
-  ): Promise<ResponseMessageDto> {
-    return this.edcService.sendOrder(id);
-  }
+  // @Post('/order/:id')
+  // async sendEdcOrder(
+  //   @Param() { id }: FindOneStringParams,
+  // ): Promise<ResponseMessageDto> {
+  //   return this.edcService.sendOrder(id);
+  // }
 
   @UseGuards(PermissionsGuard([EdcPermissions.CREATE_ADMIN]))
   @UseGuards(AuthorizationGuard)

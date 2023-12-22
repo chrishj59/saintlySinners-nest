@@ -471,151 +471,151 @@ export class EdcService {
     return this.filesService.uploadProductFile(imageBuffer, userId, filename);
   }
 
-  async saveOrder(dto: EdcOrderDto): Promise<ResponseMessageDto> {
-    const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
-    const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
-    const order: EdcOrderInterface = {
-      orderdetails: {
-        customerdetails: {
-          email: edcEmail,
-          apikey: edcApiKey,
-          output: 'advanced',
-        },
-        receiver: {
-          name: dto.name,
-          street: dto.street,
-          postalcode: dto.postalcode,
-          house_nr: dto.house_nr,
-          city: dto.city,
-          country: dto.country,
-          phone: dto.phone,
-          own_ordernumber: dto.own_ordernumber,
-          consumer_amount: dto.consumer_amount,
-          consumer_amount_currency: dto.consumer_amount_currency,
-          attachment: dto.attachment,
-        },
-        products: dto.products,
-      },
-    };
+  // async saveOrder(dto: EdcOrderDto): Promise<ResponseMessageDto> {
+  //   const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
+  //   const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
+  //   const order: EdcOrderInterface = {
+  //     orderdetails: {
+  //       customerdetails: {
+  //         email: edcEmail,
+  //         apikey: edcApiKey,
+  //         output: 'advanced',
+  //       },
+  //       receiver: {
+  //         name: dto.name,
+  //         street: dto.street,
+  //         postalcode: dto.postalcode,
+  //         house_nr: dto.house_nr,
+  //         city: dto.city,
+  //         country: dto.country,
+  //         phone: dto.phone,
+  //         own_ordernumber: dto.own_ordernumber,
+  //         consumer_amount: dto.consumer_amount,
+  //         consumer_amount_currency: dto.consumer_amount_currency,
+  //         attachment: dto.attachment,
+  //       },
+  //       products: dto.products,
+  //     },
+  //   };
 
-    const xml2js = require('xml2js');
-    const builder = new xml2js.Builder({
-      explicitArray: true,
-      mergeAttrs: true,
-    });
-    const xmlOutput = builder.buildObject(order);
-    const url = require('url');
-    const params = new url.URLSearchParams({
-      data: xmlOutput,
-    });
-    const { data } = await firstValueFrom(
-      this.httpService.post(process.env.EDC_ORDER_URL, params.toString()).pipe(
-        catchError((error: AxiosError) => {
-          this.logger.error(error.response.data);
-          throw 'An error happened!';
-        }),
-      ),
-    );
+  //   const xml2js = require('xml2js');
+  //   const builder = new xml2js.Builder({
+  //     explicitArray: true,
+  //     mergeAttrs: true,
+  //   });
+  //   const xmlOutput = builder.buildObject(order);
+  //   const url = require('url');
+  //   const params = new url.URLSearchParams({
+  //     data: xmlOutput,
+  //   });
+  //   const { data } = await firstValueFrom(
+  //     this.httpService.post(process.env.EDC_ORDER_URL, params.toString()).pipe(
+  //       catchError((error: AxiosError) => {
+  //         this.logger.error(error.response.data);
+  //         throw 'An error happened!';
+  //       }),
+  //     ),
+  //   );
 
-    return {
-      status: MessageStatusEnum.SUCCESS,
-      message: `save order edc service  xml ${data}`,
-    };
-  }
+  //   return {
+  //     status: MessageStatusEnum.SUCCESS,
+  //     message: `save order edc service  xml ${data}`,
+  //   };
+  // }
 
-  async sendOrder(id: string): Promise<ResponseMessageDto> {
-    const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
-    const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
-    const custOrder = await this.custOrderRepo.findOne({
-      where: {
-        id,
-      },
-      relations: ['orderLines', 'country'],
-    });
-    const prodIds = custOrder.orderLines.map(
-      (l: CUSTOMER_ORDER_LINE) => l.prodRef,
-    );
-    const pdfUrl = process.env.SS_INV_URL + custOrder.invoicePdf.key;
-    const order: EdcOrderInterface = {
-      orderdetails: {
-        customerdetails: {
-          email: edcEmail,
-          apikey: edcApiKey,
-          output: 'advanced',
-        },
-        receiver: {
-          name: custOrder.name,
-          street: custOrder.street,
-          postalcode: custOrder.postCode,
-          house_nr: custOrder.houseNumber,
-          city: custOrder.city,
-          country: custOrder.country.edcCountryCode,
-          phone: custOrder.telphone,
-          own_ordernumber: custOrder.orderNumber.toString(),
-          consumer_amount: custOrder.total.toString(),
-          consumer_amount_currency: custOrder.currencyCode,
-          attachment: pdfUrl,
-        },
-        products: { artnr: prodIds },
-      },
-    };
+  // async sendOrder(id: string): Promise<ResponseMessageDto> {
+  //   const edcEmail = this.configService.get('EDC_ACCOUNT_EMAIL');
+  //   const edcApiKey = this.configService.get('EDC_ACCOUNT_API_KEY');
+  //   const custOrder = await this.custOrderRepo.findOne({
+  //     where: {
+  //       id,
+  //     },
+  //     relations: ['orderLines', 'country'],
+  //   });
+  //   const prodIds = custOrder.orderLines.map(
+  //     (l: CUSTOMER_ORDER_LINE) => l.prodRef,
+  //   );
+  //   const pdfUrl = process.env.SS_INV_URL + custOrder.invoicePdf.key;
+  //   const order: EdcOrderInterface = {
+  //     orderdetails: {
+  //       customerdetails: {
+  //         email: edcEmail,
+  //         apikey: edcApiKey,
+  //         output: 'advanced',
+  //       },
+  //       receiver: {
+  //         name: custOrder.name,
+  //         street: custOrder.street,
+  //         postalcode: custOrder.postCode,
+  //         house_nr: custOrder.houseNumber,
+  //         city: custOrder.city,
+  //         country: custOrder.country.edcCountryCode,
+  //         phone: custOrder.telphone,
+  //         own_ordernumber: custOrder.orderNumber.toString(),
+  //         consumer_amount: custOrder.total.toString(),
+  //         consumer_amount_currency: custOrder.currencyCode,
+  //         attachment: pdfUrl,
+  //       },
+  //       products: { artnr: prodIds },
+  //     },
+  //   };
 
-    /** send the order to EDC */
-    const xml2js = require('xml2js');
-    const builder = new xml2js.Builder({
-      explicitArray: true,
-      mergeAttrs: true,
-    });
-    const xmlOutput = builder.buildObject(order);
-    const url = require('url');
-    const params = new url.URLSearchParams({
-      data: xmlOutput,
-    });
-    const { data } = await firstValueFrom(
-      this.httpService.post(process.env.EDC_ORDER_URL, params.toString()).pipe(
-        catchError((error: AxiosError) => {
-          this.logger.error(error.response.data);
-          throw 'An error happened!';
-        }),
-      ),
-    );
-    const edcResponse: EdcSaveOrderReponse = data;
+  //   /** send the order to EDC */
+  //   const xml2js = require('xml2js');
+  //   const builder = new xml2js.Builder({
+  //     explicitArray: true,
+  //     mergeAttrs: true,
+  //   });
+  //   const xmlOutput = builder.buildObject(order);
+  //   const url = require('url');
+  //   const params = new url.URLSearchParams({
+  //     data: xmlOutput,
+  //   });
+  //   const { data } = await firstValueFrom(
+  //     this.httpService.post(process.env.EDC_ORDER_URL, params.toString()).pipe(
+  //       catchError((error: AxiosError) => {
+  //         this.logger.error(error.response.data);
+  //         throw 'An error happened!';
+  //       }),
+  //     ),
+  //   );
+  //   const edcResponse: EdcSaveOrderReponse = data;
 
-    const prodVat: number = edcResponse.products.reduce((accum, current) => {
-      return accum + parseFloat(current.vat);
-    }, 0);
+  //   const prodVat: number = edcResponse.products.reduce((accum, current) => {
+  //     return accum + parseFloat(current.vat);
+  //   }, 0);
 
-    const vatTotal: number = parseFloat(
-      prodVat +
-        parseFloat(edcResponse.vathigh).toFixed(2) +
-        parseFloat(edcResponse.vatlow).toFixed(2),
-    );
+  //   const vatTotal: number = parseFloat(
+  //     prodVat +
+  //       parseFloat(edcResponse.vathigh).toFixed(2) +
+  //       parseFloat(edcResponse.vatlow).toFixed(2),
+  //   );
 
-    const updateParam = {
-      vendOrderNumber: edcResponse.ordernumber,
-      vendGoodCost: parseFloat(edcResponse.subtotal_excl_vat),
-      vendDelCost: parseFloat(edcResponse.shippingcosts_excl_vat),
-      vendTotalPayable: parseFloat(edcResponse.total_incl_vat),
-      vendVat: vatTotal,
-    };
+  //   const updateParam = {
+  //     vendOrderNumber: edcResponse.ordernumber,
+  //     vendGoodCost: parseFloat(edcResponse.subtotal_excl_vat),
+  //     vendDelCost: parseFloat(edcResponse.shippingcosts_excl_vat),
+  //     vendTotalPayable: parseFloat(edcResponse.total_incl_vat),
+  //     vendVat: vatTotal,
+  //   };
 
-    const updates = await this.custOrderRepo.update(id, updateParam);
-    const products = edcResponse.products;
-    const custLines = custOrder.orderLines;
+  //   const updates = await this.custOrderRepo.update(id, updateParam);
+  //   const products = edcResponse.products;
+  //   const custLines = custOrder.orderLines;
 
-    for (const product of products) {
-      const custLine = custLines.find((c) => c.prodRef === product.artnr);
-      custLine.edcStockStatus = product.stock;
-      const custUpdates = await this.custOrdLineRepo.update(custLine.id, {
-        edcStockStatus: product.stock,
-      });
-    }
+  //   for (const product of products) {
+  //     const custLine = custLines.find((c) => c.prodRef === product.artnr);
+  //     custLine.edcStockStatus = product.stock;
+  //     const custUpdates = await this.custOrdLineRepo.update(custLine.id, {
+  //       edcStockStatus: product.stock,
+  //     });
+  //   }
 
-    return {
-      status: MessageStatusEnum.SUCCESS,
-      message: `send order to EDC called with ${edcResponse.result}`,
-    };
-  }
+  //   return {
+  //     status: MessageStatusEnum.SUCCESS,
+  //     message: `send order to EDC called with ${edcResponse.result}`,
+  //   };
+  // }
 
   async productFiltered(search: EdcProductDto) {
     this.logger.log(
