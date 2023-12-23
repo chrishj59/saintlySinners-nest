@@ -24,7 +24,7 @@ import { EdcOrderCreatedResponseDto } from 'src/dtos/edc-order-created.reponse.d
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { CustOrderUpdatedResponseDto } from 'src/dtos/cust-order-updated.response.dto';
 
-@Controller()
+@Controller('customerOrder')
 export class CustomerOrderController {
   constructor(private customerService: CustomerOrderService) {}
 
@@ -32,11 +32,26 @@ export class CustomerOrderController {
   async getOrder() {
     return 'order to be implemented';
   }
-  @Post('/customerOrder')
+  @Post('/customerOrder1')
   async saveOrder(
     @Body() dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
     return await this.customerService.saveOrder(dto);
+  }
+
+  @Post('/customerOrderPaid/:id')
+  public async updateCustomerOrder2(
+    @Param() paramId: FindOneStringParams,
+    @Body() custOrder: EditCustomerOrderDto,
+  ): Promise<CustOrderUpdatedResponseDto> {
+    console.log(`id is: ${JSON.stringify(paramId.id)}`);
+    const updatedOrder: CustOrderUpdatedResponseDto =
+      await this.customerService.updateCustomerOrder(paramId.id, custOrder);
+
+    return {
+      status: updatedOrder.status,
+      orderMessage: updatedOrder.orderMessage,
+    };
   }
 
   @Patch('/customerOrder/:id')

@@ -22,6 +22,7 @@ import { UserModule } from './user/user.module';
 import { VendorModule } from './vendor/vendor.module';
 import { NotificationModule } from './notification/notification.module';
 import { CategoryModule } from './category/category.module';
+import { CustSerrvModule } from './cust-serrv/cust-serrv.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { CategoryModule } from './category/category.module';
     CustomerOrderModule,
     NotificationModule,
     CategoryModule,
+    CustSerrvModule,
 
     //ProductModule,
   ],
