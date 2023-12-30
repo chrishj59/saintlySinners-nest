@@ -23,6 +23,7 @@ import { VendorModule } from './vendor/vendor.module';
 import { NotificationModule } from './notification/notification.module';
 import { CategoryModule } from './category/category.module';
 import { CustSerrvModule } from './cust-serrv/cust-serrv.module';
+import { XtraderModule } from './xtrader/xtrader.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { CustSerrvModule } from './cust-serrv/cust-serrv.module';
     NotificationModule,
     CategoryModule,
     CustSerrvModule,
+    XtraderModule,
 
     //ProductModule,
   ],

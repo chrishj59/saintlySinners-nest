@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PublicFile } from 'src/remote-files/entity/publicFile.entity';
+import { PUBLIC_FILE } from 'src/remote-files/entity/publicFile.entity';
 
 import { RemoteFilesModule } from '../remote-files/remote-files.module';
 import { StripeModule } from '../stripe/stripe.module';
@@ -12,7 +12,7 @@ import { UserService } from './user.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([USER, PublicFile]),
+    TypeOrmModule.forFeature([USER, PUBLIC_FILE]),
     RemoteFilesModule,
     StripeModule,
   ],

@@ -12,15 +12,15 @@ import { v4 as uuid } from 'uuid';
 
 import { CUSTOMER_INVOICE_PDF } from './entity/customerInvoiceFile.entity';
 import { EDC_PRODUCT_FILE } from './entity/productFile.entity';
-import { PublicFile } from './entity/publicFile.entity';
+import { PUBLIC_FILE } from './entity/publicFile.entity';
 
 //import { S3 } from 'aws-sdk';
 //  import { Upload } from "@aws-sdk/lib-storage";
 @Injectable()
 export class RemoteFilesService {
   constructor(
-    @InjectRepository(PublicFile)
-    private publicFilesRepository: Repository<PublicFile>,
+    @InjectRepository(PUBLIC_FILE)
+    private publicFilesRepository: Repository<PUBLIC_FILE>,
     @InjectRepository(EDC_PRODUCT_FILE)
     private productFilesRepository: Repository<EDC_PRODUCT_FILE>,
     @InjectRepository(CUSTOMER_INVOICE_PDF)
@@ -29,6 +29,7 @@ export class RemoteFilesService {
     private readonly configService: ConfigService,
   ) {}
   logger = new Logger('RemoteFilesService');
+
   async uploadPublicFile(dataBuffer: Buffer, filename: string) {
     const client = new S3Client({});
     const key = `${uuid()}-${filename}`;
@@ -99,7 +100,7 @@ export class RemoteFilesService {
     fileId: number,
     queryRunner: QueryRunner,
   ) {
-    const file = await queryRunner.manager.findOneBy(PublicFile, {
+    const file = await queryRunner.manager.findOneBy(PUBLIC_FILE, {
       id: fileId,
     });
     //const s3 = new S3();
@@ -112,7 +113,7 @@ export class RemoteFilesService {
       const response = await client.send(command);
     } catch (err) {
       console.error(err);
-      await queryRunner.manager.delete(PublicFile, fileId);
+      await queryRunner.manager.delete(PUBLIC_FILE, fileId);
     }
     // await s3.deleteObject({
     //   Bucket: this.configService.get('AWS_PUBLIC_BUCKET_NAME'),
