@@ -25,7 +25,7 @@ export class XTR_CATEGORY_IMAGE_REMOTE_FILE {
   public location: string;
 
   @OneToOne(() => XTR_CATEGORY, (cat: XTR_CATEGORY) => cat.image)
-  cat: XTR_CATEGORY;
+  public cat: XTR_CATEGORY;
 
   @Exclude()
   @CreateDateColumn()

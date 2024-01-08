@@ -13,9 +13,13 @@ import { v4 as uuid } from 'uuid';
 import { CUSTOMER_INVOICE_PDF } from './entity/customerInvoiceFile.entity';
 import { EDC_PRODUCT_FILE } from './entity/productFile.entity';
 import { PUBLIC_FILE } from './entity/publicFile.entity';
+import { XTR_CATEGORY_IMAGE_REMOTE_FILE } from './entity/xtrCategoryFile.entity';
+import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from './entity/stockFile.entity';
 
 //import { S3 } from 'aws-sdk';
 //  import { Upload } from "@aws-sdk/lib-storage";
+import { HttpService } from '@nestjs/axios';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 @Injectable()
 export class RemoteFilesService {
   constructor(
@@ -25,8 +29,12 @@ export class RemoteFilesService {
     private productFilesRepository: Repository<EDC_PRODUCT_FILE>,
     @InjectRepository(CUSTOMER_INVOICE_PDF)
     private custInvRepo: Repository<CUSTOMER_INVOICE_PDF>,
-
+    @InjectRepository(XTR_CATEGORY_IMAGE_REMOTE_FILE)
+    private xtrCatRepo: Repository<XTR_CATEGORY_IMAGE_REMOTE_FILE>,
+    @InjectRepository(XTR_PRODUCT_IMAGE_REMOTE_FILE)
+    private xtrProdRepo: Repository<XTR_PRODUCT_IMAGE_REMOTE_FILE>,
     private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
   ) {}
   logger = new Logger('RemoteFilesService');
 
@@ -120,7 +128,38 @@ export class RemoteFilesService {
     //   Key: file.key,
     // });
   }
-
+  public async uploadXtrCategoryFile(
+    dataBuffer: Buffer,
+    categoryID: number,
+    fileName: string,
+  ): Promise<XTR_CATEGORY_IMAGE_REMOTE_FILE> {
+    const client = new S3Client({});
+    const key = `XTR-CAT-${fileName}`;
+    const command = new PutObjectCommand({
+      Bucket: this.configService.get('AWS_XTR_CAT_BUCKET_NAME'),
+      Key: key,
+      Body: dataBuffer,
+    });
+    try {
+      const response = await client.send(command);
+      if (response.$metadata.httpStatusCode !== 200) {
+        throw new BadRequestException(`Could not save ${fileName} to AWS `);
+      }
+      let newFile = this.xtrCatRepo.create({
+        key: key,
+        //location: uploadResult.Location,
+        cat: {
+          id: categoryID,
+        },
+      });
+      newFile = await this.xtrCatRepo.save(newFile, {
+        reload: true,
+      });
+      return newFile;
+    } catch (err) {
+      throw new BadRequestException(JSON.stringify(err));
+    }
+  }
   async uploadProductFile(
     dataBuffer: Buffer,
     productId: number,
@@ -223,6 +262,148 @@ export class RemoteFilesService {
       return newFile;
     } catch (err) {
       this.logger.warn(`Save order error ${err.message} `);
+    }
+  }
+
+  async getXtrProdImage(
+    name: string,
+  ): Promise<XTR_PRODUCT_IMAGE_REMOTE_FILE | null> {
+    return this.xtrProdRepo.findOne({ where: { key: name } });
+  }
+
+  async uploadXtrStockFile(fileName: string, category: string, prodId: number) {
+    const imgUrl = `${process.env.XTRADER_IMG_URL}${fileName}`;
+    this.logger.log(
+      `uploadXtrStockFile called with filename: ${fileName} cat ${category} and prod with id ${prodId}`,
+    );
+    const fileNameParts = fileName.split('.');
+    const fileType = fileNameParts[1];
+    console.log(`fileType: ${fileType}`);
+    let thumbId: number;
+    let ximageId: number;
+    let ximage2: number;
+    let ximage3: number;
+    let ximage4: number;
+    let ximage5: number;
+    let multi1: number;
+    let multi2: number;
+    let multi3: number;
+    let bigmulti1: number;
+    let bigmulti2: number;
+    let bigmulti3: number;
+
+    switch (category) {
+      case 'thumb':
+        thumbId = prodId;
+        break;
+      case 'ximage':
+        ximageId = prodId;
+        break;
+      case 'ximage2':
+        ximage2 = prodId;
+        break;
+      case 'ximage3':
+        ximage3 = prodId;
+        break;
+      case 'ximage4':
+        ximage4 = prodId;
+        break;
+      case 'ximage5':
+        ximage5 = prodId;
+        break;
+      case 'multi1':
+        multi1 = prodId;
+        break;
+      case 'multi2':
+        multi2 = prodId;
+        break;
+      case 'multi3':
+        multi3 = prodId;
+        break;
+      case 'bigmulti1':
+        bigmulti1 = prodId;
+        break;
+      case 'bigmulti2':
+        bigmulti2 = prodId;
+        break;
+      case 'bigmulti3':
+        bigmulti3 = prodId;
+        break;
+    }
+    let imgFileBuff: Buffer;
+    try {
+      let imgFile = await this.httpService.axiosRef.get(imgUrl, {
+        responseType: 'arraybuffer',
+      });
+      imgFileBuff = imgFile.data;
+      const client = new S3Client({});
+      const key = fileName;
+      const command = new PutObjectCommand({
+        Bucket: this.configService.get('AWS_XTR_STOCK_BUCKET_NAME'),
+        Key: key,
+        Body: imgFileBuff,
+      });
+      try {
+        const response = await client.send(command);
+        if (response.$metadata.httpStatusCode !== 200) {
+          throw new BadRequestException(`Could not save ${fileName} to AWS `);
+        }
+        let newFile = this.xtrProdRepo.create({
+          key: key,
+          //location: uploadResult.Location,
+          category,
+          fileType,
+          thumb: {
+            id: thumbId,
+          },
+
+          ximage: {
+            id: ximageId,
+          },
+          ximage2: {
+            id: ximage2,
+          },
+          ximage3: {
+            id: ximage3,
+          },
+          ximage4: {
+            id: ximage4,
+          },
+          ximage5: {
+            id: ximage5,
+          },
+          multi1: {
+            id: multi1,
+          },
+          multi12: {
+            id: multi2,
+          },
+          multi13: {
+            id: multi3,
+          },
+          bigmulti1: {
+            id: bigmulti1,
+          },
+          bigmulti2: {
+            id: bigmulti2,
+          },
+          bigmulti3: {
+            id: bigmulti3,
+          },
+        });
+
+        newFile = await this.xtrProdRepo.save(newFile, {
+          reload: true,
+        });
+        this.logger.log(
+          `new stock image file ${JSON.stringify(newFile, null, 2)}`,
+        );
+        return newFile;
+      } catch (err) {
+        throw new BadRequestException(JSON.stringify(err));
+      }
+    } catch (err) {
+      this.logger.warn(`Could not find image  ${fileName}`);
     }
   }
 }

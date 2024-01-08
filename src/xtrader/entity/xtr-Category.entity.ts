@@ -7,6 +7,7 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
@@ -14,6 +15,7 @@ import {
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
+import { XTR_PRODUCT } from './xtr-product.entity';
 
 @Entity({ name: 'xtr-category' })
 export class XTR_CATEGORY extends BaseEntity {
@@ -37,6 +39,9 @@ export class XTR_CATEGORY extends BaseEntity {
   @Expose()
   @OneToMany(() => XTR_CATEGORY, (child: XTR_CATEGORY) => child.parentCategory)
   childCategories: XTR_CATEGORY[];
+
+  @OneToMany(() => XTR_PRODUCT, (product: XTR_PRODUCT) => product.category)
+  products: XTR_PRODUCT[];
 
   @Exclude()
   @DeleteDateColumn()

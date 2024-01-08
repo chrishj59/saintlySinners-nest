@@ -9,7 +9,7 @@ export class XtrCategoryDto {
 
   @IsOptional()
   @IsNumber()
-  parentId?: number;
+  parentId: number;
 
   @IsOptional()
   @IsString()
