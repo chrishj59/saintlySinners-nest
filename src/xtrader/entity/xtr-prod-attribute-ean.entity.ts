@@ -25,11 +25,11 @@ export class XTR_PROD_ATTRIBUTE_EAN extends BaseEntity {
   @Column({ name: 'value', type: 'varchar', length: 30 })
   value: string;
 
-  // @ManyToMany(() => XTR_PRODUCT, (prod: XTR_PRODUCT) => prod.attrs)
-  // products: XTR_PRODUCT[];
-  @ManyToOne(() => XTR_PRODUCT, (prod: XTR_PRODUCT) => prod.eans)
-  @JoinColumn({ name: 'prod_id', referencedColumnName: 'id' })
-  product: XTR_PRODUCT;
+  @ManyToMany(() => XTR_PRODUCT, (prod: XTR_PRODUCT) => prod.eans)
+  products: XTR_PRODUCT[];
+  // @ManyToOne(() => XTR_PRODUCT, (prod: XTR_PRODUCT) => prod.eans)
+  // @JoinColumn({ name: 'prod_id', referencedColumnName: 'id' })
+  // product: XTR_PRODUCT;
 
   @Exclude()
   @DeleteDateColumn()

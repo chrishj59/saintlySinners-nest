@@ -56,8 +56,8 @@ export class XtrProductDto {
   id: number;
 
   @IsOptional()
-  @IsNumber()
-  weight: number;
+  @IsNumberString()
+  weight: string;
 
   @IsString()
   name: string;
@@ -67,20 +67,20 @@ export class XtrProductDto {
   model: string;
 
   @IsOptional()
-  @IsNumber()
-  goodsPrice: number;
+  @IsNumberString()
+  goodsPrice: string;
 
   @IsOptional()
-  @IsNumber()
-  privateStockPrice: number;
+  @IsNumberString()
+  privateStockPrice: string;
 
   @IsOptional()
   @IsNumber()
   caseSize: number;
 
   @IsOptional()
-  @IsNumber()
-  retailPrice: number;
+  @IsNumberString()
+  retailPrice: string;
 
   @IsString()
   thumb: string;
@@ -137,8 +137,8 @@ export class XtrProductDto {
   descriptionHtml: string;
 
   @IsOptional()
-  @IsNumber()
-  ean: number;
+  @IsString()
+  ean: string;
 
   @IsOptional()
   @IsString()
@@ -193,8 +193,8 @@ export class XtrProductDto {
   originDiamUom: string;
 
   @IsOptional()
-  @IsNumber()
-  circumference: number;
+  @IsNumberString()
+  circumference: string;
 
   @IsOptional()
   @IsString()

@@ -176,8 +176,142 @@ export class XTR_PRODUCT extends BaseEntity {
   })
   descriptionHtml: string;
 
-  @Column({ name: 'ean', type: 'bigint', nullable: true })
-  ean: number;
+  @Column({ name: 'ean', type: 'varchar', length: 13, nullable: true })
+  ean: string;
+
+  // @Column({ name: 'ean-extra-small', type: 'varchar', length: 13, nullable: true })
+  // eanSmall: string;
+
+  // @Column({ name: 'ean-small', type: 'varchar', length: 13, nullable: true })
+  // eanExtraSmall: string;
+
+  // @Column({ name: 'ean-medium', type: 'varchar', length: 13, nullable: true })
+  // eanMedium: string;
+
+  // @Column({ name: 'ean-large', type: 'varchar', length: 13, nullable: true })
+  // eanLarge: string;
+
+  // @Column({ name: 'ean-extra-large', type: 'varchar', length: 13, nullable: true })
+  // eanExtraLarge: string;
+
+  // @Column({ name: 'ean-Xlarge', type: 'varchar', length: 13, nullable: true })
+  // eanXLarge: string;
+
+  // @Column({ name: 'ean-x-large', type: 'varchar', length: 13, nullable: true })
+  // eanXLarge: string;
+
+  // @Column({ name: 'ean-XXlarge', type: 'varchar', length: 13, nullable: true })
+  // eanXXLarge: string;
+
+  // @Column({ name: 'ean-sm', type: 'varchar', length: 13, nullable: true })
+  // eanSm: string;
+
+  // @Column({ name: 'ean-m', type: 'varchar', length: 13, nullable: true })
+  // eanM: string;
+
+  // @Column({ name: 'ean-ml', type: 'varchar', length: 13, nullable: true })
+  // eanMl: string;
+
+  // @Column({ name: 'ean-lxl', type: 'varchar', length: 13, nullable: true })
+  // eanLxl: string;
+  // @Column({ name: 'ean-xs', type: 'varchar', length: 13, nullable: true })
+  // eanXs: string;
+
+  // @Column({ name: 'ean-xss', type: 'varchar', length: 13, nullable: true })
+  // eanXss: string;
+
+  // @Column({ name: 'ean-xxl', type: 'varchar', length: 13, nullable: true })
+  // eanXxl: string;
+
+  // @Column({ name: 'ean-xxxl', type: 'varchar', length: 13, nullable: true })
+  // eanXxxl: string;
+
+  // @Column({ name: 'ean-xxxxl', type: 'varchar', length: 13, nullable: true })
+  // eanXxxxl: string;
+
+  // @Column({ name: 'ean-xxlxxxl', type: 'varchar', length: 13, nullable: true })
+  // eanXxlxxxl: string;
+
+  // @Column({ name: 'ean-80bm', type: 'varchar', length: 13, nullable: true })
+  // ean80bm: string;
+
+  // @Column({ name: 'ean-85bl', type: 'varchar', length: 13, nullable: true })
+  // ean85bl: string;
+
+  // @Column({ name: 'ean-85cl', type: 'varchar', length: 13, nullable: true })
+  // ean85cl: string;
+
+  // @Column({ name: 'ean-85dl', type: 'varchar', length: 13, nullable: true })
+  // ean85dl: string;
+
+  // @Column({ name: 'ean-75bs', type: 'varchar', length: 13, nullable: true })
+  // ean75bs: string;
+
+  // @Column({ name: 'ean-80cm', type: 'varchar', length: 13, nullable: true })
+  // ean80cm: string;
+
+  // @Column({ name: 'ean-90dxl', type: 'varchar', length: 13, nullable: true })
+  // ean90dxl: string;
+
+  // @Column({ name: 'ean-90exl', type: 'varchar', length: 13, nullable: true })
+  // ean90exl: string;
+
+  // @Column({ name: 'ean-95d2xl', type: 'varchar', length: 13, nullable: true })
+  // ean95d2xl: string;
+
+  // @Column({ name: 'ean-95e2xl', type: 'varchar', length: 13, nullable: true })
+  // ean95e2xl: string;
+
+  // @Column({ name: 'ean-95f2xl', type: 'varchar', length: 13, nullable: true })
+  // ean95f2xl: string;
+
+  // @Column({ name: 'ean-32b', type: 'varchar', length: 13, nullable: true })
+  // ean32b: string;
+
+  // @Column({ name: 'ean-32c', type: 'varchar', length: 13, nullable: true })
+  // ean32c: string;
+
+  // @Column({ name: 'ean-34a', type: 'varchar', length: 13, nullable: true })
+  // ean34a: string;
+
+  // @Column({ name: 'ean-34b', type: 'varchar', length: 13, nullable: true })
+  // ean34b: string;
+
+  // @Column({ name: 'ean-34c', type: 'varchar', length: 13, nullable: true })
+  // ean34c: string;
+
+  // @Column({ name: 'ean-34d', type: 'varchar', length: 13, nullable: true })
+  // ean34d: string;
+
+  // @Column({ name: 'ean-32d', type: 'varchar', length: 13, nullable: true })
+  // ean32d: string;
+
+  // @Column({ name: 'ean-36b', type: 'varchar', length: 13, nullable: true })
+  // ean36b: string;
+
+  // @Column({ name: 'ean-36c', type: 'varchar', length: 13, nullable: true })
+  // ean36c: string;
+
+  // @Column({ name: 'ean-36bm', type: 'varchar', length: 13, nullable: true })
+  // ean36bm: string;
+
+  // @Column({ name: 'ean-38bl', type: 'varchar', length: 13, nullable: true })
+  // ean38bl: string;
+
+  // @Column({ name: 'ean-34bs', type: 'varchar', length: 13, nullable: true })
+  // ean34bs: string;
+
+  // @Column({ name: 'ean-36', type: 'varchar', length: 13, nullable: true })
+  // ean36: string;
+
+  // @Column({ name: 'ean-38cxl', type: 'varchar', length: 13, nullable: true })
+  // ean38cxl: string;
+
+  // @Column({ name: 'ean-38', type: 'varchar', length: 13, nullable: true })
+  // ean38: string;
+
+  // @Column({ name: 'ean-40', type: 'varchar', length: 13, nullable: true })
+  // ean40: string;
 
   @Column({ name: 'prod_length', type: 'varchar', length: 10, nullable: true })
   length: string;
@@ -339,58 +473,31 @@ export class XTR_PRODUCT extends BaseEntity {
   @Column({ name: 'opening', type: 'varchar', length: 20, nullable: true })
   opening: string;
 
-  @OneToMany(
-    () => XTR_PROD_ATTRIBUTE_EAN,
-    (ean: XTR_PROD_ATTRIBUTE_EAN) => ean.product,
-  )
-  eans: XTR_PROD_ATTRIBUTE_EAN[];
+  // @OneToMany(
+  //   () => XTR_PROD_ATTRIBUTE_EAN,
+  //   (ean: XTR_PROD_ATTRIBUTE_EAN) => ean.product,
+  // )
+  // eans: XTR_PROD_ATTRIBUTE_EAN[];
 
   @OneToMany(() => XTR_PROD_ATTRIBUTE, (attr: XTR_PROD_ATTRIBUTE) => attr, {
     cascade: ['insert', 'update'],
   })
   attributes: XTR_PROD_ATTRIBUTE[];
-  // @Column({ name: 'ean_small', type: 'varchar', length: 13, nullable: true })
-  // eanSmall: string;
 
-  // @Column({ name: 'ean_large', type: 'varchar', length: 13, nullable: true })
-  // eanLarge: string;
-
-  // @Column({ name: 'ean_xlarge', type: 'varchar', length: 13, nullable: true })
-  // eanXlarge: string;
-
-  // @Column({ name: 'ean_medium', type: 'varchar', length: 13, nullable: true })
-  // eanMedium: string;
-
-  // @Column({ name: 'ean_xxl', type: 'varchar', length: 13, nullable: true })
-  // eanxxl: string;
-
-  // @Column({ name: 'ean_lxl', type: 'varchar', length: 13, nullable: true })
-  // eanLxl: string;
-
-  // @Column({ name: 'ean_xxlxxxl', type: 'varchar', length: 13, nullable: true })
-  // eanXxlXxxL: string;
-
-  // @Column({ name: 'eam_sm', type: 'varchar', length: 13, nullable: true })
-  // eanSm: string;
-
-  // ManyToMany
-  // @ManyToMany(() => XTR_ATTRIBUTE, (attr) => attr.products, { cascade: true })
-  // @JoinTable()
-  // attrs: XTR_ATTRIBUTE[];
-
-  // @Column({ name: 'power', type: 'varchar', length: 20, nullable: true })
-  // power: string;
-
-  // @Column({ name: 'size', type: 'varchar', length: 20, nullable: true })
-  // size: string;
-
-  // @Column({ name: 'opening', type: 'varchar', length: 20, nullable: true })
-  // opening: string;
-
-  // category id manyToOne
   @ManyToOne(() => XTR_CATEGORY, (category) => category.products)
   @JoinColumn({ name: 'category_id', referencedColumnName: 'id' })
   category: XTR_CATEGORY;
+
+  @ManyToMany(
+    () => XTR_PROD_ATTRIBUTE_EAN,
+    (ean: XTR_PROD_ATTRIBUTE_EAN) => ean.products,
+  )
+  @JoinTable({
+    name: 'xtr-prod-eans',
+    joinColumn: { name: 'product_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'ean_id', referencedColumnName: 'id' },
+  })
+  eans: XTR_PROD_ATTRIBUTE_EAN[];
 
   @Exclude()
   @DeleteDateColumn()

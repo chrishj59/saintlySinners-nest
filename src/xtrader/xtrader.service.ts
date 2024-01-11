@@ -28,6 +28,8 @@ export class XtraderService {
     private attrRep: Repository<XTR_PROD_ATTRIBUTE>,
     @InjectRepository(XTR_ATTRIBUTE_VALUE)
     private attrValueRepo: Repository<XTR_ATTRIBUTE_VALUE>,
+    @InjectRepository(XTR_PROD_ATTRIBUTE_EAN)
+    private prodEanRepo: Repository<XTR_PROD_ATTRIBUTE_EAN>,
     private readonly filesService: RemoteFilesService,
     private readonly httpService: HttpService,
   ) {}
@@ -113,13 +115,13 @@ export class XtraderService {
     this.logger.log(`dto passed in ${JSON.stringify(dto, null, 2)}`);
     const prod = new XTR_PRODUCT();
     prod.id = dto.id;
-    prod.weight = dto.weight;
+    prod.weight = parseFloat(dto.weight);
     prod.name = dto.name;
     prod.model = dto.model;
-    prod.goodsPrice = dto.goodsPrice;
-    prod.privateStockPrice = dto.privateStockPrice;
+    prod.goodsPrice = parseFloat(dto.goodsPrice);
+    prod.privateStockPrice = parseFloat(dto.privateStockPrice);
     prod.caseSize = dto.caseSize;
-    prod.retailPrice = dto.retailPrice;
+    prod.retailPrice = parseFloat(dto.retailPrice);
     prod.description = dto.description;
     prod.descriptionHtml = dto.descriptionHtml;
     prod.ean = dto.ean;
@@ -137,7 +139,7 @@ export class XtraderService {
     prod.originCircumUom = dto.originCircumUom;
     prod.originDiam = dto.originDiam;
     prod.originDiamUom = dto.originDiamUom;
-    prod.circumference = dto.circumference;
+    prod.circumference = parseFloat(dto.circumference);
     prod.circumferenceUom = dto.circumferenceUom;
     prod.colour = dto.colour;
     prod.flexbility = dto.flexbility;
@@ -223,7 +225,13 @@ export class XtraderService {
         _ean.code = ean.ean;
         _ean.value = ean.value;
         this.logger.warn(`_ean is ${JSON.stringify(_ean, null, 2)}`);
-        eanArray.push(_ean);
+        let eanDB = await this.prodEanRepo.findOne({
+          where: { code: _ean.code },
+        });
+        if (!eanDB) {
+          eanDB = await this.prodEanRepo.save(_ean, { reload: true });
+        }
+        eanArray.push(eanDB);
       }
       this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
       prod.eans = eanArray;
