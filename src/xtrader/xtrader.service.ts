@@ -130,17 +130,13 @@ export class XtraderService {
     prod.condomSafe = dto.condomSafe;
     prod.forWho = dto.forWho;
     prod.liquidVolume = dto.liquidVolume;
-    prod.liquidVolumeUom = dto.liquidVolumeUom;
     prod.washing = dto.washing;
-    prod.insertableToy = dto.insertableToy;
+    prod.insertable = dto.insertable;
     prod.diameter = dto.diameter;
-    prod.diameterUom = dto.diameterUom;
+
     prod.originCircum = dto.originCircum;
-    prod.originCircumUom = dto.originCircumUom;
     prod.originDiam = dto.originDiam;
-    prod.originDiamUom = dto.originDiamUom;
-    prod.circumference = parseFloat(dto.circumference);
-    prod.circumferenceUom = dto.circumferenceUom;
+    prod.circumference = dto.circumference;
     prod.colour = dto.colour;
     prod.flexbility = dto.flexbility;
     prod.controller = dto.controller;

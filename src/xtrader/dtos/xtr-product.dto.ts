@@ -149,56 +149,36 @@ export class XtrProductDto {
   lubeType: string;
 
   @IsOptional()
-  @IsString()
+  @IsBoolean()
   condomSafe: boolean;
 
   @IsOptional()
   @IsString()
-  liquidVolume: number;
-
-  @IsOptional()
-  @IsString()
-  liquidVolumeUom: string;
+  liquidVolume: string;
 
   @IsOptional()
   @IsString()
   washdown: string;
 
   @IsOptional()
-  @IsBoolean()
-  insertableToy: boolean;
-
-  @IsOptional()
-  @IsNumber()
-  diameter: number;
+  @IsString()
+  insertable: string;
 
   @IsOptional()
   @IsString()
-  diameterUom: string;
-
-  @IsOptional()
-  @IsNumber()
-  originCircum: number;
+  diameter: string;
 
   @IsOptional()
   @IsString()
-  originCircumUom: string;
-
-  @IsOptional()
-  @IsNumber()
-  originDiam: number;
+  originCircum: string;
 
   @IsOptional()
   @IsString()
-  originDiamUom: string;
+  originDiam: string;
 
   @IsOptional()
-  @IsNumberString()
+  @IsString()
   circumference: string;
-
-  @IsOptional()
-  @IsString()
-  circumferenceUom: string;
 
   @IsOptional()
   @IsString()

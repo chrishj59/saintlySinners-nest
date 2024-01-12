@@ -324,20 +324,11 @@ export class XTR_PRODUCT extends BaseEntity {
 
   @Column({
     name: 'liquid_volume',
-    type: 'decimal',
-    precision: 3,
-    scale: 2,
-    nullable: true,
-  })
-  liquidVolume: number;
-
-  @Column({
-    name: 'liquid_volume_uom',
     type: 'varchar',
-    length: 10,
+    length: 20,
     nullable: true,
   })
-  liquidVolumeUom: string;
+  liquidVolume: string;
 
   @Column({ name: 'number_of_pills', type: 'int', nullable: true })
   numberOfPills: number;
@@ -348,74 +339,43 @@ export class XTR_PRODUCT extends BaseEntity {
   // @Column({ name: 'washing', type: 'varchar', length: 20, nullable: true })
   // washdown: string;
 
-  @Column({ name: 'insertable', type: 'boolean', nullable: true })
-  insertableToy: boolean;
+  @Column({ name: 'insertable', type: 'varchar', length: 20, nullable: true })
+  insertable: string;
 
   @Column({
     name: 'diameter',
-    type: 'decimal',
-    precision: 2,
-    scale: 2,
+    type: 'varchar',
+    length: 20,
     nullable: true,
   })
-  diameter: number;
-
-  @Column({ name: 'diameter_uom', type: 'varchar', length: 10, nullable: true })
-  diameterUom: string;
+  diameter: string;
 
   @Column({ name: 'harness_compatible', type: 'boolean', nullable: true })
   harnessCompatible: boolean;
 
   @Column({
     name: 'origin_circumference',
-    type: 'decimal',
-    precision: 3,
-    scale: 2,
-    nullable: true,
-  })
-  originCircum: number;
-
-  @Column({
-    name: 'origin_circumference_uom',
     type: 'varchar',
-    length: 10,
+    length: 20,
     nullable: true,
   })
-  originCircumUom: string;
+  originCircum: string;
 
   @Column({
     name: 'origin_diameter',
-    type: 'decimal',
-    precision: 3,
-    scale: 2,
-    nullable: true,
-  })
-  originDiam: number;
-
-  @Column({
-    name: 'origin_diameter_uom',
     type: 'varchar',
-    length: 10,
+
     nullable: true,
   })
-  originDiamUom: string;
+  originDiam: string;
 
   @Column({
     name: 'circumference',
-    type: 'decimal',
-    precision: 3,
-    scale: 2,
-    nullable: true,
-  })
-  circumference: number;
-
-  @Column({
-    name: 'circumference_uom',
     type: 'varchar',
-    length: 10,
+    length: 20,
     nullable: true,
   })
-  circumferenceUom: string;
+  circumference: string;
 
   @Column({ name: 'colour', type: 'varchar', length: 10, nullable: true })
   colour: string;
