@@ -163,7 +163,7 @@ export class XTR_PRODUCT extends BaseEntity {
   @Column({
     name: 'description',
     type: 'varchar',
-    length: 1000,
+    length: 10000,
     nullable: true,
   })
   description: string;
@@ -171,7 +171,7 @@ export class XTR_PRODUCT extends BaseEntity {
   @Column({
     name: 'description_html',
     type: 'varchar',
-    length: 1000,
+    length: 11000,
     nullable: true,
   })
   descriptionHtml: string;

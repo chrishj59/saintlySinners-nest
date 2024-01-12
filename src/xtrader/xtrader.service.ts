@@ -91,7 +91,7 @@ export class XtraderService {
     const _id = parseInt(id);
     try {
       const cat = await this.catRepo.findOne({ where: { id: _id } });
-      this.logger.log(`find cat returned ${cat}`);
+      // this.logger.log(`find cat returned ${cat}`);
       return cat;
     } catch (err) {
       console.log(`Error getting one category ${JSON.stringify(err, null, 2)}`);
@@ -112,7 +112,7 @@ export class XtraderService {
   }
 
   async newProduct(dto: XtrProductDto) {
-    this.logger.log(`dto passed in ${JSON.stringify(dto, null, 2)}`);
+    // this.logger.log(`dto passed in ${JSON.stringify(dto, null, 2)}`);
     const prod = new XTR_PRODUCT();
     prod.id = dto.id;
     prod.weight = parseFloat(dto.weight);
@@ -155,14 +155,12 @@ export class XtraderService {
     prod.category = cat;
 
     let brand = await this.getBrand(dto.brand);
-    this.logger.log(`get brand initially ${brand}`);
     if (!brand) {
-      this.logger.log('save brand to DB');
       const _brand = new XTR_BRAND();
       _brand.name = dto.brand;
       const _brandDB = await this.brandRepo.save(_brand, { reload: true });
       brand = _brandDB;
-      this.logger.log(`Brand saved ${JSON.stringify(_brandDB, null, 2)}`);
+      // this.logger.log(`Brand saved ${JSON.stringify(_brandDB, null, 2)}`);
     }
     prod.brand = brand;
     let _prod = await this.prodRepo.save(prod, { reload: true });
@@ -172,7 +170,7 @@ export class XtraderService {
       console.log(`does thumb already exist ${JSON.stringify(thumb, null, 2)}`);
       if (!thumb) {
         await this.filesService.uploadXtrStockFile(dto.thumb, 'thumb', prod.id);
-        this.logger.log('after save thumb image');
+        // this.logger.log('after save thumb image');
       }
     }
 
@@ -194,7 +192,7 @@ export class XtraderService {
 
         _attrValue.title = attrVal.title ? attrVal.title : ' ';
         _attrValue.priceAdjustment = parseFloat(attrVal.priceAdjustment);
-        this.logger.log(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
+        // this.logger.log(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
         const attrValueDB = await this.attrValueRepo.save(_attrValue, {
           reload: true,
         });
@@ -205,15 +203,15 @@ export class XtraderService {
       attribute = await this.attrRep.save(attribute, { reload: true });
       const attributes: XTR_PROD_ATTRIBUTE[] = [];
       attributes.push(attribute);
-      this.logger.log(`attributes ${JSON.stringify(attributes, null, 2)}`);
+      // this.logger.log(`attributes ${JSON.stringify(attributes, null, 2)}`);
       prod.attributes = attributes;
-      this.logger.log(
-        `Prod attributes ${JSON.stringify(prod.attributes, null, 2)}`,
-      );
+      // this.logger.log(
+      //   `Prod attributes ${JSON.stringify(prod.attributes, null, 2)}`,
+      // );
     }
 
     if (dto.eans) {
-      this.logger.log(`need to add eans`);
+      // this.logger.log(`need to add eans`);
 
       const eanArray: XTR_PROD_ATTRIBUTE_EAN[] = [];
       for (const ean of dto.eans) {
@@ -229,7 +227,7 @@ export class XtraderService {
         }
         eanArray.push(eanDB);
       }
-      this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
+      // this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
       prod.eans = eanArray;
     }
 
