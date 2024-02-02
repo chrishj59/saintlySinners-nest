@@ -20,6 +20,7 @@ import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from './entity/stockFile.entity';
 //  import { Upload } from "@aws-sdk/lib-storage";
 import { HttpService } from '@nestjs/axios';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
+import axios from 'axios';
 @Injectable()
 export class RemoteFilesService {
   constructor(
@@ -278,9 +279,10 @@ export class RemoteFilesService {
     );
     const fileNameParts = fileName.split('.');
     const fileType = fileNameParts[1];
-    console.log(`fileType: ${fileType}`);
+    this.logger.log(`file category: ${category} fileType: ${fileType}`);
     let thumbId: number;
-    let ximageId: number;
+
+    let ximage: number;
     let ximage2: number;
     let ximage3: number;
     let ximage4: number;
@@ -297,7 +299,7 @@ export class RemoteFilesService {
         thumbId = prodId;
         break;
       case 'ximage':
-        ximageId = prodId;
+        ximage = prodId;
         break;
       case 'ximage2':
         ximage2 = prodId;
@@ -330,11 +332,13 @@ export class RemoteFilesService {
         bigmulti3 = prodId;
         break;
     }
+    this.logger.log(`ximage after switch ${ximage}`);
     let imgFileBuff: Buffer;
     try {
       let imgFile = await this.httpService.axiosRef.get(imgUrl, {
         responseType: 'arraybuffer',
       });
+      this.logger.log(`imgFile `);
       imgFileBuff = imgFile.data;
       const client = new S3Client({});
       const key = fileName;
@@ -345,6 +349,11 @@ export class RemoteFilesService {
       });
       try {
         const response = await client.send(command);
+        console.log(
+          `response status from AWS ${JSON.stringify(
+            response.$metadata.httpStatusCode,
+          )}`,
+        );
         if (response.$metadata.httpStatusCode !== 200) {
           throw new BadRequestException(`Could not save ${fileName} to AWS `);
         }
@@ -358,7 +367,7 @@ export class RemoteFilesService {
           },
 
           ximage: {
-            id: ximageId,
+            id: ximage,
           },
           ximage2: {
             id: ximage2,
@@ -391,19 +400,24 @@ export class RemoteFilesService {
             id: bigmulti3,
           },
         });
-
+        this.logger.log(`file to save ${JSON.stringify(newFile, null, 2)}`);
         newFile = await this.xtrProdRepo.save(newFile, {
           reload: true,
         });
-        this.logger.log(
-          `new stock image file ${JSON.stringify(newFile, null, 2)}`,
-        );
+
         return newFile;
       } catch (err) {
         throw new BadRequestException(JSON.stringify(err));
       }
     } catch (err) {
-      this.logger.warn(`Could not find image  ${fileName}`);
+      if (axios.isAxiosError(err)) {
+        this.logger.warn(`Axios error ${JSON.stringify(err.status)}`);
+        this.logger.warn(
+          `Axios message ${JSON.stringify(err.response.statusText)}`,
+        );
+        this.logger.warn(`Axios message ${JSON.stringify(err.message)}`);
+      }
+      this.logger.warn(`Could not find image from xtrader ${fileName} `);
     }
   }
 }

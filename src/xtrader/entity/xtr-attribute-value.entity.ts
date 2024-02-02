@@ -20,7 +20,13 @@ export class XTR_ATTRIBUTE_VALUE extends BaseEntity {
   @Column({ type: 'varchar', length: 50, nullable: true })
   title: string;
 
-  @Column({ name: 'price-adjustment', type: 'decimal', precision: 3, scale: 2 })
+  @Column({
+    name: 'price-adjustment',
+    type: 'decimal',
+    precision: 3,
+    scale: 2,
+    default: 0,
+  })
   priceAdjustment: number;
 
   @ManyToMany(() => XTR_PROD_ATTRIBUTE, (attr) => attr)

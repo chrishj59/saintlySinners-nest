@@ -7,14 +7,15 @@ import { CategoryIdDto } from './dtos/categoryId.dto';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 import { CategoryDto } from './dtos/category.dto';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectRepository(EDC_CATEGORY)
     private catRepo: Repository<EDC_CATEGORY>,
-    @InjectRepository(EDC_PRODUCT)
-    private producRepo: Repository<EDC_PRODUCT>,
+    @InjectRepository(XTR_PRODUCT)
+    private producRepo: Repository<XTR_PRODUCT>,
   ) {}
   logger = new Logger('Category service');
 
@@ -52,28 +53,59 @@ export class CategoryService {
 
   public async getCategoryProducts(
     dto: CategoryIdDto,
-  ): Promise<EDC_PRODUCT[] | ResponseMessageDto> {
+  ): Promise<XTR_PRODUCT[] | ResponseMessageDto> {
     const categoryid = Number(dto.id);
-    const query = this.producRepo.createQueryBuilder('edc_product');
-    let products: EDC_PRODUCT[];
+    const query = this.producRepo.createQueryBuilder('xtr-product');
 
+    let products: XTR_PRODUCT[];
     try {
+      // products = await this.producRepo.find({
+      //   relations: ['category'],
+      //   where: { category: { id: categoryid } },
+      // });
       products = await query
-        .leftJoinAndSelect('edc_product.images', 'images')
-        .leftJoinAndSelect('edc_product.variants', 'variants')
-        .leftJoinAndSelect('edc_product.defaultCategory', 'defaultCategory')
-        .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
-        .andWhere('newCategories.id = :categoryid', {
+        .leftJoinAndSelect('xtr-product.thumb', 'thumb')
+        .leftJoinAndSelect('xtr-product.category', 'category')
+        .leftJoinAndSelect('xtr-product.brand', 'brand')
+        .leftJoinAndSelect('xtr-product.attributes', 'attributes')
+        .leftJoinAndSelect('attributes.attributeValues', 'attributeValues')
+        .leftJoinAndSelect('xtr-product.eans', 'eans')
+        .andWhere('category.id = :categoryid', {
           categoryid: categoryid,
         })
         .getMany();
-      products = products.map((p) => {
-        p.b2c = parseFloat(p.b2c.toFixed(2));
-        if (!p.defaultCategory) {
-          p.defaultCategory = p.newCategories[0];
-        }
-        return p;
-      });
+      this.logger.log(
+        `category number of prods found ${JSON.stringify(
+          products.length,
+          null,
+          2,
+        )}`,
+      );
+      // try {
+      //   products = await query
+      //     .leftJoinAndSelect('xtr-product.attributes', 'attributes')
+      //     .leftJoinAndSelect('xtr-product.eans', 'eans')
+
+      //     .andWhere('category_id = :categoryid', {
+      //       categoryid: categoryid,
+      //     })
+      //     .getMany();
+      // products = await query
+      //   .leftJoinAndSelect('edc_product.images', 'images')
+      //   .leftJoinAndSelect('edc_product.variants', 'variants')
+      //   .leftJoinAndSelect('edc_product.defaultCategory', 'defaultCategory')
+      //   .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
+      //   .andWhere('newCategories.id = :categoryid', {
+      //     categoryid: categoryid,
+      //   })
+      //   .getMany();
+      // products = products.map((p) => {
+      //   p.b2c = parseFloat(p.b2c.toFixed(2));
+      //   if (!p.defaultCategory) {
+      //     p.defaultCategory = p.newCategories[0];
+      //   }
+      //   return p;
+      // });
     } catch (e) {
       this.logger.warn('get products error');
       this.logger.warn(e);
@@ -81,6 +113,7 @@ export class CategoryService {
     }
 
     if (products) {
+      this.logger.log(`number of products to return ${products.length}`);
       return products;
     } else {
       return {

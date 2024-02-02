@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, IsString } from '@nestjs/class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from '@nestjs/class-validator';
 
 export class DeliveryChargeDto {
   @IsOptional()
@@ -22,6 +28,21 @@ export class DeliveryChargeDto {
 
   @IsNumber()
   maxWeight: number;
+
+  @IsNumber()
+  minDays: number;
+
+  @IsNumber()
+  maxDays: number;
+
+  @IsString()
+  durationDescription: string;
+
+  @IsBoolean()
+  hasTracking: boolean;
+
+  @IsBoolean()
+  hasLostClaim: boolean;
 
   @IsNumber()
   amount: number;

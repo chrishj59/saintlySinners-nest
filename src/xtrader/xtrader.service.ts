@@ -1,19 +1,20 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { XTR_CATEGORY } from './entity/xtr-Category.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { XtrCategoryDto } from './dtos/xtr-category.dto';
 import { FindOneNumberParams } from 'src/utils/findOneParamString';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
 import { PUBLIC_FILE } from 'src/remote-files/entity/publicFile.entity';
 
 import { HttpService } from '@nestjs/axios';
-import { Ean, XtrProductDto } from './dtos/xtr-product.dto';
+import { Attribute, Ean, XtrProductDto } from './dtos/xtr-product.dto';
 import { XTR_PRODUCT } from './entity/xtr-product.entity';
 import { XTR_BRAND } from './entity/xtr-brand.entity';
 import { XTR_PROD_ATTRIBUTE } from './entity/xtr-prod-attribute.entity';
 import { XTR_ATTRIBUTE_VALUE } from './entity/xtr-attribute-value.entity';
 import { XTR_PROD_ATTRIBUTE_EAN } from './entity/xtr-prod-attribute-ean.entity';
+import { XtrProductFilterDto } from './dtos/xtr-prod-filter.dto';
 
 @Injectable()
 export class XtraderService {
@@ -80,7 +81,7 @@ export class XtraderService {
           cat = await this.catRepo.save(cat, { reload: true });
         }
       } catch (err) {
-        this.logger.warn(`Could not find image for ${cat.catName}`);
+        this.logger.warn(`category Could not find image for ${cat.catName}`);
       }
     }
 
@@ -112,7 +113,9 @@ export class XtraderService {
   }
 
   async newProduct(dto: XtrProductDto) {
-    // this.logger.log(`dto passed in ${JSON.stringify(dto, null, 2)}`);
+    this.logger.log(
+      `new prodyct dto passed in ${JSON.stringify(dto, null, 2)}`,
+    );
     const prod = new XTR_PRODUCT();
     prod.id = dto.id;
     prod.weight = parseFloat(dto.weight);
@@ -150,10 +153,12 @@ export class XtraderService {
     prod.washing = dto.washing;
 
     // prod.feature = dto.feature
-
+    console.log(
+      `prod.retailPrice ${prod.retailPrice} dto.retailPrice ${prod.retailPrice}`,
+    );
     const cat = await this.getCategoryByName(dto.catName);
     prod.category = cat;
-
+    this.logger.log(``);
     let brand = await this.getBrand(dto.brand);
     if (!brand) {
       const _brand = new XTR_BRAND();
@@ -163,48 +168,70 @@ export class XtraderService {
       // this.logger.log(`Brand saved ${JSON.stringify(_brandDB, null, 2)}`);
     }
     prod.brand = brand;
-    let _prod = await this.prodRepo.save(prod, { reload: true });
+
     /** load images for product if in DTO */
     if (dto.thumb) {
       let thumb = await this.filesService.getXtrProdImage(dto.thumb);
       console.log(`does thumb already exist ${JSON.stringify(thumb, null, 2)}`);
       if (!thumb) {
-        await this.filesService.uploadXtrStockFile(dto.thumb, 'thumb', prod.id);
-        // this.logger.log('after save thumb image');
+        thumb = await this.filesService.uploadXtrStockFile(
+          dto.thumb,
+          'thumb',
+          prod.id,
+        );
+        this.logger.log('after save thumb image');
       }
+      this.logger.log(`about to assign thumb to prod`);
+      prod.thumb = thumb;
+      this.logger.log(`prod.thumb ${JSON.stringify(prod.thumb, null, 2)}`);
     }
-
+    let _prod = await this.prodRepo.save(prod, { reload: true });
     if (dto.attribute) {
+      this.logger.log(`start dto.attribute`);
       let attribute = new XTR_PROD_ATTRIBUTE();
-      attribute.id = dto.attribute.id;
+      attribute.attributeId = dto.attribute.id;
       attribute.name = dto.attribute.name;
+      attribute.product = _prod;
       attribute = await this.attrRep.save(attribute, { reload: true });
 
       const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
       const attrValues = dto.attribute.attributeValues;
-      console.log(`attrValues ${JSON.stringify(attrValues, null, 2)}`);
+      this.logger.log(`attrValues ${JSON.stringify(attrValues, null, 2)}`);
       for (const attrVal of attrValues) {
         this.logger.warn(
           `attrVal at start of loop ${JSON.stringify(attrVal, null, 2)}`,
         );
-        const _attrValue = new XTR_ATTRIBUTE_VALUE();
-        _attrValue.id = attrVal.value;
-
-        _attrValue.title = attrVal.title ? attrVal.title : ' ';
-        _attrValue.priceAdjustment = parseFloat(attrVal.priceAdjustment);
-        // this.logger.log(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
-        const attrValueDB = await this.attrValueRepo.save(_attrValue, {
-          reload: true,
+        let _attrValue = await this.attrValueRepo.findOne({
+          where: { id: attrVal.value },
         });
+        this.logger.warn(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
+        if (!_attrValue) {
+          _attrValue = new XTR_ATTRIBUTE_VALUE();
+          _attrValue.id = attrVal.value;
+
+          _attrValue.title = attrVal.title ? attrVal.title : ' ';
+          _attrValue.priceAdjustment = parseFloat(attrVal.priceAdjust);
+          const attrValueDB = await this.attrValueRepo.save(_attrValue, {
+            reload: true,
+          });
+          this.logger.log(
+            `saved attrib value ${JSON.stringify(attrValueDB, null, 2)}`,
+          );
+        }
+
+        // const _attrValue = new XTR_ATTRIBUTE_VALUE();
+
+        // this.logger.log(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
+
         attrValuesArray.push(_attrValue);
       }
 
       attribute.attributeValues = attrValuesArray;
       attribute = await this.attrRep.save(attribute, { reload: true });
-      const attributes: XTR_PROD_ATTRIBUTE[] = [];
-      attributes.push(attribute);
+      // const attributes: XTR_PROD_ATTRIBUTE[] = [];
+      // attributes.push(attribute);
       // this.logger.log(`attributes ${JSON.stringify(attributes, null, 2)}`);
-      prod.attributes = attributes;
+      // prod.attributes = attributes;
       // this.logger.log(
       //   `Prod attributes ${JSON.stringify(prod.attributes, null, 2)}`,
       // );
@@ -218,39 +245,50 @@ export class XtraderService {
         const _ean = new XTR_PROD_ATTRIBUTE_EAN();
         _ean.code = ean.ean;
         _ean.value = ean.value;
-        this.logger.warn(`_ean is ${JSON.stringify(_ean, null, 2)}`);
-        let eanDB = await this.prodEanRepo.findOne({
-          where: { code: _ean.code },
-        });
-        if (!eanDB) {
-          eanDB = await this.prodEanRepo.save(_ean, { reload: true });
-        }
-        eanArray.push(eanDB);
+        _ean.product = prod;
+        this.prodEanRepo.save(_ean, { reload: true });
+        const _eanDB = await this.logger.warn(
+          `_ean is ${JSON.stringify(_ean, null, 2)}`,
+        );
+        // let eanDB = await this.prodEanRepo.findOne({
+        //   where: { code: _ean.code },
+        // });
+        // if (!eanDB) {
+        //   eanDB = await this.prodEanRepo.save(_ean, { reload: true });
+        // }
+        // eanArray.push(eanDB);
       }
       // this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
-      prod.eans = eanArray;
+      // prod.eans = eanArray;
     }
 
+    console.log(`dto.ximage ${JSON.stringify(dto.ximage, null, 2)}`);
     if (dto.ximage) {
-      const ximage = await this.filesService.getXtrProdImage(dto.ximage);
+      let ximage = await this.filesService.getXtrProdImage(dto.ximage);
+      this.logger.log(
+        `check ximage retuned ${JSON.stringify(ximage, null, 2)}`,
+      );
       if (!ximage) {
-        await this.filesService.uploadXtrStockFile(
+        ximage = await this.filesService.uploadXtrStockFile(
           dto.ximage,
           'ximage',
           prod.id,
         );
+        this.logger.log(`ximage after save ${JSON.stringify(ximage, null, 2)}`);
       }
+      prod.ximage = ximage;
     }
 
     if (dto.ximage2) {
-      const ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
+      let ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
       if (!ximage2) {
-        await this.filesService.uploadXtrStockFile(
+        ximage2 = await this.filesService.uploadXtrStockFile(
           dto.ximage2,
           'ximage2',
           prod.id,
         );
       }
+      prod.ximage2;
     }
     if (dto.ximage3) {
       const ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
@@ -325,27 +363,116 @@ export class XtraderService {
       }
     }
     if (dto.bigmulti2) {
-      const bigmulti2 = await this.filesService.getXtrProdImage(dto.bigmulti2);
+      let bigmulti2 = await this.filesService.getXtrProdImage(dto.bigmulti2);
       if (!bigmulti2) {
-        await this.filesService.uploadXtrStockFile(
+        bigmulti2 = await this.filesService.uploadXtrStockFile(
           dto.bigmulti2,
           'bigmulti2',
           prod.id,
         );
       }
+      prod.bigmulti2 = bigmulti2;
     }
 
     if (dto.bigmulti3) {
-      const bigmulti3 = await this.filesService.getXtrProdImage(dto.bigmulti3);
+      let bigmulti3 = await this.filesService.getXtrProdImage(dto.bigmulti3);
       if (!bigmulti3) {
-        await this.filesService.uploadXtrStockFile(
+        bigmulti3 = await this.filesService.uploadXtrStockFile(
           dto.bigmulti3,
           'bigmulti3',
           prod.id,
         );
       }
+      prod.bigmulti3 = bigmulti3;
     }
-
+    _prod = await this.prodRepo.save(prod, { reload: true });
     return _prod;
+  }
+
+  public async getProduct(id: number): Promise<XTR_PRODUCT> {
+    const prod = await this.prodRepo.findOne({
+      relations: [
+        'thumb',
+        'ximage',
+        'ximage2',
+        'ximage3',
+        'ximage4',
+        'ximage5',
+        'multi1',
+        'multi2',
+        'multi3',
+        'bigmulti1',
+        'bigmulti2',
+        'bigmulti3',
+        'feature',
+        'brand',
+        'attributes',
+        'attributes.attributeValues',
+        'category',
+        'eans',
+      ],
+      where: { id },
+    });
+
+    return prod;
+  }
+  public async getProductIds(): Promise<number[]> {
+    const prods = await this.prodRepo.find({
+      select: {
+        id: true,
+      },
+    });
+
+    let ids: number[] = [];
+    for (const p of prods) {
+      if (p.id) {
+        ids.push(p.id);
+      }
+    }
+    return ids;
+  }
+
+  public async getProductsFiltered(
+    filterValue: XtrProductFilterDto,
+  ): Promise<XTR_PRODUCT[]> {
+    const title = filterValue.searchParam;
+    try {
+      const products = await this.prodRepo.find({
+        where: [
+          {
+            name: ILike(`%${title}%`),
+          },
+          {
+            description: ILike(`%${title}%`),
+          },
+        ],
+
+        relations: [
+          'thumb',
+          'ximage',
+          'ximage2',
+          'ximage3',
+          'ximage4',
+          'ximage5',
+          'multi1',
+          'multi2',
+          'multi3',
+          'bigmulti1',
+          'bigmulti2',
+          'bigmulti3',
+          'feature',
+          'brand',
+          'attributes',
+          'atrributes.attributeValues',
+          'category',
+          'eans',
+        ],
+      });
+
+      return products;
+    } catch (err) {
+      this.logger.warn('Error getting products');
+      throw new BadRequestException('Error getting products');
+    }
   }
 }

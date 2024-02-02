@@ -89,6 +89,9 @@ export class Country extends BaseEntity {
   @Column({ name: 'edc_code', type: 'smallint', default: 0, nullable: true })
   edcCountryCode: number;
 
+  @Column({ name: 'delivery-active', type: 'boolean', default: false })
+  deliveryActive: boolean;
+
   @ManyToMany(() => LangIso639, (lang) => lang)
   languages: LangIso639[];
 

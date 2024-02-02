@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { XtrCategoryDto } from './dtos/xtr-category.dto';
 import { XtraderService } from './xtrader.service';
 import { XTR_CATEGORY } from './entity/xtr-Category.entity';
 import { FindOneNumberParams } from 'src/utils/findOneParamString';
 import { XtrProductDto } from './dtos/xtr-product.dto';
+import { XTR_PRODUCT } from './entity/xtr-product.entity';
+import { XtrProductFilterDto } from './dtos/xtr-prod-filter.dto';
 
 @Controller()
 export class XtraderController {
@@ -25,7 +27,22 @@ export class XtraderController {
   }
 
   @Post('/xtrProd')
-  async newProduct(@Body() dto: XtrProductDto) {
+  async newProduct(@Body() dto: XtrProductDto): Promise<XTR_PRODUCT> {
     return this.productService.newProduct(dto);
+  }
+
+  @Get('/xtrProd/:id')
+  async getProduct(@Param() { id }: FindOneNumberParams): Promise<XTR_PRODUCT> {
+    return await this.productService.getProduct(parseInt(id));
+  }
+
+  @Get('/xtrProductId')
+  async getProductId(): Promise<number[]> {
+    return await this.productService.getProductIds();
+  }
+
+  @Get('/xtrProductFiltered')
+  async getProductFiltered(@Query() searchParam: XtrProductFilterDto) {
+    return this.productService.getProductsFiltered(searchParam);
   }
 }

@@ -23,7 +23,7 @@ export class AttributeValue {
   title: string;
 
   @IsNumberString()
-  priceAdjustment: string;
+  priceAdjust: string;
 }
 
 export class AttributeValues {

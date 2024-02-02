@@ -15,6 +15,7 @@ import { EDC_PRODUCT } from 'src/edc/entities/edc-product';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
 import { EDC_CATEGORY } from 'src/edc/entities/edc-category.entity';
 import { CategoryDto } from './dtos/category.dto';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 
 @Controller()
 // @SerializeOptions({
@@ -40,8 +41,7 @@ export class CategoryController {
   @Get('/productByCategoryId')
   public async productByCategoryid(
     @Query() dto: CategoryIdDto,
-  ): Promise<EDC_PRODUCT[] | ResponseMessageDto> {
-    const res = await this.catService.getCategoryProducts(dto);
-    return res;
+  ): Promise<XTR_PRODUCT[] | ResponseMessageDto> {
+    return await this.catService.getCategoryProducts(dto);
   }
 }

@@ -17,7 +17,7 @@ export class PRODUCT_VENDOR extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'name', type: 'varchar', length: 50, nullable: true })
   name: string;
 
   @OneToMany(() => CUSTOMER_ORDER, (order: CUSTOMER_ORDER) => order.vendor)

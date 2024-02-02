@@ -36,14 +36,46 @@ export class DeliveryCharge extends BaseEntity {
   @Column({ name: 'weight-uom', type: 'varchar' })
   uom: string;
 
-  @Column({ name: 'min-weight', type: 'integer' })
+  @Column({
+    name: 'min-weight',
+    type: 'numeric',
+    precision: 5,
+    scale: 3,
+    nullable: true,
+  })
   minWeight: number;
 
-  @Column({ name: 'max-weight', type: 'integer' })
+  @Column({
+    name: 'max-weight',
+    type: 'numeric',
+    precision: 5,
+    scale: 3,
+    nullable: true,
+  })
   maxWeight: number;
 
-  @Column({ type: 'decimal', precision: 8, scale: 2 })
+  @Column({ name: 'charge', type: 'decimal', precision: 8, scale: 2 })
   amount: number;
+
+  @Column({ name: 'min-days', type: 'smallint', nullable: true })
+  minDays: number;
+
+  @Column({ name: 'max-days', type: 'smallint', nullable: true })
+  maxDays: number;
+
+  @Column({
+    name: 'duration-description',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  durationDescription: string;
+
+  @Column({ name: 'has_tracking', type: 'boolean', default: false })
+  hasTracking: boolean;
+
+  @Column({ name: 'has_lost_claim', type: 'boolean', default: false })
+  hasLostClaim: boolean;
 
   @Exclude()
   @CreateDateColumn()

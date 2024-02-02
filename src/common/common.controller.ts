@@ -76,6 +76,11 @@ export class CommonController {
     return await this.commonService.getCountriesEdc();
   }
 
+  @Get('/country/delivery')
+  public async getCountryDelivery(): Promise<Country[]> {
+    return await this.commonService.getCountriesDelivery();
+  }
+
   @Put('/country')
   public async saveCountry(@Body() dto: CountryUpdateDTO): Promise<number> {
     return this.commonService.saveCountry(dto);

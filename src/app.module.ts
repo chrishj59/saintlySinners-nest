@@ -24,6 +24,7 @@ import { NotificationModule } from './notification/notification.module';
 import { CategoryModule } from './category/category.module';
 import { CustSerrvModule } from './cust-serrv/cust-serrv.module';
 import { XtraderModule } from './xtrader/xtrader.module';
+import { XtraderCategoryModule } from './xtrader-category/xtrader-category.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { XtraderModule } from './xtrader/xtrader.module';
     CategoryModule,
     CustSerrvModule,
     XtraderModule,
+    XtraderCategoryModule,
 
     //ProductModule,
   ],

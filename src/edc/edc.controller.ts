@@ -57,15 +57,15 @@ export class EdcController {
     return this.edcService.getProductSingle(parseInt(id));
   }
 
-  @Get('/product')
-  async getProducts(): Promise<EDC_PRODUCT[]> {
-    return this.edcService.getProducts();
-  }
+  // @Get('/product')
+  // async getProducts(): Promise<EDC_PRODUCT[]> {
+  //   return this.edcService.getProducts();
+  // }
 
-  @Get('/productId')
-  async getProductId(): Promise<EDC_PRODUCT[]> {
-    return this.edcService.getProductIds();
-  }
+  // @Get('/productId')
+  // async getProductId(): Promise<EDC_PRODUCT[]> {
+  //   return this.edcService.getProductIds();
+  // }
 
   @Get('/productFiltered')
   async getProductFiltered(@Query() id: EdcProductDto) {

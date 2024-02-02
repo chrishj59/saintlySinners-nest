@@ -81,6 +81,11 @@ export class CommonService {
     delCharge.maxWeight = dto.maxWeight;
     delCharge.minWeight = dto.minWeight;
     delCharge.uom = dto.uom;
+    delCharge.maxDays = dto.maxDays;
+    delCharge.minDays = dto.minDays;
+    delCharge.durationDescription = dto.durationDescription;
+    delCharge.hasLostClaim = dto.hasLostClaim;
+    delCharge.hasTracking = dto.hasTracking;
     const vendor = await this.vendorRepository.findOne({
       where: { id: dto.vendorId },
     });
@@ -107,7 +112,11 @@ export class CommonService {
     deliveryCharge.maxWeight = dto.maxWeight;
     deliveryCharge.minWeight = dto.minWeight;
     deliveryCharge.uom = dto.uom;
-
+    deliveryCharge.minDays = dto.minDays;
+    deliveryCharge.maxDays = dto.maxDays;
+    deliveryCharge.durationDescription = dto.durationDescription;
+    deliveryCharge.hasLostClaim = dto.hasLostClaim;
+    deliveryCharge.hasTracking = dto.hasTracking;
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
@@ -123,7 +132,9 @@ export class CommonService {
     deliveryCharge.courier = courier;
     deliveryCharge.country = country;
     deliveryCharge.vendor = vendor;
-    return await this.delChargeRepository.save(deliveryCharge);
+    return await this.delChargeRepository.save(deliveryCharge, {
+      reload: true,
+    });
   }
 
   public async getCountryNames(): Promise<Country[]> {
@@ -153,6 +164,11 @@ export class CommonService {
     return countries;
   }
 
+  public async getCountriesDelivery(): Promise<Country[]> {
+    return await this.countryRepository.find({
+      where: { deliveryActive: true },
+    });
+  }
   public async saveCountry(dto: CountryUpdateDTO): Promise<number> {
     const { affected } = await this.countryRepository.update(
       { id: dto.id },
