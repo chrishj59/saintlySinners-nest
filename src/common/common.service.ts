@@ -13,6 +13,12 @@ import { DeliveryCharge } from './entity/delivery-charges.entity';
 import { DeliveryCourier } from './entity/delivery-courier.entity';
 import DeliveryChargeNotFoundException from './exceptions/deliveryChargeNotFound.exception';
 import { CountryUpdateDTO } from './dtos/country-update.dto';
+import {
+  DeliveryRemoteLocationDto,
+  DeliveryRemoteLocationUpdateDto,
+} from './dtos/delivery-remote-location.dto';
+import { DELIVERY_REMOTE_LOCATION } from './entity/delivery-remote-location';
+import RemoteDeliveryChargeNotFoundException from './exceptions/remoteDeliveryChargeNotFoundException';
 
 @Injectable()
 export class CommonService {
@@ -25,6 +31,8 @@ export class CommonService {
     private vendorRepository: Repository<PRODUCT_VENDOR>,
     @InjectRepository(DeliveryCharge)
     private delChargeRepository: Repository<DeliveryCharge>,
+    @InjectRepository(DELIVERY_REMOTE_LOCATION)
+    private delRemoteChargeRepository: Repository<DELIVERY_REMOTE_LOCATION>,
   ) {}
 
   logger = new Logger('Common service');
@@ -64,6 +72,75 @@ export class CommonService {
     return _courier;
   }
 
+  public async addDeliveryRemoteLocation(
+    dto: DeliveryRemoteLocationDto,
+  ): Promise<DELIVERY_REMOTE_LOCATION> {
+    this.logger.log(
+      `addDeliveryRemoteLocation called with ${JSON.stringify(dto, null, 2)}`,
+    );
+    const deliveryCharge = await this.delChargeRepository.findOne({
+      where: { id: dto.deliveryId },
+    });
+    if (!deliveryCharge) {
+      throw new BadRequestException('no valid dilvery id');
+    }
+    deliveryCharge.hasRemoteCharge = true;
+    await this.delChargeRepository.save(deliveryCharge);
+    const remoteDelCharge: DELIVERY_REMOTE_LOCATION =
+      new DELIVERY_REMOTE_LOCATION();
+
+    (remoteDelCharge.postCode = dto.postCodePart),
+      (remoteDelCharge.remoteCharge = dto.remoteCharge),
+      (remoteDelCharge.deliveryCharge = deliveryCharge),
+      (remoteDelCharge.days = dto.days);
+
+    const _remoteDelCharge = await this.delRemoteChargeRepository.save(
+      remoteDelCharge,
+      { reload: true },
+    );
+
+    return _remoteDelCharge;
+  }
+
+  public async updateDeliveryRemoteLocation(
+    dto: DeliveryRemoteLocationUpdateDto,
+  ): Promise<DELIVERY_REMOTE_LOCATION> {
+    this.logger.log(
+      `updateDeliveryRemoteLocation called with ${JSON.stringify(
+        dto,
+        null,
+        2,
+      )}`,
+    );
+    // const deliveryCharge = await this.delChargeRepository.findOne({
+    //   where: { id: dto.deliveryId },
+    // });
+    // if (!deliveryCharge) {
+    //   throw new BadRequestException('no valid dilvery id');
+    // }
+    // // deliveryCharge.hasRemoteCharge = true;
+    // await this.delChargeRepository.save(deliveryCharge);
+    // const remoteDelCharge: DELIVERY_REMOTE_LOCATION =
+    //   new DELIVERY_REMOTE_LOCATION();
+    const remoteDelCharge = await this.delRemoteChargeRepository.findOne({
+      where: { id: dto.id },
+    });
+
+    if (!remoteDelCharge) {
+      throw new RemoteDeliveryChargeNotFoundException(dto.id.toString());
+    }
+
+    remoteDelCharge.postCode = dto.postCodePart;
+    remoteDelCharge.remoteCharge = dto.remoteCharge;
+    remoteDelCharge.days = dto.days;
+
+    const _remoteDelCharge = await this.delRemoteChargeRepository.save(
+      remoteDelCharge,
+      { reload: true },
+    );
+
+    return _remoteDelCharge;
+  }
   public async addDeliveryCharge(
     dto: DeliveryChargeDto,
   ): Promise<DeliveryCharge> {
@@ -98,7 +175,7 @@ export class CommonService {
 
   public async allDeliveryCharges(): Promise<DeliveryCharge[]> {
     return await this.delChargeRepository.find({
-      relations: ['vendor', 'country', 'courier'],
+      relations: ['vendor', 'country', 'courier', 'remoteLocations'],
     });
   }
 
@@ -187,6 +264,16 @@ export class CommonService {
     return await this.courierRepository.find();
   }
 
+  async deleteRemoteDeliveryCharge(id: string): Promise<ResponseMessageDto> {
+    const deleteResponse = await this.delRemoteChargeRepository.softDelete(id);
+    if (!deleteResponse.affected) {
+      throw new RemoteDeliveryChargeNotFoundException(id);
+    }
+    return {
+      status: MessageStatusEnum.SUCCESS,
+      message: `Deleted ${deleteResponse.affected} remote delivery charge`,
+    };
+  }
   async deleteCategory(id: string): Promise<ResponseMessageDto> {
     const deleteResponse = await this.delChargeRepository.softDelete(id);
     if (!deleteResponse.affected) {

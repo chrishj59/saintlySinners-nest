@@ -11,7 +11,9 @@ import {
 } from '@nestjs/common';
 
 import { ResponseMessageDto } from '../dtos/response-message-dto';
-import FindOneStringParams from '../utils/findOneParamString';
+import FindOneStringParams, {
+  FindOneNumberParams,
+} from '../utils/findOneParamString';
 import { CommonService } from './common.service';
 import { CountryDto } from './dtos/country.dto';
 import { CourierDto } from './dtos/courier.dto';
@@ -19,6 +21,12 @@ import { DeliveryChargeDto } from './dtos/deliveryCharge.dto';
 import { Country } from './entity/country.entity';
 import { DeliveryCourier } from './entity/delivery-courier.entity';
 import { CountryUpdateDTO } from './dtos/country-update.dto';
+import {
+  DeliveryRemoteLocationDto,
+  DeliveryRemoteLocationUpdateDto,
+} from './dtos/delivery-remote-location.dto';
+import daysToWeeks from 'date-fns/esm/daysToWeeks';
+import { DELIVERY_REMOTE_LOCATION } from './entity/delivery-remote-location';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -42,10 +50,29 @@ export class CommonController {
     return this.commonService.addDeliveryCharge(dto);
   }
 
+  @Post('/deliveryRemoteLocation')
+  public async addDeliveryRemoteLocation(
+    @Body() dto: DeliveryRemoteLocationDto,
+  ): Promise<DELIVERY_REMOTE_LOCATION> {
+    return this.commonService.addDeliveryRemoteLocation(dto);
+  }
+
+  @Put('/deliveryRemoteLocation')
+  public async updateDeliveryRemoteLocation(
+    @Body() dto: DeliveryRemoteLocationUpdateDto,
+  ): Promise<DELIVERY_REMOTE_LOCATION> {
+    return this.commonService.updateDeliveryRemoteLocation(dto);
+  }
+
+  @Delete('/deliveryRemoteLocation/:id')
+  public async deleteDEliveryRemoteLocation(
+    @Param() postCode: FindOneNumberParams,
+  ): Promise<ResponseMessageDto> {
+    return await this.commonService.deleteRemoteDeliveryCharge(postCode.id);
+  }
+
   @Put('/deliveryCharge')
-  public async updateDeliveryCharge(
-    @Body() dto: DeliveryChargeDto, // @Body() dto: DeliveryChargeDto, //: Promise<DeliveryCharge>
-  ) {
+  public async updateDeliveryCharge(@Body() dto: DeliveryChargeDto) {
     return await this.commonService.updateDeliveyCharge(dto);
   }
 

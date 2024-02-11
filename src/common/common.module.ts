@@ -11,6 +11,7 @@ import { CountryState } from './entity/countryState.entity';
 import { DeliveryCharge } from './entity/delivery-charges.entity';
 import { DeliveryCourier } from './entity/delivery-courier.entity';
 import { LangIso639 } from './entity/iso_639_lang.entity';
+import { DELIVERY_REMOTE_LOCATION } from './entity/delivery-remote-location';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { LangIso639 } from './entity/iso_639_lang.entity';
       DeliveryCharge,
       DeliveryCourier,
       PRODUCT_VENDOR,
+      DELIVERY_REMOTE_LOCATION,
     ]),
   ],
   controllers: [CommonController],

@@ -252,7 +252,6 @@ export class RemoteFilesService {
     try {
       const resp = await client.send(putCommand);
       const result = resp.$metadata.httpStatusCode;
-      this.logger.log(`s3 result code: ${result}`);
       let newFile = this.custInvRepo.create({
         key: key,
         order: { id: orderId },
@@ -332,13 +331,13 @@ export class RemoteFilesService {
         bigmulti3 = prodId;
         break;
     }
-    this.logger.log(`ximage after switch ${ximage}`);
+    this.logger.log(`ximageid after switch ${ximage}`);
     let imgFileBuff: Buffer;
     try {
       let imgFile = await this.httpService.axiosRef.get(imgUrl, {
         responseType: 'arraybuffer',
       });
-      this.logger.log(`imgFile `);
+
       imgFileBuff = imgFile.data;
       const client = new S3Client({});
       const key = fileName;
@@ -400,7 +399,6 @@ export class RemoteFilesService {
             id: bigmulti3,
           },
         });
-        this.logger.log(`file to save ${JSON.stringify(newFile, null, 2)}`);
         newFile = await this.xtrProdRepo.save(newFile, {
           reload: true,
         });
@@ -412,10 +410,14 @@ export class RemoteFilesService {
     } catch (err) {
       if (axios.isAxiosError(err)) {
         this.logger.warn(`Axios error ${JSON.stringify(err.status)}`);
-        this.logger.warn(
-          `Axios message ${JSON.stringify(err.response.statusText)}`,
-        );
-        this.logger.warn(`Axios message ${JSON.stringify(err.message)}`);
+        if (err.response) {
+          this.logger.warn(
+            `Axios message ${JSON.stringify(err.response.statusText)}`,
+          );
+          this.logger.warn(`Axios message ${JSON.stringify(err.message)}`);
+        } else {
+          this.logger.warn(`err ${JSON.stringify(err, null, 2)}`);
+        }
       }
       this.logger.warn(`Could not find image from xtrader ${fileName} `);
     }

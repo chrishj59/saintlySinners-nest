@@ -8,6 +8,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   VersionColumn,
@@ -15,6 +16,8 @@ import {
 
 import { Country } from './country.entity';
 import { DeliveryCourier } from './delivery-courier.entity';
+import { DELIVERY_REMOTE_LOCATION } from './delivery-remote-location';
+import { boolean } from 'joi';
 
 @Entity({ name: 'delivery-charge' })
 export class DeliveryCharge extends BaseEntity {
@@ -76,6 +79,15 @@ export class DeliveryCharge extends BaseEntity {
 
   @Column({ name: 'has_lost_claim', type: 'boolean', default: false })
   hasLostClaim: boolean;
+
+  @Column({ name: 'has_remote_charge', type: 'boolean', default: false })
+  hasRemoteCharge: boolean;
+
+  @OneToMany(
+    () => DELIVERY_REMOTE_LOCATION,
+    (remoteLocation) => remoteLocation.deliveryCharge,
+  )
+  remoteLocations: DeliveryCharge[];
 
   @Exclude()
   @CreateDateColumn()
