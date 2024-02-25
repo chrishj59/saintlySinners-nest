@@ -86,13 +86,26 @@ export class CommonService {
     }
     deliveryCharge.hasRemoteCharge = true;
     await this.delChargeRepository.save(deliveryCharge);
-    const remoteDelCharge: DELIVERY_REMOTE_LOCATION =
-      new DELIVERY_REMOTE_LOCATION();
-
-    (remoteDelCharge.postCode = dto.postCodePart),
-      (remoteDelCharge.remoteCharge = dto.remoteCharge),
-      (remoteDelCharge.deliveryCharge = deliveryCharge),
-      (remoteDelCharge.days = dto.days);
+    // const remoteDelCharge: DELIVERY_REMOTE_LOCATION =
+    //   new DELIVERY_REMOTE_LOCATION();
+    let remoteDelCharge: DELIVERY_REMOTE_LOCATION;
+    remoteDelCharge = await this.delRemoteChargeRepository.findOne({
+      where: {
+        postCode: dto.postCodePart,
+        deliveryCharge: { id: dto.deliveryId },
+      },
+    });
+    this.logger.log(
+      `addremote location found ${JSON.stringify(remoteDelCharge, null, 2)}`,
+    );
+    if (!remoteDelCharge) {
+      remoteDelCharge = new DELIVERY_REMOTE_LOCATION();
+    }
+    remoteDelCharge.postCode = dto.postCodePart;
+    remoteDelCharge.remoteCharge = dto.remoteCharge;
+    remoteDelCharge.deliveryCharge = deliveryCharge;
+    remoteDelCharge.days = dto.days;
+    remoteDelCharge.surcharge = dto.surcharge;
 
     const _remoteDelCharge = await this.delRemoteChargeRepository.save(
       remoteDelCharge,
@@ -133,6 +146,7 @@ export class CommonService {
     remoteDelCharge.postCode = dto.postCodePart;
     remoteDelCharge.remoteCharge = dto.remoteCharge;
     remoteDelCharge.days = dto.days;
+    remoteDelCharge.surcharge = dto.surcharge;
 
     const _remoteDelCharge = await this.delRemoteChargeRepository.save(
       remoteDelCharge,
@@ -176,6 +190,7 @@ export class CommonService {
   public async allDeliveryCharges(): Promise<DeliveryCharge[]> {
     return await this.delChargeRepository.find({
       relations: ['vendor', 'country', 'courier', 'remoteLocations'],
+      order: { courier: { name: 'ASC' } },
     });
   }
 

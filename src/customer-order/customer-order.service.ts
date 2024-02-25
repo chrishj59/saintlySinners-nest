@@ -37,6 +37,7 @@ import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
 import { getDay } from 'date-fns';
 import { isAfter } from 'date-fns';
 import { format, add } from 'date-fns';
+import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 type prodLine = {
@@ -89,11 +90,11 @@ export class CustomerOrderService {
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
-
-    const prods = await this.prodRepo
-      .createQueryBuilder('edc_product')
-      .where('edc_product.artnr IN (:...artnr)', { artnr: dto.products })
-      .getMany();
+    this.logger.log(`called save order with ${JSON.stringify(dto, null, 2)}`);
+    // const prods = await this.prodRepo
+    //   .createQueryBuilder('edc_product')
+    //   .where('edc_product.artnr IN (:...artnr)', { artnr: dto.products })
+    //   .getMany();
     const inv_lines: CUSTOMER_ORDER_LINE[] = [];
     let orderGoodsAmount: number = 0;
 
@@ -101,38 +102,38 @@ export class CustomerOrderService {
     let orderVAtAmount: number = 0;
 
     let OrderPayable: number = 0;
-    const _artnrs: string[] = dto.products;
-    _artnrs.map((el) => {
-      const prod = prods.find((p: EDC_PRODUCT) => p.artnr === el);
-      if (prod === undefined) {
-        this.logger.warn(`could not find prod with artner: ${el}`);
-      } else {
-        inv_lines.findIndex;
-        const invLineIdx = inv_lines.findIndex(
-          (invEl: CUSTOMER_ORDER_LINE) => invEl.prodRef === el,
-        );
-        if (invLineIdx === -1) {
-          const _invLine: CUSTOMER_ORDER_LINE = new CUSTOMER_ORDER_LINE();
-          (_invLine.prodRef = prod.artnr),
-            (_invLine.description = prod.title),
-            (_invLine.quantity = 1),
-            (_invLine.price = prod.b2c.toString()),
-            (_invLine.vatRate = prod.vatRateUk / 100),
-            (_invLine.lineTotal = prod.b2c.toString());
-          _invLine.edcProduct = prod;
+    // const _artnrs: string[] = dto.products;
+    // _artnrs.map((el) => {
+    //   const prod = prods.find((p: EDC_PRODUCT) => p.artnr === el);
+    //   if (prod === undefined) {
+    //     this.logger.warn(`could not find prod with artner: ${el}`);
+    //   } else {
+    //     inv_lines.findIndex;
+    //     const invLineIdx = inv_lines.findIndex(
+    //       (invEl: CUSTOMER_ORDER_LINE) => invEl.prodRef === el,
+    //     );
+    //     if (invLineIdx === -1) {
+    //       const _invLine: CUSTOMER_ORDER_LINE = new CUSTOMER_ORDER_LINE();
+    //       (_invLine.prodRef = prod.artnr),
+    //         (_invLine.description = prod.title),
+    //         (_invLine.quantity = 1),
+    //         (_invLine.price = prod.b2c.toString()),
+    //         (_invLine.vatRate = prod.vatRateUk / 100),
+    //         (_invLine.lineTotal = prod.b2c.toString());
+    //       _invLine.edcProduct = prod;
 
-          inv_lines.push(_invLine);
-        } else {
-          const _invLine: CUSTOMER_ORDER_LINE = inv_lines[invLineIdx];
-          _invLine.quantity++;
+    //       inv_lines.push(_invLine);
+    //     } else {
+    //       const _invLine: CUSTOMER_ORDER_LINE = inv_lines[invLineIdx];
+    //       _invLine.quantity++;
 
-          _invLine.lineTotal = (
-            parseFloat(_invLine.price) * _invLine.quantity
-          ).toString();
-          inv_lines[invLineIdx] = _invLine;
-        }
-      }
-    });
+    //       _invLine.lineTotal = (
+    //         parseFloat(_invLine.price) * _invLine.quantity
+    //       ).toString();
+    //       inv_lines[invLineIdx] = _invLine;
+    //     }
+    //   }
+    // });
 
     /** Calculate oreder total net, vat and payable */
     inv_lines.map((line: CUSTOMER_ORDER_LINE) => {
@@ -141,6 +142,9 @@ export class CustomerOrderService {
       orderVAtAmount += vat;
     });
 
+    if (1 === 1) {
+      return;
+    }
     /** VAT reg - when registered add VAT to payable */
     OrderPayable = orderGoodsAmount;
 
@@ -171,28 +175,34 @@ export class CustomerOrderService {
     custOrder.total = OrderPayable;
     custOrder.currencyCode = dto.currencyCode;
     if (dto.oneTimeCustomer) {
-      custOrder.customerTitle = dto.customer.customerTitle;
-      custOrder.name = dto.customer.name;
-      custOrder.houseNumber = dto.customer.houseNumber;
-      custOrder.houseName = dto.customer.houseName;
-      custOrder.street = dto.customer.street;
-      custOrder.city = dto.customer.city;
-      custOrder.county = dto.customer.county;
-      custOrder.postCode = dto.customer.postCode;
-      custOrder.zip = dto.customer.zip;
-      custOrder.telphone = dto.customer.telphone;
-      custOrder.email = dto.customer.email;
-      custOrder.country = country;
-      custOrder.orderLines = inv_lines;
+      const customerOneTime = new ONE_TIME_CUSTOMER();
+
+      customerOneTime.title = dto.customer.title;
+      customerOneTime.firstName = dto.customer.firstName;
+      // custOrder.houseNumber = dto.customer.hous§eNumber;
+      // custOrder.houseName = dto.customer.houseName;
+      customerOneTime.street = dto.customer.street;
+      customerOneTime.street2 = dto.customer.street2;
+      customerOneTime.city = dto.customer.city;
+      customerOneTime.county = dto.customer.county;
+      customerOneTime.postCode = dto.customer.postCode;
+      // oneTimeCustomer.zip = dto.customer.zip;
+      customerOneTime.telephone = dto.customer.telephone;
+      customerOneTime.email = dto.customer.email;
+
+      custOrder.customerOneTime = customerOneTime;
     } else {
       custOrder.customer = customer;
     }
+    custOrder.country = country;
+    custOrder.orderLines = inv_lines;
     let custOrderUpdated = await this.custOrderRepo.save(custOrder, {
       reload: true,
     });
 
     if (custOrderUpdated) {
-      await this.createPDF(custOrderUpdated);
+      //TODO: create PDF invoice
+      // await this.createPDF(custOrderUpdated);
 
       return {
         status: MessageStatusEnum.SUCCESS,
@@ -299,46 +309,48 @@ export class CustomerOrderService {
   `;
     return html;
   }
-  async updateCustomerOrder(
-    id: string,
-    custOrder: EditCustomerOrderDto,
-  ): Promise<CustOrderUpdatedResponseDto> {
-    const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
 
-    const resultstatus =
-      result.affected === 1
-        ? MessageStatusEnum.SUCCESS
-        : MessageStatusEnum.WARNING;
-    const orderUpdated = await this.custOrderRepo.findOne({
-      where: { id: id },
-      relations: ['invoicePdf', 'orderLines'],
-    });
-    const invPdf = await this.getCustomerInvoice(id);
-    const email = process.env.ADMIN_EMAIL;
-    //const text: 'paid'
+  //TODO: correct product on update
+  // async updateCustomerOrder(
+  //   id: string,
+  //   custOrder: EditCustomerOrderDto,
+  // ): Promise<CustOrderUpdatedResponseDto> {
+  //  const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
 
-    await this.notificationService.notifyEmail({
-      email,
-      text: `Payment received for order: ${orderUpdated.orderNumber} EDC payment due ${orderUpdated.vendTotalPayable}`,
-    });
+  //   const resultstatus =
+  //     result.affected === 1
+  //       ? MessageStatusEnum.SUCCESS
+  //       : MessageStatusEnum.WARNING;
+  //   const orderUpdated = await this.custOrderRepo.findOne({
+  //     where: { id: id },
+  //     relations: ['invoicePdf', 'orderLines'],
+  //   });
+  //   const invPdf = await this.getCustomerInvoice(id);
+  //   const email = process.env.ADMIN_EMAIL;
+  //   //const text: 'paid'
 
-    const custEmail: string = orderUpdated.email;
-    const subject: string = 'Your SaintlySinners Invoice';
+  //   await this.notificationService.notifyEmail({
+  //     email,
+  //     text: `Payment received for order: ${orderUpdated.orderNumber} EDC payment due ${orderUpdated.vendTotalPayable}`,
+  //   });
 
-    const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
-    const pdfBuffer = Buffer.from(invPdf);
-    await this.notificationService.customerInvoiceEmail(
-      custEmail,
-      subject,
-      body,
-      pdfBuffer,
-    );
+  //   const custEmail: string = orderUpdated.customerOneTime.email;
+  //   const subject: string = 'Your SaintlySinners Invoice';
 
-    return {
-      status: resultstatus,
-      orderMessage: { orderId: id, rowsUpdated: result.affected },
-    };
-  }
+  //   const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
+  //   const pdfBuffer = Buffer.from(invPdf);
+  //   await this.notificationService.customerInvoiceEmail(
+  //     custEmail,
+  //     subject,
+  //     body,
+  //     pdfBuffer,
+  //   );
+
+  //   return {
+  //     status: resultstatus,
+  //     orderMessage: { orderId: id, rowsUpdated: result.affected },
+  //   };
+  // }
 
   async getCustomerInvoice(id: any): Promise<Uint8Array> {
     const order = await this.custOrderRepo.findOne({
@@ -394,7 +406,7 @@ export class CustomerOrderService {
     try {
       const getCommand = new GetObjectCommand({
         Bucket: 'saintly-sinners-public-bucket',
-        Key: 'dainis-graveris-y2cOf7SfeMI-unsplash.jpg',
+        Key: 'logo.jpg',
       });
       const response = await this.s3.send(getCommand);
       const byteArray: Uint8Array | undefined =
@@ -442,7 +454,7 @@ export class CustomerOrderService {
       //   ? order.houseName
       //   : null +
       // (order.houseNumber < 0 ? order.houseNumber : null) +
-      order.street;
+      order.customerOneTime.street;
 
     doc
       .fontSize(10)
@@ -459,13 +471,17 @@ export class CustomerOrderService {
 
       .font('Helvetica-Bold')
       .text('Sold to:', 50, this.customerInformationTop + 60)
-      .text(order.name, 50, this.customerInformationTop + 75)
+      .text(
+        `${order.customerOneTime.firstName} ${order.customerOneTime.lastName}`,
+        50,
+        this.customerInformationTop + 75,
+      )
       .font('Helvetica')
       .text(address1, 50, this.customerInformationTop + 90)
-      .text(order.city, 50, this.customerInformationTop + 105)
-      .text(order.county, 50, this.customerInformationTop + 120)
+      .text(order.customerOneTime.city, 50, this.customerInformationTop + 105)
+      .text(order.customerOneTime.county, 50, this.customerInformationTop + 120)
       .text(
-        order.postCode.length > 0 ? order.postCode : order.zip.toString(),
+        order.customerOneTime.postCode,
         50,
         this.customerInformationTop + 135,
       )

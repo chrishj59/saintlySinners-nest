@@ -16,12 +16,18 @@ export class DeliveryCourier extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'name', type: 'varchar', length: 50, nullable: true })
   name: string;
 
   @OneToMany(() => DeliveryCharge, (charge) => charge.courier)
   deliveryCharges: DeliveryCharge[];
 
+  @Column({
+    name: 'delivery-module',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
   @CreateDateColumn()
   createdDate: Date;
   @UpdateDateColumn()

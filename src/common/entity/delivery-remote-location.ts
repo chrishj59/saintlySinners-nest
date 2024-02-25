@@ -14,6 +14,7 @@ import {
   VersionColumn,
 } from 'typeorm';
 import { DeliveryCharge } from './delivery-charges.entity';
+import { boolean } from 'joi';
 
 @Entity({ name: 'delivery-remote_location' })
 @Index(['postCode', 'deliveryCharge'], { unique: true })
@@ -26,6 +27,9 @@ export class DELIVERY_REMOTE_LOCATION extends BaseEntity {
 
   @Column({ name: 'charge', type: 'numeric', scale: 2, precision: 10 })
   remoteCharge: number;
+
+  @Column({ name: 'surcharge', type: 'boolean', default: false })
+  surcharge: boolean;
 
   @Column({ name: 'days', type: 'int', nullable: true })
   days: number;

@@ -21,6 +21,8 @@ import {
 } from 'typeorm';
 
 import { CUSTOMER_ORDER_LINE } from './customerOrderLine.entity';
+import { ONE_TIME_CUSTOMER } from './customerOrderCustomer.entity';
+import { CUSTOMER_ORDER_PRODUCT } from './customerOrderProduct.entity';
 
 @Entity({ name: 'customer_order' })
 export class CUSTOMER_ORDER extends BaseEntity {
@@ -56,47 +58,56 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({ name: 'oneTimeCustomer', default: false })
   oneTimeCustomer: boolean;
 
-  @Column({ name: 'title', nullable: true })
-  customerTitle: string;
+  @OneToOne(() => ONE_TIME_CUSTOMER)
+  @JoinColumn()
+  customerOneTime: ONE_TIME_CUSTOMER;
+  // @Column({ name: 'title', nullable: true })
+  // title: string;
 
-  @Column({ name: 'customer_name', nullable: true })
-  name: string;
+  // @Column({ name: 'first_name', nullable: true })
+  // firstName: string;
 
-  @Column({ name: 'house_number', type: 'integer', nullable: true })
-  houseNumber: number;
+  // @Column({ name: 'last_name', nullable: true })
+  // lastName: string;
 
-  @Column({ name: 'house_name', type: 'varchar', length: 20, nullable: true })
-  houseName: string;
+  // @Column({ name: 'house_number', type: 'integer', nullable: true })
+  // houseNumber: number;
 
-  @Column({ name: 'street', type: 'varchar', length: 50, nullable: true })
-  street: string;
+  // @Column({ name: 'house_name', type: 'varchar', length: 20, nullable: true })
+  // houseName: string;
 
-  @Column({ name: 'city', type: 'varchar', length: 50, nullable: true })
-  city: string;
+  // @Column({ name: 'street', type: 'varchar', length: 64, nullable: true })
+  // street: string;
 
-  @Column({ name: 'county', type: 'varchar', length: 50, nullable: true })
-  county: string;
+  // @Column({ name: 'street2', type: 'varchar', length: 35, nullable: true })
+  // street2: string;
+
+  // @Column({ name: 'city', type: 'varchar', length: 50, nullable: true })
+  // city: string;
+
+  // @Column({ name: 'county', type: 'varchar', length: 50, nullable: true })
+  // county: string;
 
   @ManyToOne(() => Country, (country: Country) => country.orders)
   country: Country;
 
-  @Column({ name: 'postCode', type: 'varchar', length: 10, nullable: true })
-  postCode: string;
+  // @Column({ name: 'postCode', type: 'varchar', length: 10, nullable: true })
+  // postCode: string;
 
-  @Column({ name: 'zip', type: 'smallint', nullable: true })
-  zip: number;
+  // @Column({ name: 'zip', type: 'smallint', nullable: true })
+  // zip: number;
 
-  @Column({ name: 'telephone', type: 'varchar', length: 20, nullable: true })
-  telphone: string;
+  // @Column({ name: 'telephone', type: 'varchar', length: 20, nullable: true })
+  // telphone: string;
 
-  @Column({
-    name: 'email',
-    type: 'varchar',
-    length: 254,
-    nullable: true,
-    default: '',
-  })
-  email: string;
+  // @Column({
+  //   name: 'email',
+  //   type: 'varchar',
+  //   length: 254,
+  //   nullable: true,
+  //   default: '',
+  // })
+  // email: string;
 
   @Column({ name: 'goods_amount', type: 'double precision' })
   goodsValue: number;
@@ -122,6 +133,15 @@ export class CUSTOMER_ORDER extends BaseEntity {
     },
   )
   orderLines: CUSTOMER_ORDER_LINE[];
+
+  @OneToMany(
+    () => CUSTOMER_ORDER_PRODUCT,
+    (product: CUSTOMER_ORDER_PRODUCT) => product.order,
+    {
+      cascade: ['insert', 'update', 'remove'],
+    },
+  )
+  products: CUSTOMER_ORDER_PRODUCT[];
 
   @OneToOne(() => CUSTOMER_INVOICE_PDF, {
     eager: true,

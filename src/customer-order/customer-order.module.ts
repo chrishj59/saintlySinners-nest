@@ -11,13 +11,17 @@ import { CustomerOrderController } from './customer-order.controller';
 import { CustomerOrderService } from './customer-order.service';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
+import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
+import { CUSTOMER_ORDER_PRODUCT } from './entities/customerOrderProduct.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       CUSTOMER_ORDER,
+      ONE_TIME_CUSTOMER,
       PRODUCT_VENDOR,
       CUSTOMER_ORDER_LINE,
+      CUSTOMER_ORDER_PRODUCT,
       EDC_PRODUCT,
       Country,
       USER,

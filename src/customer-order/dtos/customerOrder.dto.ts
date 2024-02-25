@@ -16,22 +16,32 @@ import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
 class Customer {
   @IsOptional()
   @IsString()
-  customerTitle: string;
+  title: string;
+
+  // @IsString()
+  // name: string;
 
   @IsString()
-  name: string;
+  firstName: string;
 
-  @IsOptional()
-  @IsNumber()
-  houseNumber: number;
-
-  @IsOptional()
   @IsString()
-  houseName: string;
+  lastName: string;
+
+  // @IsOptional()
+  // @IsNumber()
+  // houseNumber: number;
+
+  // @IsOptional()
+  // @IsString()
+  // houseName: string;
 
   @IsOptional()
   @IsString()
   street: string;
+
+  @IsOptional()
+  @IsString()
+  street2: string;
 
   @IsOptional()
   @IsString()
@@ -55,18 +65,33 @@ class Customer {
 
   @IsOptional()
   @IsString()
-  telphone: string;
+  telephone: string;
 
   @IsEmail()
   email: string;
+
+  @IsOptional()
+  @IsString()
+  orderRef: string;
+
+  @IsOptional()
+  @IsNumber()
+  ioss: number;
 }
 
 export class Product {
+  model: string;
+  quantity: number;
+}
+export class Products {
+  // @ValidateNested({ each: true })
+  // @IsArray()
+  // @ArrayNotEmpty()
+  // @ArrayMinSize(2)
+  // artnr: string[];
   @ValidateNested({ each: true })
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayMinSize(2)
-  artnr: string[];
+  @Type(() => Product)
+  product: Product[];
 }
 
 export class CustomerOrderDto {
@@ -100,11 +125,16 @@ export class CustomerOrderDto {
   @IsString()
   currencyCode: string;
 
-  // @Type(() => Product)
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayMinSize(1)
-  products: string[];
+  @IsOptional()
+  @IsString()
+  deliveryCompany: string;
+
+  @Type(() => Products)
+  products: Products[];
+  // @IsArray()
+  // @ArrayNotEmpty()
+  // @ArrayMinSize(1)
+  // products:ProductList[] ;
 }
 
 export class EditCustomerOrderDto {

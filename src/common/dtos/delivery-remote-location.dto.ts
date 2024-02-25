@@ -1,4 +1,6 @@
+import { boolean } from 'joi';
 import {
+  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -18,6 +20,10 @@ export class DeliveryRemoteLocationDto {
   @IsOptional()
   @IsNumber()
   days: number;
+
+  @IsOptional()
+  @IsBoolean()
+  surcharge: boolean;
 }
 
 export class DeliveryRemoteLocationUpdateDto {
@@ -29,6 +35,10 @@ export class DeliveryRemoteLocationUpdateDto {
 
   @IsNumber()
   remoteCharge: number;
+
+  @IsOptional()
+  @IsBoolean()
+  surcharge: boolean;
 
   @IsOptional()
   @IsNumber()
