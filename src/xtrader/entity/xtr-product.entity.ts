@@ -22,6 +22,7 @@ import { XTR_FEATURE } from './xtr-feature.entity';
 import { XTR_PROD_ATTRIBUTE_EAN } from './xtr-prod-attribute-ean.entity';
 import { XTR_PROD_ATTRIBUTE } from './xtr-prod-attribute.entity';
 import { XtrProdStockStatusEnum } from '../enum/xtrProd-status.enum';
+import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 
 @Entity({ name: 'xtr-product', orderBy: { id: 'ASC' } })
 export class XTR_PRODUCT extends BaseEntity {
@@ -335,6 +336,12 @@ export class XTR_PRODUCT extends BaseEntity {
     },
   )
   eans: XTR_PROD_ATTRIBUTE_EAN[];
+
+  @OneToMany(
+    () => CUSTOMER_ORDER_LINE,
+    (line: CUSTOMER_ORDER_LINE) => line.edcProduct,
+  )
+  orderLines: CUSTOMER_ORDER_LINE[];
 
   @Exclude()
   @DeleteDateColumn()

@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 
 import { CUSTOMER_ORDER } from './customerOrder.entity';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 
 @Entity('customer_order_line')
 export class CUSTOMER_ORDER_LINE extends BaseEntity {
@@ -26,6 +27,9 @@ export class CUSTOMER_ORDER_LINE extends BaseEntity {
   @ManyToOne(() => EDC_PRODUCT, (prod: EDC_PRODUCT) => prod.orderLines)
   edcProduct: EDC_PRODUCT;
 
+  @ManyToOne(() => XTR_PRODUCT, (prod: XTR_PRODUCT) => prod.orderLines)
+  xtraderProduct: XTR_PRODUCT;
+
   @Column({ name: 'unit_price', type: 'double precision' })
   price: string;
 
@@ -37,6 +41,12 @@ export class CUSTOMER_ORDER_LINE extends BaseEntity {
 
   @Column({ name: 'description' })
   description: string;
+
+  @Column({ name: 'attrib_name', type: 'varchar', length: 20, nullable: true })
+  attributeName: string;
+
+  @Column({ name: 'attrib_value', type: 'varchar', length: 50, nullable: true })
+  attributeValue: string;
 
   @Column({ name: 'vat_rate', type: 'double precision' })
   vatRate: number;

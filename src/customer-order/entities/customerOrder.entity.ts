@@ -23,6 +23,7 @@ import {
 import { CUSTOMER_ORDER_LINE } from './customerOrderLine.entity';
 import { ONE_TIME_CUSTOMER } from './customerOrderCustomer.entity';
 import { CUSTOMER_ORDER_PRODUCT } from './customerOrderProduct.entity';
+import { Variant } from '../../edc/dtos/add-product.dto';
 
 @Entity({ name: 'customer_order' })
 export class CUSTOMER_ORDER extends BaseEntity {
@@ -58,7 +59,9 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({ name: 'oneTimeCustomer', default: false })
   oneTimeCustomer: boolean;
 
-  @OneToOne(() => ONE_TIME_CUSTOMER)
+  @OneToOne(() => ONE_TIME_CUSTOMER, {
+    cascade: ['insert', 'update', 'remove'],
+  })
   @JoinColumn()
   customerOneTime: ONE_TIME_CUSTOMER;
   // @Column({ name: 'title', nullable: true })
@@ -120,6 +123,22 @@ export class CUSTOMER_ORDER extends BaseEntity {
 
   @Column({ name: 'currency_code', type: 'char', length: 3 })
   currencyCode: string;
+
+  @Column({
+    name: 'xtrader_confirm_order',
+    type: 'varchar',
+    length: 10,
+    nullable: true,
+  })
+  confirmOrder: string;
+
+  @Column({
+    name: 'xtrader_error',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  xtraderError: string;
 
   @ManyToOne(() => USER, (customer: USER) => customer.orders)
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })

@@ -29,9 +29,10 @@ export class CustomerOrderController {
   constructor(private customerService: CustomerOrderService) {}
 
   @Get('/order')
-  async getOrder() {
-    return 'order to be implemented';
+  async getOrder(): Promise<CUSTOMER_ORDER[]> {
+    return await this.customerService.getOrders();
   }
+
   @Post('/customerOrder')
   async saveOrder(
     @Body() dto: CustomerOrderDto,
@@ -39,20 +40,22 @@ export class CustomerOrderController {
     return await this.customerService.saveOrder(dto);
   }
 
-  // @Post('/customerOrderPaid/:id')
-  // public async updateCustomerOrder2(
-  //   @Param() paramId: FindOneStringParams,
-  //   @Body() custOrder: EditCustomerOrderDto,
-  // ): Promise<CustOrderUpdatedResponseDto> {
-  //   console.log(`id is: ${JSON.stringify(paramId.id)}`);
-  //   const updatedOrder: CustOrderUpdatedResponseDto =
-  //     await this.customerService.updateCustomerOrder(paramId.id, custOrder);
+  @Patch('/customerOrderPaid/:id')
+  public async updateCustomerOrder(
+    @Param() paramId: FindOneStringParams,
+    @Body() custOrder: EditCustomerOrderDto,
+  ): Promise<CustOrderUpdatedResponseDto> {
+    console.log(`id is: ${JSON.stringify(paramId.id)}`);
+    console.log(`body is ${JSON.stringify(custOrder)}`);
 
-  //   return {
-  //     status: updatedOrder.status,
-  //     orderMessage: updatedOrder.orderMessage,
-  //   };
-  // }
+    const updatedOrder: CustOrderUpdatedResponseDto =
+      await this.customerService.customerOrderPaid(paramId.id, custOrder);
+
+    return {
+      status: updatedOrder.status,
+      orderMessage: updatedOrder.orderMessage,
+    };
+  }
 
   // @Patch('/customerOrder/:id')
   // public async updateCustomerOrder(

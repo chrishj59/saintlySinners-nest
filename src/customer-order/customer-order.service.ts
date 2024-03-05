@@ -13,6 +13,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectAws } from 'aws-sdk-v3-nest';
+import { HttpService } from '@nestjs/axios';
 import PDFDocument from 'pdfkit';
 import { Country } from 'src/common/entity/country.entity';
 import { ResponseMessageDto } from 'src/dtos/response-message-dto';
@@ -26,6 +27,8 @@ import { EDC_PRODUCT } from '../edc/entities/edc-product';
 import {
   CustomerOrderDto,
   EditCustomerOrderDto,
+  Product,
+  Products,
 } from './dtos/customerOrder.dto';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
@@ -38,8 +41,12 @@ import { getDay } from 'date-fns';
 import { isAfter } from 'date-fns';
 import { format, add } from 'date-fns';
 import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
+import { url } from 'inspector';
+import { XTRADER_RESULT_INTERFACE } from 'src/common/interfaces/xtraderResult.interface';
 
 //import { S3Client } from '@aws-sdk/client-s3';
+
 type prodLine = {
   artnr: string;
 };
@@ -62,8 +69,8 @@ export class CustomerOrderService {
   constructor(
     @InjectRepository(PRODUCT_VENDOR)
     private vendorRepository: Repository<PRODUCT_VENDOR>,
-    @InjectRepository(EDC_PRODUCT)
-    private prodRepo: Repository<EDC_PRODUCT>,
+    @InjectRepository(XTR_PRODUCT)
+    private prodRepo: Repository<XTR_PRODUCT>,
     @InjectRepository(Country)
     private countryRepo: Repository<Country>,
     @InjectRepository(USER)
@@ -77,12 +84,41 @@ export class CustomerOrderService {
     private readonly configService: ConfigService,
     private readonly filesService: RemoteFilesService,
     private readonly notificationService: NotificationService,
+    private readonly httpService: HttpService,
   ) {}
 
   logger = new Logger('CustomerOrderService');
   PDFDocument = require('pdfkit');
 
   customerInformationTop = 200;
+
+  createCompareFn<T extends Object>(
+    property: keyof T,
+    sort_order: 'asc' | 'desc',
+  ) {
+    const compareFn = (a: T, b: T) => {
+      const val1 = a[property];
+      const val2 = b[property];
+      const order = sort_order !== 'desc' ? 1 : -1;
+
+      switch (typeof val1) {
+        case 'number': {
+          const valb = val2 as number;
+          const result = val1 - valb;
+          return result * order;
+        }
+        case 'string': {
+          const valb = val2 as string;
+          const result = val1.localeCompare(valb);
+          return result * order;
+        }
+        // add other cases like boolean, etc.
+        default:
+          return 0;
+      }
+    };
+    return compareFn;
+  }
 
   async saveOrder(
     dto: CustomerOrderDto,
@@ -95,13 +131,58 @@ export class CustomerOrderService {
     //   .createQueryBuilder('edc_product')
     //   .where('edc_product.artnr IN (:...artnr)', { artnr: dto.products })
     //   .getMany();
+
     const inv_lines: CUSTOMER_ORDER_LINE[] = [];
     let orderGoodsAmount: number = 0;
 
-    /* VAT reg: not usede yet */
+    /* VAT reg: not used yet */
     let orderVAtAmount: number = 0;
 
     let OrderPayable: number = 0;
+
+    let vendorAmount: number = 0;
+
+    const sortedProducts = dto.products.sort((a, b) =>
+      a.model.localeCompare(b.model),
+    );
+
+    const models = sortedProducts.map((p) => p.model);
+    const prods = await this.prodRepo
+      .createQueryBuilder('xtr-product')
+      .where('xtr-product.model IN (:...models)', {
+        models: models,
+      })
+      .getMany();
+
+    console.log(`prods found ${JSON.stringify(prods, null, 2)}`);
+    if (prods) {
+      prods.map((p: XTR_PRODUCT) => {
+        const _prods = dto.products.find(
+          (item: Product) => item.model === p.model,
+        );
+        if (!prods) {
+          return;
+        }
+        const _lineTotal = (
+          Number(p.retailPrice) * Number(_prods.quantity)
+        ).toFixed(2);
+        vendorAmount = vendorAmount + p.goodsPrice;
+        const invLine = new CUSTOMER_ORDER_LINE();
+        invLine.description = p.name;
+        invLine.xtraderProduct = p;
+        invLine.prodRef = p.model;
+        this.logger.log(`p.retail_price ${p.retailPrice.toString()}`);
+        // invLine.price = p.retailPrice
+        invLine.price = Number(p.retailPrice).toFixed(2);
+        invLine.quantity = _prods.quantity;
+        invLine.vatRate = Number(process.env.VAT_STD) / 100;
+        invLine.lineTotal = _lineTotal;
+        invLine.attributeName = _prods.attributeName;
+        invLine.attributeValue = _prods.attributeValue;
+        inv_lines.push(invLine);
+        this.logger.log(`invLine ${JSON.stringify(invLine)}`);
+      });
+    }
     // const _artnrs: string[] = dto.products;
     // _artnrs.map((el) => {
     //   const prod = prods.find((p: EDC_PRODUCT) => p.artnr === el);
@@ -135,25 +216,23 @@ export class CustomerOrderService {
     //   }
     // });
 
-    /** Calculate oreder total net, vat and payable */
+    /** Calculate order total net, vat and payable */
     inv_lines.map((line: CUSTOMER_ORDER_LINE) => {
       orderGoodsAmount += parseFloat(line.lineTotal);
       const vat = parseFloat(line.lineTotal) * line.vatRate;
       orderVAtAmount += vat;
     });
 
-    if (1 === 1) {
-      return;
-    }
     /** VAT reg - when registered add VAT to payable */
     OrderPayable = orderGoodsAmount;
+    const vendorPayable = Number(vendorAmount) + Number(dto.delivery);
 
     let country: Country;
     let customer: USER;
     if (dto.oneTimeCustomer) {
       country = await this.countryRepo.findOne({
         where: {
-          edcCountryCode: dto.customer.country,
+          id: dto.customer.country,
         },
       });
 
@@ -167,7 +246,7 @@ export class CustomerOrderService {
     const custOrder = new CUSTOMER_ORDER();
     custOrder.vendor = vend;
     custOrder.lines = inv_lines;
-
+    custOrder.vendTotalPayable = vendorPayable;
     custOrder.stripeSession = dto.stripeSessionId;
     custOrder.oneTimeCustomer = dto.oneTimeCustomer;
     custOrder.goodsValue = orderGoodsAmount;
@@ -175,10 +254,12 @@ export class CustomerOrderService {
     custOrder.total = OrderPayable;
     custOrder.currencyCode = dto.currencyCode;
     if (dto.oneTimeCustomer) {
+      this.logger.log('oneTimeCustomer ${dto.oneTimeCustomer}');
       const customerOneTime = new ONE_TIME_CUSTOMER();
 
       customerOneTime.title = dto.customer.title;
       customerOneTime.firstName = dto.customer.firstName;
+      customerOneTime.lastName = dto.customer.lastName;
       // custOrder.houseNumber = dto.customer.hous§eNumber;
       // custOrder.houseName = dto.customer.houseName;
       customerOneTime.street = dto.customer.street;
@@ -196,13 +277,14 @@ export class CustomerOrderService {
     }
     custOrder.country = country;
     custOrder.orderLines = inv_lines;
+
     let custOrderUpdated = await this.custOrderRepo.save(custOrder, {
       reload: true,
     });
 
     if (custOrderUpdated) {
       //TODO: create PDF invoice
-      // await this.createPDF(custOrderUpdated);
+      await this.createPDF(custOrderUpdated);
 
       return {
         status: MessageStatusEnum.SUCCESS,
@@ -310,47 +392,146 @@ export class CustomerOrderService {
     return html;
   }
 
-  //TODO: correct product on update
-  // async updateCustomerOrder(
-  //   id: string,
-  //   custOrder: EditCustomerOrderDto,
-  // ): Promise<CustOrderUpdatedResponseDto> {
-  //  const result: UpdateResult = await this.custOrderRepo.update(id, custOrder);
+  private async sendOrderToXtrader(
+    customerOrder: CUSTOMER_ORDER,
+  ): Promise<XTRADER_RESULT_INTERFACE> {
+    const vendorCode = process.env.XTRADER_CODE;
+    const vendorPass = process.env.XTRADER_VENDOR_PASS;
+    const xtaderPassword = process.env.XTRADER_PASSWORD;
+    const accountid = process.env.XTRADER_ACCOUNT_ID;
+    const param = `Type=ORDEREXTOC&testingmode=TRUE&VendorCode=${accountid}&VendorTxCode=IDWEB-126284-TESTMODE-5628-20100304022456&VenderPass=${xtaderPassword}&VenderSite=https://www.saintlysinners.co.uk&Venderserial=J1amRk&ShippingModule=tracked24&postage=1&customerFirstName=Bob&customerLastName=Smith&deliveryCompany=Royal Mail Tracked24&deliveryAddress1=12 Balaam Street&deliveryAddress2=&deliveryTown=Plaistow&deliveryCounty=London&ddeliveryPostcode=NW13 8AQ&deliveryCountry=GB&deliveryTelephone=07711288977&notifyEmail=someEmail@test.com&originalOrdernumber=24&ioss=&ProductCodes=MODEL&Products=C13003{Size}X Large:1|0023:2&`;
 
-  //   const resultstatus =
-  //     result.affected === 1
-  //       ? MessageStatusEnum.SUCCESS
-  //       : MessageStatusEnum.WARNING;
-  //   const orderUpdated = await this.custOrderRepo.findOne({
-  //     where: { id: id },
-  //     relations: ['invoicePdf', 'orderLines'],
-  //   });
-  //   const invPdf = await this.getCustomerInvoice(id);
-  //   const email = process.env.ADMIN_EMAIL;
-  //   //const text: 'paid'
+    const url = `${process.env.XTRADER_URL}?${param}`;
+    this.logger.log(`xtraderURL ${url}`);
+    const orderRsp = await this.httpService.axiosRef.post<string>(url);
+    this.logger.log(
+      `xtrader orderAPI  returns ${JSON.stringify(orderRsp.data)}`,
+    );
 
-  //   await this.notificationService.notifyEmail({
-  //     email,
-  //     text: `Payment received for order: ${orderUpdated.orderNumber} EDC payment due ${orderUpdated.vendTotalPayable}`,
-  //   });
+    const deliveryUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
+    console.log(`deliveryUrl ${deliveryUrl}`);
+    const { data } = await this.httpService.axiosRef.post<string>(deliveryUrl);
+    this.logger.log(`Orderupdate  ${data}`);
 
-  //   const custEmail: string = orderUpdated.customerOneTime.email;
-  //   const subject: string = 'Your SaintlySinners Invoice';
+    const xtraderResult = orderRsp.data; //'DOSuccess|:|IDWEB_Order_id=f152566';
+    const resultArry = xtraderResult.split('|');
+    this.logger.log(`status ${resultArry[0]}`);
+    const xtraderResultCode = resultArry[0];
+    const valueArray = resultArry[2].split('=');
 
-  //   const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
-  //   const pdfBuffer = Buffer.from(invPdf);
-  //   await this.notificationService.customerInvoiceEmail(
-  //     custEmail,
-  //     subject,
-  //     body,
-  //     pdfBuffer,
-  //   );
+    return { status: xtraderResultCode, value: valueArray[1] };
+  }
 
-  //   return {
-  //     status: resultstatus,
-  //     orderMessage: { orderId: id, rowsUpdated: result.affected },
-  //   };
-  // }
+  async customerOrderPaid(
+    id: string,
+    custOrder: EditCustomerOrderDto,
+  ): Promise<CustOrderUpdatedResponseDto> {
+    this.logger.log(
+      `updateCustomerOrder payload custOrder ${JSON.stringify(
+        custOrder,
+        null,
+        2,
+      )}`,
+    );
+    const customerOrder = await this.custOrderRepo.findOne({ where: { id } });
+    if (!customerOrder) {
+      throw new BadRequestException(`Order does not exists for id: ${id}`);
+    }
+    customerOrder.stripeSession = custOrder.stripeSession;
+    customerOrder.orderStatus = edcOrderStatusEnum.STRIPE_PAID;
+
+    const result: UpdateResult = await this.custOrderRepo.update(
+      id,
+      customerOrder,
+    );
+
+    const resultstatus =
+      result.affected === 1
+        ? MessageStatusEnum.SUCCESS
+        : MessageStatusEnum.WARNING;
+    this.logger.log('Updated customer order ');
+    const orderUpdated = await this.custOrderRepo.findOne({
+      where: { id: id },
+      relations: ['customerOneTime', 'invoicePdf', 'orderLines'],
+    });
+
+    this.logger.log(`about to call this.getCustomerInvoice with id ${id}`);
+    const invPdf = await this.getCustomerInvoice(id);
+
+    this.logger.log('after call to notificationService.notifyEmail');
+    this.logger.log(`orderUpdated ${JSON.stringify(orderUpdated, null, 2)}`);
+    const custEmail: string = orderUpdated.customerOneTime.email;
+    const subject: string = 'Your SaintlySinners Invoice';
+
+    const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
+    const pdfBuffer = Buffer.from(invPdf);
+    await this.notificationService.customerInvoiceEmail(
+      custEmail,
+      subject,
+      body,
+      pdfBuffer,
+    );
+
+    this.logger.log(
+      `about to call sendOrderToXtrader with ${JSON.stringify(
+        orderUpdated,
+        null,
+        2,
+      )}`,
+    );
+    const xtraderStatus = await this.sendOrderToXtrader(orderUpdated);
+
+    if (xtraderStatus.status === 'DOSuccess') {
+      customerOrder.orderStatus = edcOrderStatusEnum.VENDOR_ORDERED;
+      customerOrder.confirmOrder = xtraderStatus.value;
+    } else if (xtraderStatus.status === 'DOFailed_insuf_funds') {
+      // need to top up
+      customerOrder.xtraderError = xtraderStatus.value;
+      const email = process.env.ADMIN_EMAIL;
+      //const text: 'paid'
+
+      this.logger.log(
+        `about to call notificationService.notifyEmail - insufficient funds`,
+      );
+      await this.notificationService.notifyEmail({
+        email,
+        subject: 'Insufficient funds for Xtrader Drop shipping',
+        text: `Payment received for order: ${orderUpdated.orderNumber} Xtrader payment due ${customerOrder.xtraderError}`,
+      });
+    } else {
+      // error with format of string
+      customerOrder.xtraderError = 'Xtrader OrderAPI string error';
+      const adminEmail = process.env.ADMIN_EMAIL;
+      //const text: 'paid'
+
+      this.logger.log(
+        `about to call notificationService.notifyEmail - Incorrect API string`,
+      );
+      this.logger.log(`call notifyemail with admin email ${adminEmail}`);
+
+      await this.notificationService.notifyEmail({
+        email: adminEmail,
+        subject: 'Error with Xtrader OrderAPI string',
+        text: `Payment received for order: ${orderUpdated.orderNumber} - BUT error from Xtrader ${customerOrder.xtraderError}`,
+      });
+    }
+
+    const vendorResult: UpdateResult = await this.custOrderRepo.update(
+      id,
+      customerOrder,
+    );
+
+    const vendoResultstatus =
+      vendorResult.affected === 1
+        ? MessageStatusEnum.SUCCESS
+        : MessageStatusEnum.WARNING;
+
+    this.logger.log(`vendoResult status ${vendoResultstatus}`);
+    return {
+      status: resultstatus,
+      orderMessage: { orderId: id, rowsUpdated: result.affected },
+    };
+  }
 
   async getCustomerInvoice(id: any): Promise<Uint8Array> {
     const order = await this.custOrderRepo.findOne({
@@ -599,8 +780,8 @@ export class CustomerOrderService {
 
     doc
       .fontSize(10)
-      .text(item.edcProduct.artnr, 50, y)
-      .text(item.edcProduct.title, 150, y)
+      .text(item.xtraderProduct.model, 50, y)
+      .text(item.xtraderProduct.name, 150, y)
 
       .text(this.formatAmount(price), 280, y, {
         width: 90,
@@ -632,6 +813,11 @@ export class CustomerOrderService {
       );
   }
 
+  async getOrders(): Promise<CUSTOMER_ORDER[]> {
+    this.logger.log('getOrders called');
+    const orders = await this.custOrderRepo.find();
+    return orders;
+  }
   formatDate(date: Date) {
     const day = date.getDate();
     const month = date.getMonth() + 1;
@@ -647,6 +833,4 @@ export class CustomerOrderService {
   private formatCurrency(cents) {
     return '€  ' + (cents / 100).toFixed(2);
   }
-
-  // save PDF fo aws-S3
 }

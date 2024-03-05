@@ -82,6 +82,8 @@ class Customer {
 export class Product {
   model: string;
   quantity: number;
+  attributeName?: string;
+  attributeValue?: string;
 }
 export class Products {
   // @ValidateNested({ each: true })
@@ -129,8 +131,12 @@ export class CustomerOrderDto {
   @IsString()
   deliveryCompany: string;
 
+  @IsOptional()
+  @IsNumber()
+  delivery: number;
+
   @Type(() => Products)
-  products: Products[];
+  products: Product[];
   // @IsArray()
   // @ArrayNotEmpty()
   // @ArrayMinSize(1)
@@ -178,7 +184,7 @@ export class EditCustomerOrderDto {
   @IsArray()
   @ArrayNotEmpty()
   @ArrayMinSize(1)
-  products: string[];
+  products: Products[];
 
   @IsOptional()
   @IsEnum(edcOrderStatusEnum)

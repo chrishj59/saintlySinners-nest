@@ -15,6 +15,7 @@ import { XTR_FEATURE } from './entity/xtr-feature.entity';
 import { XTR_PROD_ATTRIBUTE_EAN } from './entity/xtr-prod-attribute-ean.entity';
 import { XTR_ATTRIBUTE_VALUE } from './entity/xtr-attribute-value.entity';
 import { XTR_PROD_ATTRIBUTE } from './entity/xtr-prod-attribute.entity';
+import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { XTR_PROD_ATTRIBUTE } from './entity/xtr-prod-attribute.entity';
       XTR_FEATURE,
       XTR_ATTRIBUTE_VALUE,
       XTR_PROD_ATTRIBUTE,
+      CUSTOMER_ORDER_LINE,
     ]),
     RemoteFilesModule,
     HttpModule,

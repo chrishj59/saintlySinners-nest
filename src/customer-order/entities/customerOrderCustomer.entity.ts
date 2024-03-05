@@ -14,7 +14,7 @@ export class ONE_TIME_CUSTOMER extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'title', type: 'varchar', length: 10 })
+  @Column({ name: 'title', type: 'varchar', length: 10, nullable: true })
   title: string;
 
   @Column({ name: 'first_name', type: 'varchar', length: 50 })

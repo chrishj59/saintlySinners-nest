@@ -7,6 +7,10 @@ export class NotifyEmailDto {
   @IsOptional()
   @IsString()
   text: string;
+
+  @IsOptional()
+  @IsString()
+  subject: string;
 }
 
 export class InvoiceEmailDto {
