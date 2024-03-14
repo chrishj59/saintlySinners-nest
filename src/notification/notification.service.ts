@@ -1,52 +1,54 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodmailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
+import * as aws from '@aws-sdk/client-ses';
+import { SendEmailCommand } from '@aws-sdk/client-ses';
 import { InvoiceEmailDto, NotifyEmailDto } from '../dtos/notify-email.dtos';
+import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
+// import { MailerModuleOption } from 'src/interface/mailerModuleOption';
+
 @Injectable()
 export class NotificationService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService, // private readonly mailerOptions: MailerModuleOption,
+  ) {}
   logger = new Logger('NotificationService');
 
-  private readonly transporter = nodmailer.createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: this.configService.get('SMTP_USER'),
-      clientId: this.configService.get('GOOGLE_OAUTH_CLIENT_ID'),
-      clientSecret: this.configService.get('GOOGLE_OAUTH_CLIENT_SECRET'),
-      refreshToken: this.configService.get('GOOGLE_OAUTH_REFRESH_TOKEN'),
-    },
-    // host: 'smtp.gmail.com',
-    // port: 465,
-    // secure: true,
-    // auth: {
-    //   user: process.env.SMTP_USER,
-    //   pass: 'LYUfgi^6ySX8!ED7',
-    // },
-  });
-
   async notifyEmail({ email, subject, text }: NotifyEmailDto) {
-    const fromEmail = this.configService.get('SMTP_USER');
-    const toEmail = email;
+    this.logger.log(
+      `notifyEmail called with email ${email} subject: ${subject} `,
+    );
 
-    this.logger.log(`fromEmail ${fromEmail} to email ${toEmail}`);
-    // this.logger.log(`sender email ${this.configService.get('SMTP_USER')}`);
-    // this.logger.log(`user ${this.configService.get('SMTP_USER')}`);
-    // this.logger.log(
-    //   `clientId ${this.configService.get('GOOGLE_OAUTH_CLIENT_ID')}`,
-    // );
-    // this.logger.log(
-    //   `clientSecret ${this.configService.get('GOOGLE_OAUTH_CLIENT_SECRET')}`,
-    // );
-    // this.logger.log(
-    //   `refreshToken ${this.configService.get('GOOGLE_OAUTH_REFRESH_TOKEN')}`,
-    // );
-    await this.transporter.sendMail({
-      from: fromEmail, //this.configService.get('SMTP_USER'),
-      to: toEmail, //email,
-      subject: subject, // 'Saintly Sinners Order',
-      text,
+    const ses = new aws.SES({
+      apiVersion: '2010-12-01',
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
     });
+
+    const transporter = nodemailer.createTransport({
+      SES: { ses, aws },
+    });
+
+    this.logger.log('call transporter.sendMail');
+    transporter.sendMail(
+      {
+        from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
+        to: email,
+        subject,
+        text,
+      },
+      (err, info) => {
+        this.logger.log(`error ${JSON.stringify(err, null, 2)}`);
+
+        this.logger.log(
+          `messageid: ${JSON.stringify(info.messageId, null, 2)}`,
+        );
+      },
+    );
+    this.logger.warn('after this.transporter.sendMail ');
   }
 
   async customerInvoiceEmail(
@@ -55,29 +57,48 @@ export class NotificationService {
     html: string,
     pdfData: Buffer,
   ) {
-    await this.transporter.sendMail({
-      from: this.configService.get('SMTP_USER'),
-      to: email,
-      subject,
-      html,
-      attachments: [
-        {
-          filename: 'Invoice.pdf',
-          contentType: 'application/pdf',
-          content: pdfData,
-        },
-      ],
+    this.logger.log(
+      `customerInvoiceEmail called with pdfData length ${pdfData.byteLength}`,
+    );
+    const ses = new aws.SES({
+      apiVersion: '2010-12-01',
+      region: 'eu-west-2',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
     });
-    // TODO: send enail to customer
-    // const mailOptions = {
-    //   from: "XXXX",
-    //   to: "XXXX",
-    //   subject: `Subject`,
-    //   attachments: [{
-    //       filename: "Receipt.pdf",
-    //       contentType: 'application/pdf', // <- You also can specify type of the document
-    //       content: pdfBufferedFile // <- Here comes the buffer of generated pdf file
-    //   }]
-    // }
+
+    const transporter = nodemailer.createTransport({
+      SES: { ses, aws },
+    });
+
+    this.logger.log('call transporter.sendMail');
+    transporter.sendMail(
+      {
+        from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
+        to: email,
+        subject,
+        html,
+        attachments: [
+          {
+            filename: 'Invoice.pdf',
+            contentType: 'application/pdf',
+            content: pdfData,
+          },
+        ],
+      },
+      (err, info) => {
+        this.logger.log(`error ${JSON.stringify(err, null, 2)}`);
+        this.logger.log(`envelope ${JSON.stringify(info.envelope, null, 2)}`);
+        this.logger.log(
+          `customer email messageid: ${JSON.stringify(
+            info.messageId,
+            null,
+            2,
+          )}`,
+        );
+      },
+    );
   }
 }

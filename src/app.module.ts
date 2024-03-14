@@ -25,6 +25,7 @@ import { CategoryModule } from './category/category.module';
 import { CustSerrvModule } from './cust-serrv/cust-serrv.module';
 import { XtraderModule } from './xtrader/xtrader.module';
 import { XtraderCategoryModule } from './xtrader-category/xtrader-category.module';
+import { AwsModule } from './aws/aws.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { XtraderCategoryModule } from './xtrader-category/xtrader-category.modul
     CustSerrvModule,
     XtraderModule,
     XtraderCategoryModule,
+    AwsModule,
 
     //ProductModule,
   ],

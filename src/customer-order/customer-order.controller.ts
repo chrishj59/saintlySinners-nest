@@ -92,4 +92,9 @@ export class CustomerOrderController {
     const pdfStream = await this.customerService.getCustomerInvoice(id);
     return new StreamableFile(pdfStream);
   }
+
+  @Get('/orderStatus')
+  async getOrderStatus() {
+    return await this.customerService.getOrderStatus();
+  }
 }

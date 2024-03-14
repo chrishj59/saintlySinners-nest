@@ -15,6 +15,7 @@ import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
 import { CUSTOMER_ORDER_PRODUCT } from './entities/customerOrderProduct.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { HttpModule } from '@nestjs/axios';
+import { AwsModule } from 'src/aws/aws.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { HttpModule } from '@nestjs/axios';
     RemoteFilesModule,
     NotificationModule,
     HttpModule,
+    AwsModule,
   ],
 
   controllers: [CustomerOrderController],

@@ -220,7 +220,7 @@ export class CustomerOrderService {
     inv_lines.map((line: CUSTOMER_ORDER_LINE) => {
       orderGoodsAmount += parseFloat(line.lineTotal);
       const vat = parseFloat(line.lineTotal) * line.vatRate;
-      orderVAtAmount += vat;
+      orderVAtAmount += parseFloat(vat.toFixed());
     });
 
     /** VAT reg - when registered add VAT to payable */
@@ -399,23 +399,48 @@ export class CustomerOrderService {
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
     const xtaderPassword = process.env.XTRADER_PASSWORD;
     const accountid = process.env.XTRADER_ACCOUNT_ID;
-    const param = `Type=ORDEREXTOC&testingmode=TRUE&VendorCode=${accountid}&VendorTxCode=IDWEB-126284-TESTMODE-5628-20100304022456&VenderPass=${xtaderPassword}&VenderSite=https://www.saintlysinners.co.uk&Venderserial=J1amRk&ShippingModule=tracked24&postage=1&customerFirstName=Bob&customerLastName=Smith&deliveryCompany=Royal Mail Tracked24&deliveryAddress1=12 Balaam Street&deliveryAddress2=&deliveryTown=Plaistow&deliveryCounty=London&ddeliveryPostcode=NW13 8AQ&deliveryCountry=GB&deliveryTelephone=07711288977&notifyEmail=someEmail@test.com&originalOrdernumber=24&ioss=&ProductCodes=MODEL&Products=C13003{Size}X Large:1|0023:2&`;
-
-    const url = `${process.env.XTRADER_URL}?${param}`;
-    this.logger.log(`xtraderURL ${url}`);
-    const orderRsp = await this.httpService.axiosRef.post<string>(url);
     this.logger.log(
-      `xtrader orderAPI  returns ${JSON.stringify(orderRsp.data)}`,
+      `sendOrderToXtrader called with order ${JSON.stringify(
+        customerOrder,
+        null,
+        2,
+      )}`,
     );
+    const xtrData = {
+      Type: 'ORDEREXTOC',
+      testingmode: true,
+      VendorCode: process.env.XTRADER_ACCOUNT_ID, //55922,
+      VendorTxCode: 'IDWEB-126284-TESTMODE-5628-20100304022456',
+      VenderPass: process.env.XTRADER_VENDOR_PASS, //5886106859,
+      VenderSite: process.env.XTRADER_VENDOR_SITE, //'https://www.saintlysinners.co.uk',
+      Venderserial: process.env.XTRADER_CODE,
+      //'FkeOh0dx4EVrlXTn1TP%3D%3DgMwIzMxIjM5ADOwIDNyMVbWVXSGR2bZdFezpFWshTTU',
+      ShippingModule: 'tracked24',
+      postage: 1,
+      customerFirstName: 'Bob',
+      customerLastName: 'Smith',
+      deliveryAddress1: '12 Balaam Street',
+      deliveryAddress2: '',
+      deliveryTown: 'Plaistow',
+      deliveryCounty: 'London',
+      deliveryPostcode: 'NW13 8AQ',
+      deliveryCountry: 'GB',
+      ProductCodes: 'MODEL',
+      Products: 'GO-4:1',
+    };
+
+    const rs = await axios.post<string>(`${process.env.XTRADER_URL}`, xtrData, {
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    });
+    const xtraderResult = rs.data;
+    // console.warn(`xtraderResponse ${typeof xtraderResponse}`);
 
     const deliveryUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
     console.log(`deliveryUrl ${deliveryUrl}`);
     const { data } = await this.httpService.axiosRef.post<string>(deliveryUrl);
     this.logger.log(`Orderupdate  ${data}`);
 
-    const xtraderResult = orderRsp.data; //'DOSuccess|:|IDWEB_Order_id=f152566';
     const resultArry = xtraderResult.split('|');
-    this.logger.log(`status ${resultArry[0]}`);
     const xtraderResultCode = resultArry[0];
     const valueArray = resultArry[2].split('=');
 
@@ -553,6 +578,16 @@ export class CustomerOrderService {
     }
 
     return null;
+  }
+
+  async getOrderStatus() {
+    const vendorPass = process.env.XTRADER_VENDOR_PASS;
+
+    const accountid = process.env.XTRADER_ACCOUNT_ID;
+
+    const deliveryUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
+    const { data } = await this.httpService.axiosRef.post<string>(deliveryUrl);
+    return data;
   }
 
   private async createPDF(order: CUSTOMER_ORDER) {
@@ -815,7 +850,8 @@ export class CustomerOrderService {
 
   async getOrders(): Promise<CUSTOMER_ORDER[]> {
     this.logger.log('getOrders called');
-    const orders = await this.custOrderRepo.find();
+
+    const orders = await this.custOrderRepo.find({ relations: ['customer'] });
     return orders;
   }
   formatDate(date: Date) {

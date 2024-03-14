@@ -64,53 +64,9 @@ export class CUSTOMER_ORDER extends BaseEntity {
   })
   @JoinColumn()
   customerOneTime: ONE_TIME_CUSTOMER;
-  // @Column({ name: 'title', nullable: true })
-  // title: string;
-
-  // @Column({ name: 'first_name', nullable: true })
-  // firstName: string;
-
-  // @Column({ name: 'last_name', nullable: true })
-  // lastName: string;
-
-  // @Column({ name: 'house_number', type: 'integer', nullable: true })
-  // houseNumber: number;
-
-  // @Column({ name: 'house_name', type: 'varchar', length: 20, nullable: true })
-  // houseName: string;
-
-  // @Column({ name: 'street', type: 'varchar', length: 64, nullable: true })
-  // street: string;
-
-  // @Column({ name: 'street2', type: 'varchar', length: 35, nullable: true })
-  // street2: string;
-
-  // @Column({ name: 'city', type: 'varchar', length: 50, nullable: true })
-  // city: string;
-
-  // @Column({ name: 'county', type: 'varchar', length: 50, nullable: true })
-  // county: string;
 
   @ManyToOne(() => Country, (country: Country) => country.orders)
   country: Country;
-
-  // @Column({ name: 'postCode', type: 'varchar', length: 10, nullable: true })
-  // postCode: string;
-
-  // @Column({ name: 'zip', type: 'smallint', nullable: true })
-  // zip: number;
-
-  // @Column({ name: 'telephone', type: 'varchar', length: 20, nullable: true })
-  // telphone: string;
-
-  // @Column({
-  //   name: 'email',
-  //   type: 'varchar',
-  //   length: 254,
-  //   nullable: true,
-  //   default: '',
-  // })
-  // email: string;
 
   @Column({ name: 'goods_amount', type: 'double precision' })
   goodsValue: number;
@@ -135,10 +91,20 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({
     name: 'xtrader_error',
     type: 'varchar',
-    length: 50,
+    length: 100,
     nullable: true,
   })
   xtraderError: string;
+
+  @Column({
+    name: 'xtrader_status',
+    type: 'varchar',
+    nullable: true,
+  })
+  xtraderStatus: string;
+
+  @Column({ name: 'delivery_date', type: 'date', nullable: true })
+  deliveryDate: Date;
 
   @ManyToOne(() => USER, (customer: USER) => customer.orders)
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })
