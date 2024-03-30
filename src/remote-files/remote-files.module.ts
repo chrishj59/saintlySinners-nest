@@ -9,6 +9,7 @@ import { RemoteFilesService } from './remote-files.service';
 import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from './entity/stockFile.entity';
 import { XTR_CATEGORY_IMAGE_REMOTE_FILE } from './entity/xtrCategoryFile.entity';
 import { HttpModule } from '@nestjs/axios';
+import { XTR_BRAND_IMAGE_REMOTE_FILE } from './entity/xtraderBrandFile.entity';
 // import { XTR_CATEGORY } from 'src/xtrader/entity/xtr-Category.entity';
 // import { XtraderModule } from 'src/xtrader/xtrader.module';
 
@@ -20,6 +21,7 @@ import { HttpModule } from '@nestjs/axios';
       CUSTOMER_INVOICE_PDF,
       XTR_CATEGORY_IMAGE_REMOTE_FILE,
       XTR_PRODUCT_IMAGE_REMOTE_FILE,
+      XTR_BRAND_IMAGE_REMOTE_FILE,
     ]),
     HttpModule,
   ],

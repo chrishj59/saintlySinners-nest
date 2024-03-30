@@ -1,7 +1,5 @@
 import { Exclude } from 'class-transformer';
-
-import { XTR_CATEGORY } from 'src/xtrader/entity/xtr-Category.entity';
-
+import { XTR_BRAND } from 'src/xtrader/entity/xtr-brand.entity';
 import {
   Column,
   CreateDateColumn,
@@ -13,19 +11,16 @@ import {
   VersionColumn,
 } from 'typeorm';
 
-@Entity({ name: 'xtr_category_image' })
-export class XTR_CATEGORY_IMAGE_REMOTE_FILE {
+@Entity({ name: 'xtr_brand_image' })
+export class XTR_BRAND_IMAGE_REMOTE_FILE {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
   @Column({ name: 'aws-key', type: 'varchar', length: '100' })
   public key: string;
 
-  @Column({ name: 'location', nullable: true })
-  public location: string;
-
-  @OneToOne(() => XTR_CATEGORY, (cat: XTR_CATEGORY) => cat.image)
-  public cat: XTR_CATEGORY;
+  @OneToOne(() => XTR_BRAND, (brand: XTR_BRAND) => brand.image)
+  public brand: XTR_BRAND;
 
   @Exclude()
   @CreateDateColumn()

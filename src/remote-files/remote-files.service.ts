@@ -15,12 +15,13 @@ import { EDC_PRODUCT_FILE } from './entity/productFile.entity';
 import { PUBLIC_FILE } from './entity/publicFile.entity';
 import { XTR_CATEGORY_IMAGE_REMOTE_FILE } from './entity/xtrCategoryFile.entity';
 import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from './entity/stockFile.entity';
-
+import { XTR_BRAND_IMAGE_REMOTE_FILE } from './entity/xtraderBrandFile.entity';
 //import { S3 } from 'aws-sdk';
 //  import { Upload } from "@aws-sdk/lib-storage";
 import { HttpService } from '@nestjs/axios';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import axios from 'axios';
+
 @Injectable()
 export class RemoteFilesService {
   constructor(
@@ -34,6 +35,8 @@ export class RemoteFilesService {
     private xtrCatRepo: Repository<XTR_CATEGORY_IMAGE_REMOTE_FILE>,
     @InjectRepository(XTR_PRODUCT_IMAGE_REMOTE_FILE)
     private xtrProdRepo: Repository<XTR_PRODUCT_IMAGE_REMOTE_FILE>,
+    @InjectRepository(XTR_BRAND_IMAGE_REMOTE_FILE)
+    private xtrBrandRepo: Repository<XTR_BRAND_IMAGE_REMOTE_FILE>,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {}
@@ -129,6 +132,54 @@ export class RemoteFilesService {
     //   Key: file.key,
     // });
   }
+  Xtr;
+  public async updateXtrBrandFile(
+    brandId: number,
+    key: string,
+  ): Promise<XTR_BRAND_IMAGE_REMOTE_FILE> {
+    let newFile = this.xtrBrandRepo.create({
+      key: key,
+      brand: {
+        id: brandId,
+      },
+    });
+    newFile = await this.xtrBrandRepo.save(newFile, {
+      reload: true,
+    });
+    return newFile;
+  }
+  public async uploadXtrBrandFile(
+    dataBuffer: Buffer,
+    categoryID: number,
+    fileName: string,
+  ): Promise<XTR_BRAND_IMAGE_REMOTE_FILE> {
+    const client = new S3Client({});
+    const key = `XTR-BRAND-${fileName}`;
+    const command = new PutObjectCommand({
+      Bucket: this.configService.get('AWS_XTR_CAT_BUCKET_NAME'),
+      Key: key,
+      Body: dataBuffer,
+    });
+    try {
+      const response = await client.send(command);
+      if (response.$metadata.httpStatusCode !== 200) {
+        throw new BadRequestException(`Could not save ${fileName} to AWS `);
+      }
+      let newFile = this.xtrBrandRepo.create({
+        key: key,
+        brand: {
+          id: categoryID,
+        },
+      });
+      newFile = await this.xtrBrandRepo.save(newFile, {
+        reload: true,
+      });
+      return newFile;
+    } catch (err) {
+      throw new BadRequestException(JSON.stringify(err));
+    }
+  }
+
   public async uploadXtrCategoryFile(
     dataBuffer: Buffer,
     categoryID: number,

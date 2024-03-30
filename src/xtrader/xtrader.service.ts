@@ -15,6 +15,8 @@ import { XTR_PROD_ATTRIBUTE } from './entity/xtr-prod-attribute.entity';
 import { XTR_ATTRIBUTE_VALUE } from './entity/xtr-attribute-value.entity';
 import { XTR_PROD_ATTRIBUTE_EAN } from './entity/xtr-prod-attribute-ean.entity';
 import { XtrProductFilterDto } from './dtos/xtr-prod-filter.dto';
+import { XtrBrandNewDto } from './dtos/xtr-brand-new.dto';
+import { XtrBrandDto } from './dtos/xtr-brand.dto';
 
 @Injectable()
 export class XtraderService {
@@ -35,6 +37,25 @@ export class XtraderService {
     private readonly httpService: HttpService,
   ) {}
   private logger = new Logger('XtraderService');
+
+  public async updateBrand(dto: XtrBrandDto): Promise<XTR_BRAND> {
+    let brand = await this.brandRepo.findOne({ where: { id: dto.id } });
+    if (!brand) {
+      throw new BadRequestException(`No brand with id: ${dto.id}`);
+    }
+    brand.imageName = dto.imageName;
+    brand.name = dto.name;
+    brand.isFavourite = dto.isFavourite;
+    brand.ranking = dto.ranking;
+    const imageFile = await this.filesService.updateXtrBrandFile(
+      dto.id,
+      dto.imageKey,
+    );
+    brand.image = imageFile;
+
+    const _brand = await this.brandRepo.save(brand, { reload: true });
+    return _brand;
+  }
 
   public async newCategory(dto: XtrCategoryDto): Promise<XTR_CATEGORY> {
     // is does the parent exist
@@ -88,11 +109,22 @@ export class XtraderService {
     return cat;
   }
 
+  public async getAllBrands(): Promise<XTR_BRAND[]> {
+    try {
+      const brands = await this.brandRepo.find();
+      return brands;
+    } catch (err) {
+      this.logger.warn('Error finding brands');
+      throw new BadRequestException(
+        `Error getting brands ${JSON.stringify(err, null, 2)}`,
+      );
+    }
+  }
   public async getOneCategory(id: string): Promise<XTR_CATEGORY> {
     const _id = parseInt(id);
     try {
       const cat = await this.catRepo.findOne({ where: { id: _id } });
-      // this.logger.log(`find cat returned ${cat}`);
+
       return cat;
     } catch (err) {
       console.log(`Error getting one category ${JSON.stringify(err, null, 2)}`);
@@ -113,9 +145,6 @@ export class XtraderService {
   }
 
   async newProduct(dto: XtrProductDto) {
-    this.logger.log(
-      `new prodyct dto passed in ${JSON.stringify(dto, null, 2)}`,
-    );
     const prod = new XTR_PRODUCT();
     prod.id = dto.id;
     prod.weight = parseFloat(dto.weight);
@@ -158,14 +187,13 @@ export class XtraderService {
     );
     const cat = await this.getCategoryByName(dto.catName);
     prod.category = cat;
-    this.logger.log(``);
+
     let brand = await this.getBrand(dto.brand);
     if (!brand) {
       const _brand = new XTR_BRAND();
       _brand.name = dto.brand;
       const _brandDB = await this.brandRepo.save(_brand, { reload: true });
       brand = _brandDB;
-      // this.logger.log(`Brand saved ${JSON.stringify(_brandDB, null, 2)}`);
     }
     prod.brand = brand;
 
@@ -179,15 +207,12 @@ export class XtraderService {
           'thumb',
           prod.id,
         );
-        this.logger.log('after save thumb image');
       }
-      this.logger.log(`about to assign thumb to prod`);
+
       prod.thumb = thumb;
-      this.logger.log(`prod.thumb ${JSON.stringify(prod.thumb, null, 2)}`);
     }
     let _prod = await this.prodRepo.save(prod, { reload: true });
     if (dto.attribute) {
-      this.logger.log(`start dto.attribute`);
       let attribute = new XTR_PROD_ATTRIBUTE();
       attribute.attributeId = dto.attribute.id;
       attribute.name = dto.attribute.name;
@@ -196,7 +221,7 @@ export class XtraderService {
 
       const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
       const attrValues = dto.attribute.attributeValues;
-      this.logger.log(`attrValues ${JSON.stringify(attrValues, null, 2)}`);
+
       for (const attrVal of attrValues) {
         this.logger.warn(
           `attrVal at start of loop ${JSON.stringify(attrVal, null, 2)}`,
@@ -214,32 +239,16 @@ export class XtraderService {
           const attrValueDB = await this.attrValueRepo.save(_attrValue, {
             reload: true,
           });
-          this.logger.log(
-            `saved attrib value ${JSON.stringify(attrValueDB, null, 2)}`,
-          );
         }
-
-        // const _attrValue = new XTR_ATTRIBUTE_VALUE();
-
-        // this.logger.log(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
 
         attrValuesArray.push(_attrValue);
       }
 
       attribute.attributeValues = attrValuesArray;
       attribute = await this.attrRep.save(attribute, { reload: true });
-      // const attributes: XTR_PROD_ATTRIBUTE[] = [];
-      // attributes.push(attribute);
-      // this.logger.log(`attributes ${JSON.stringify(attributes, null, 2)}`);
-      // prod.attributes = attributes;
-      // this.logger.log(
-      //   `Prod attributes ${JSON.stringify(prod.attributes, null, 2)}`,
-      // );
     }
 
     if (dto.eans) {
-      // this.logger.log(`need to add eans`);
-
       const eanArray: XTR_PROD_ATTRIBUTE_EAN[] = [];
       for (const ean of dto.eans) {
         const _ean = new XTR_PROD_ATTRIBUTE_EAN();
@@ -265,16 +274,13 @@ export class XtraderService {
     console.log(`dto.ximage ${JSON.stringify(dto.ximage, null, 2)}`);
     if (dto.ximage) {
       let ximage = await this.filesService.getXtrProdImage(dto.ximage);
-      this.logger.log(
-        `check ximage retuned ${JSON.stringify(ximage, null, 2)}`,
-      );
+
       if (!ximage) {
         ximage = await this.filesService.uploadXtrStockFile(
           dto.ximage,
           'ximage',
           prod.id,
         );
-        this.logger.log(`ximage after save ${JSON.stringify(ximage, null, 2)}`);
       }
       prod.ximage = ximage;
     }

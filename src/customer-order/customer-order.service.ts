@@ -44,6 +44,7 @@ import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { url } from 'inspector';
 import { XTRADER_RESULT_INTERFACE } from 'src/common/interfaces/xtraderResult.interface';
+import { isIteratable } from 'src/utils/helpers';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 
@@ -91,6 +92,8 @@ export class CustomerOrderService {
   PDFDocument = require('pdfkit');
 
   customerInformationTop = 200;
+
+  ENV = process.env.NODE_ENV;
 
   createCompareFn<T extends Object>(
     property: keyof T,
@@ -585,9 +588,49 @@ export class CustomerOrderService {
 
     const accountid = process.env.XTRADER_ACCOUNT_ID;
 
-    const deliveryUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
-    const { data } = await this.httpService.axiosRef.post<string>(deliveryUrl);
-    return data;
+    const orderStatusUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
+    let { data } = await this.httpService.axiosRef.post<string>(orderStatusUrl);
+    const env = this.configService.get<string>('NODE_ENV'); //process.env.NODE_ENV;
+    this.logger.warn(`Order status returns ${JSON.stringify(data, null, 2)}`);
+    this.logger.log(`env: ${env}`);
+    if (env === 'development') {
+      data =
+        //   '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your orderwas displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER><ORDER ID="f152567"><TRACKING> Your orderwas displatched by Royal mail Your tracking number is JW099911111GB</TRACKING></ORDER></ORDERS>';
+        '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your orderwas displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER></ORDERS>';
+    }
+
+    const xml2js = require('xml2js');
+    let numUpdates: number = 0;
+    var parser = new xml2js.Parser();
+    const result = await parser.parseStringPromise(data);
+
+    const orders = result.ORDERS.ORDER;
+    if (orders === null) {
+      return numUpdates;
+    } else if (isIteratable(orders)) {
+      for (const item of orders) {
+        const vendorOrderId = item.$.ID;
+        const custOrder = await this.custOrderRepo.findOne({
+          where: { confirmOrder: vendorOrderId },
+        });
+        if (custOrder) {
+          const tracking: string = item.TRACKING[0];
+          custOrder.xtraderStatus = tracking;
+          const idx = tracking.lastIndexOf(' ');
+          const trackingRef = tracking.substring(idx + 1);
+          custOrder.trackingRef = trackingRef;
+          const rc: UpdateResult = await this.custOrderRepo.update(
+            custOrder.id,
+            custOrder,
+          );
+          numUpdates = numUpdates + rc.affected;
+        }
+      }
+    } else {
+      this.logger.log(`Not Iterable ${JSON.stringify(orders, null, 2)}`);
+    }
+
+    return `number of updates ${numUpdates} `;
   }
 
   private async createPDF(order: CUSTOMER_ORDER) {

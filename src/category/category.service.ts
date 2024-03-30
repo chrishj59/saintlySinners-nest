@@ -65,6 +65,7 @@ export class CategoryService {
       // });
       products = await query
         .leftJoinAndSelect('xtr-product.thumb', 'thumb')
+        .leftJoinAndSelect(`xtr-product.ximage`, 'ximage')
         .leftJoinAndSelect('xtr-product.category', 'category')
         .leftJoinAndSelect('xtr-product.brand', 'brand')
         .leftJoinAndSelect('xtr-product.attributes', 'attributes')

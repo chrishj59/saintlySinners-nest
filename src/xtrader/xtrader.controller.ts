@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { XtrCategoryDto } from './dtos/xtr-category.dto';
 import { XtraderService } from './xtrader.service';
 import { XTR_CATEGORY } from './entity/xtr-Category.entity';
@@ -6,13 +15,28 @@ import { FindOneNumberParams } from 'src/utils/findOneParamString';
 import { XtrProductDto } from './dtos/xtr-product.dto';
 import { XTR_PRODUCT } from './entity/xtr-product.entity';
 import { XtrProductFilterDto } from './dtos/xtr-prod-filter.dto';
+import { XTR_BRAND } from './entity/xtr-brand.entity';
+import { BrandService } from '../brand/brand.service';
+import { Brand } from '../edc/dtos/add-product.dto';
+import { XtrBrandDto } from './dtos/xtr-brand.dto';
 
 @Controller()
 export class XtraderController {
   constructor(
+    private readonly brandService: XtraderService,
     private readonly categoryService: XtraderService,
     private readonly productService: XtraderService,
   ) {}
+
+  @Get('/xtrBrand')
+  async getAllBrands(): Promise<XTR_BRAND[]> {
+    return this.brandService.getAllBrands();
+  }
+
+  @Patch(`/xtrBrand`)
+  async updateBrand(@Body() dto: XtrBrandDto): Promise<XTR_BRAND> {
+    return this.brandService.updateBrand(dto);
+  }
 
   @Post('/xtrCat')
   async newCategory(@Body() dto: XtrCategoryDto): Promise<XTR_CATEGORY> {

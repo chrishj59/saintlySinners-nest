@@ -103,8 +103,8 @@ export class CUSTOMER_ORDER extends BaseEntity {
   })
   xtraderStatus: string;
 
-  @Column({ name: 'delivery_date', type: 'date', nullable: true })
-  deliveryDate: Date;
+  @Column({ name: 'tracking_ref', type: 'varchar', nullable: true })
+  trackingRef: string;
 
   @ManyToOne(() => USER, (customer: USER) => customer.orders)
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })
