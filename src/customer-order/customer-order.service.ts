@@ -45,6 +45,7 @@ import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { url } from 'inspector';
 import { XTRADER_RESULT_INTERFACE } from 'src/common/interfaces/xtraderResult.interface';
 import { isIteratable } from 'src/utils/helpers';
+import { JSONCookie } from 'cookie-parser';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 
@@ -129,7 +130,7 @@ export class CustomerOrderService {
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
-    this.logger.log(`called save order with ${JSON.stringify(dto, null, 2)}`);
+
     // const prods = await this.prodRepo
     //   .createQueryBuilder('edc_product')
     //   .where('edc_product.artnr IN (:...artnr)', { artnr: dto.products })
@@ -144,6 +145,8 @@ export class CustomerOrderService {
     let OrderPayable: number = 0;
 
     let vendorAmount: number = 0;
+
+    let deliveryCost: number = dto.delivery;
 
     const sortedProducts = dto.products.sort((a, b) =>
       a.model.localeCompare(b.model),
@@ -166,15 +169,26 @@ export class CustomerOrderService {
         if (!prods) {
           return;
         }
+        const dtoProduct = dto.products.find(
+          (dtoProd: Product) => dtoProd.model === p.model,
+        );
+        console.log(`dto product found ${JSON.stringify(dtoProduct, null, 2)}`);
+
+        const lineQuantity = dtoProduct.quantity;
+        const delivery = dto.delivery;
+        console.log(`lineQuantity ${lineQuantity} delivery ${delivery}`);
         const _lineTotal = (
-          Number(p.retailPrice) * Number(_prods.quantity)
+          Number(p.retailPrice) * Number(lineQuantity)
         ).toFixed(2);
-        vendorAmount = vendorAmount + p.goodsPrice;
+        console.log(
+          `retailPrice ${p.retailPrice} quantity ${_prods.quantity} LinePrice ${_lineTotal}`,
+        );
+        vendorAmount = Number(vendorAmount) + Number(p.goodsPrice);
         const invLine = new CUSTOMER_ORDER_LINE();
         invLine.description = p.name;
         invLine.xtraderProduct = p;
         invLine.prodRef = p.model;
-        this.logger.log(`p.retail_price ${p.retailPrice.toString()}`);
+
         // invLine.price = p.retailPrice
         invLine.price = Number(p.retailPrice).toFixed(2);
         invLine.quantity = _prods.quantity;
@@ -183,7 +197,6 @@ export class CustomerOrderService {
         invLine.attributeName = _prods.attributeName;
         invLine.attributeValue = _prods.attributeValue;
         inv_lines.push(invLine);
-        this.logger.log(`invLine ${JSON.stringify(invLine)}`);
       });
     }
     // const _artnrs: string[] = dto.products;
@@ -227,8 +240,9 @@ export class CustomerOrderService {
     });
 
     /** VAT reg - when registered add VAT to payable */
-    OrderPayable = orderGoodsAmount;
-    const vendorPayable = Number(vendorAmount) + Number(dto.delivery);
+    const delivery = dto.delivery;
+    OrderPayable = orderGoodsAmount + delivery;
+    const vendorPayable = Number(vendorAmount);
 
     let country: Country;
     let customer: USER;
@@ -253,11 +267,13 @@ export class CustomerOrderService {
     custOrder.stripeSession = dto.stripeSessionId;
     custOrder.oneTimeCustomer = dto.oneTimeCustomer;
     custOrder.goodsValue = orderGoodsAmount;
+    custOrder.deliveryCost = deliveryCost;
+    custOrder.vendGoodCost = vendorAmount;
+
     custOrder.tax = orderVAtAmount;
     custOrder.total = OrderPayable;
     custOrder.currencyCode = dto.currencyCode;
     if (dto.oneTimeCustomer) {
-      this.logger.log('oneTimeCustomer ${dto.oneTimeCustomer}');
       const customerOneTime = new ONE_TIME_CUSTOMER();
 
       customerOneTime.title = dto.customer.title;
@@ -360,6 +376,40 @@ export class CustomerOrderService {
       return format(shipDate, 'do MMMM yyyy');
     }
   }
+
+  deliveryHtml(tracking: string) {
+    const html = `<html> <style>
+    p {
+      color: purple;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 300;
+      font-size: medium;
+    }
+    h1 {
+      color: purple;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+  
+  <h1 style="color: purple;">Your order has been dispatched.</h1>
+  <p style="color: purple;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: medium;"
+  
+  <p style="color: purple;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: medium;">${tracking}</p>
+  <p style="color: purple;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: medium;">Enjoy Saintly Sinners</p>
+  </html>
+  `;
+    return html;
+  }
+
   invHtml(lines: CUSTOMER_ORDER_LINE[]): string {
     const html = `<html> <style>
     p {
@@ -383,9 +433,7 @@ export class CustomerOrderService {
   <p style="color: purple;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 300;
-  font-size: medium;">The elves have started to work on your order and will be sending it on ${this.shippingDate(
-    lines,
-  )}</p>
+  font-size: medium;">The elves have started to work on your order! You will receive an email when your order has been sent</p>
   <p style="color: purple;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 300;
@@ -402,13 +450,7 @@ export class CustomerOrderService {
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
     const xtaderPassword = process.env.XTRADER_PASSWORD;
     const accountid = process.env.XTRADER_ACCOUNT_ID;
-    this.logger.log(
-      `sendOrderToXtrader called with order ${JSON.stringify(
-        customerOrder,
-        null,
-        2,
-      )}`,
-    );
+
     const xtrData = {
       Type: 'ORDEREXTOC',
       testingmode: true,
@@ -441,7 +483,6 @@ export class CustomerOrderService {
     const deliveryUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
     console.log(`deliveryUrl ${deliveryUrl}`);
     const { data } = await this.httpService.axiosRef.post<string>(deliveryUrl);
-    this.logger.log(`Orderupdate  ${data}`);
 
     const resultArry = xtraderResult.split('|');
     const xtraderResultCode = resultArry[0];
@@ -454,13 +495,6 @@ export class CustomerOrderService {
     id: string,
     custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
-    this.logger.log(
-      `updateCustomerOrder payload custOrder ${JSON.stringify(
-        custOrder,
-        null,
-        2,
-      )}`,
-    );
     const customerOrder = await this.custOrderRepo.findOne({ where: { id } });
     if (!customerOrder) {
       throw new BadRequestException(`Order does not exists for id: ${id}`);
@@ -477,36 +511,32 @@ export class CustomerOrderService {
       result.affected === 1
         ? MessageStatusEnum.SUCCESS
         : MessageStatusEnum.WARNING;
-    this.logger.log('Updated customer order ');
+
     const orderUpdated = await this.custOrderRepo.findOne({
       where: { id: id },
       relations: ['customerOneTime', 'invoicePdf', 'orderLines'],
     });
 
-    this.logger.log(`about to call this.getCustomerInvoice with id ${id}`);
     const invPdf = await this.getCustomerInvoice(id);
 
-    this.logger.log('after call to notificationService.notifyEmail');
-    this.logger.log(`orderUpdated ${JSON.stringify(orderUpdated, null, 2)}`);
     const custEmail: string = orderUpdated.customerOneTime.email;
     const subject: string = 'Your SaintlySinners Invoice';
 
     const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
     const pdfBuffer = Buffer.from(invPdf);
-    await this.notificationService.customerInvoiceEmail(
-      custEmail,
-      subject,
-      body,
-      pdfBuffer,
-    );
+    try {
+      await this.notificationService.customerInvoiceEmail(
+        custEmail,
+        subject,
+        body,
+        pdfBuffer,
+      );
+    } catch (e: any) {
+      this.logger.warn(
+        `Failed to send customer invoice email ${JSON.stringify(e, null, 2)}`,
+      );
+    }
 
-    this.logger.log(
-      `about to call sendOrderToXtrader with ${JSON.stringify(
-        orderUpdated,
-        null,
-        2,
-      )}`,
-    );
     const xtraderStatus = await this.sendOrderToXtrader(orderUpdated);
 
     if (xtraderStatus.status === 'DOSuccess') {
@@ -518,9 +548,6 @@ export class CustomerOrderService {
       const email = process.env.ADMIN_EMAIL;
       //const text: 'paid'
 
-      this.logger.log(
-        `about to call notificationService.notifyEmail - insufficient funds`,
-      );
       await this.notificationService.notifyEmail({
         email,
         subject: 'Insufficient funds for Xtrader Drop shipping',
@@ -531,11 +558,6 @@ export class CustomerOrderService {
       customerOrder.xtraderError = 'Xtrader OrderAPI string error';
       const adminEmail = process.env.ADMIN_EMAIL;
       //const text: 'paid'
-
-      this.logger.log(
-        `about to call notificationService.notifyEmail - Incorrect API string`,
-      );
-      this.logger.log(`call notifyemail with admin email ${adminEmail}`);
 
       await this.notificationService.notifyEmail({
         email: adminEmail,
@@ -554,7 +576,6 @@ export class CustomerOrderService {
         ? MessageStatusEnum.SUCCESS
         : MessageStatusEnum.WARNING;
 
-    this.logger.log(`vendoResult status ${vendoResultstatus}`);
     return {
       status: resultstatus,
       orderMessage: { orderId: id, rowsUpdated: result.affected },
@@ -582,7 +603,15 @@ export class CustomerOrderService {
 
     return null;
   }
-
+  private async sendOrderDeliveryStatusEmail(email: string, tracking: string) {
+    const subject = 'Delivery status update';
+    const statusHtml = this.deliveryHtml(tracking);
+    this.notificationService.customerOrderStatusUpdateEmail(
+      email,
+      subject,
+      statusHtml,
+    );
+  }
   async getOrderStatus() {
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
 
@@ -592,11 +621,11 @@ export class CustomerOrderService {
     let { data } = await this.httpService.axiosRef.post<string>(orderStatusUrl);
     const env = this.configService.get<string>('NODE_ENV'); //process.env.NODE_ENV;
     this.logger.warn(`Order status returns ${JSON.stringify(data, null, 2)}`);
-    this.logger.log(`env: ${env}`);
+
     if (env === 'development') {
       data =
         //   '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your orderwas displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER><ORDER ID="f152567"><TRACKING> Your orderwas displatched by Royal mail Your tracking number is JW099911111GB</TRACKING></ORDER></ORDERS>';
-        '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your orderwas displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER></ORDERS>';
+        '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your order was displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER></ORDERS>';
     }
 
     const xml2js = require('xml2js');
@@ -611,11 +640,31 @@ export class CustomerOrderService {
       for (const item of orders) {
         const vendorOrderId = item.$.ID;
         const custOrder = await this.custOrderRepo.findOne({
+          relations: ['customerOneTime'],
           where: { confirmOrder: vendorOrderId },
         });
+        console.log(`update custOrder ${JSON.stringify(custOrder, null, 2)}`);
         if (custOrder) {
           const tracking: string = item.TRACKING[0];
+          console.log(`tracking ${tracking}`);
+          //TODO: If tracking is not on order send a tracking update
+          if (custOrder.xtraderStatus.length < 1) {
+            this.sendOrderDeliveryStatusEmail(
+              custOrder.customerOneTime.email,
+              custOrder.xtraderStatus,
+            );
+          } else {
+            if (!tracking.localeCompare(custOrder.xtraderStatus)) {
+              // Tracking changed
+              this.sendOrderDeliveryStatusEmail(
+                custOrder.customerOneTime.email,
+                custOrder.xtraderStatus,
+              );
+            }
+          }
           custOrder.xtraderStatus = tracking;
+          custOrder.statusDate = new Date();
+
           const idx = tracking.lastIndexOf(' ');
           const trackingRef = tracking.substring(idx + 1);
           custOrder.trackingRef = trackingRef;
@@ -627,7 +676,7 @@ export class CustomerOrderService {
         }
       }
     } else {
-      this.logger.log(`Not Iterable ${JSON.stringify(orders, null, 2)}`);
+      this.logger.warn(`Not Iterable ${JSON.stringify(orders, null, 2)}`);
     }
 
     return `number of updates ${numUpdates} `;
@@ -750,6 +799,7 @@ export class CustomerOrderService {
 
   private generateInvoiceTable(doc: PDFKit.PDFDocument, order: CUSTOMER_ORDER) {
     let i: number;
+
     const invoiceTableTop = 370;
 
     doc.font('Helvetica-Bold');
@@ -767,26 +817,45 @@ export class CustomerOrderService {
     for (i = 0; i < order.lines.length; i++) {
       const item = order.lines[i];
       const LinePosition = invoiceTableTop + (i + 1) * 30;
-      this.generateTableRow(doc, LinePosition, item);
+
+      doc.moveDown(2);
+
+      this.generateTableRow(doc, doc.y, item);
     }
 
     //total goods value
     const position = invoiceTableTop + (i + 1) * 30;
-    this.generateHr(doc, position - 5);
+    doc.moveDown(1);
+    // this.generateHr(doc, position - 5);
+    this.generateHr(doc, doc.y);
     const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-
+    doc.moveDown();
     this.generateTotalTableRow(
       doc,
-      subtotalPosition,
+      doc.y,
+      // subtotalPosition,
       '',
       '',
       'Subtotal',
       '',
       this.formatCurrency(order.goodsValue * 100),
     );
+    // delivey cost line
+
+    // const deliveryPostion = subtotalPosition + 20;
+    doc.moveDown(1);
+    this.generateTotalTableRow(
+      doc,
+      doc.y, // deliveryPostion,
+      '',
+      '',
+      'Delivery',
+      '',
+      this.formatCurrency(order.deliveryCost * 100),
+    );
 
     //   //VAT line
-    const taxPosition = subtotalPosition + 20;
+    //const taxPosition = deliveryPostion + 20;
     //   this.generateTotalTableRow(
     // 	doc,
     // 	taxPosition,
@@ -798,16 +867,17 @@ export class CustomerOrderService {
     // );
 
     // payable line
-    const totalPosition = taxPosition + 25;
+    // const totalPosition = deliveryPostion + 25; //taxPosition + 25;
+    doc.moveDown();
     doc.font('Helvetica-Bold');
     this.generateTotalTableRow(
       doc,
-      totalPosition,
+      doc.y, // totalPosition,
       '',
       '',
       'Payable',
       '',
-      this.formatCurrency(order.goodsValue * 100),
+      this.formatCurrency(order.total * 100),
     );
     doc.font('Helvetica');
   }
@@ -858,14 +928,20 @@ export class CustomerOrderService {
 
     doc
       .fontSize(10)
-      .text(item.xtraderProduct.model, 50, y)
-      .text(item.xtraderProduct.name, 150, y)
+      .text(item.xtraderProduct.model, 50, y, { width: 100, align: 'left' })
+      // .text(item.xtraderProduct.model, 50,y)
+
+      .text(item.xtraderProduct.name, 150, y, {
+        width: 150,
+        align: 'left',
+      })
 
       .text(this.formatAmount(price), 280, y, {
         width: 90,
         align: 'right',
       })
       .text(item.quantity.toString(), 370, y, { width: 90, align: 'right' })
+      // .text(item.quantity.toString(), 370, y, { width: 90, align: 'right' })
       .text(this.formatCurrency(lineTotal), 0, y, {
         align: 'right',
       });
@@ -910,6 +986,6 @@ export class CustomerOrderService {
     return (cents / 100).toFixed(2);
   }
   private formatCurrency(cents) {
-    return '€  ' + (cents / 100).toFixed(2);
+    return '£  ' + (cents / 100).toFixed(2);
   }
 }

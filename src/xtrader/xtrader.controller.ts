@@ -33,6 +33,11 @@ export class XtraderController {
     return this.brandService.getAllBrands();
   }
 
+  @Get('/xtrBrandsHomePage')
+  async getHomePageBrands(): Promise<XTR_BRAND[]> {
+    return await this.brandService.getHomePageBrands();
+  }
+
   @Patch(`/xtrBrand`)
   async updateBrand(@Body() dto: XtrBrandDto): Promise<XTR_BRAND> {
     return this.brandService.updateBrand(dto);

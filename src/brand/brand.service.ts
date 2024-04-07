@@ -15,8 +15,9 @@ import { ResponseMessageDto } from '../dtos/response-message-dto';
 import { EDC_BRAND } from '../edc/entities/edc-brand';
 import { BrandCategoryEnum } from '../enums/Brand-category.enum';
 import { BrandCatDto } from './dtos/brand-cat.dto';
-import { BrandIdDto } from './dtos/brand-id.dto';
+import { BrandIdDto, XtrBrandIdDto } from './dtos/brand-id.dto';
 import { BrandDto } from './dtos/brand.dto';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 
 @Injectable()
 export class BrandService {
@@ -25,6 +26,8 @@ export class BrandService {
     private brandRepo: Repository<EDC_BRAND>,
     @InjectRepository(EDC_PRODUCT)
     private producRepo: Repository<EDC_PRODUCT>,
+    @InjectRepository(XTR_PRODUCT)
+    private xtrProdRepo: Repository<XTR_PRODUCT>,
   ) {}
   logger = new Logger('Brands service');
 
@@ -172,6 +175,28 @@ export class BrandService {
       throw new BadRequestException(`Error loading brand ids`);
     }
     return null;
+  }
+
+  public async getXtrBrandProducts(dto: BrandIdDto): Promise<XTR_PRODUCT[]> {
+    const brandId = Number(dto.id);
+    const query = this.xtrProdRepo.createQueryBuilder('xtr-product');
+
+    try {
+      // const products = await query
+      //   .leftJoinAndSelect('xtr-product.thumb', 'thumb')
+      //   .leftJoinAndSelect('xtr-product.brand', 'brand')
+      //   // .andWhere('xtr-product.brandId = :brandid', { brandid: brandId })
+      //   .getMany();
+
+      const products = await this.xtrProdRepo.find({
+        relations: { brand: true },
+        where: { brand: { id: brandId } },
+      });
+
+      return products;
+    } catch (e) {
+      throw new BadRequestException(`Get products error ${e}`);
+    }
   }
 
   public async getBrandProducts(

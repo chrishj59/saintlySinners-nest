@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { XTR_CATEGORY } from './entity/xtr-Category.entity';
-import { ILike, Repository } from 'typeorm';
+import { ILike, MoreThan, Repository } from 'typeorm';
 import { XtrCategoryDto } from './dtos/xtr-category.dto';
 import { FindOneNumberParams } from 'src/utils/findOneParamString';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
@@ -57,6 +57,19 @@ export class XtraderService {
     return _brand;
   }
 
+  public async getHomePageBrands(): Promise<XTR_BRAND[]> {
+    const brands = await this.brandRepo.find({
+      where: {
+        isFavourite: true,
+        ranking: MoreThan(0),
+      },
+    });
+    if (!brands) {
+      throw new BadRequestException('No Brands on menu');
+    } else {
+      return brands;
+    }
+  }
   public async newCategory(dto: XtrCategoryDto): Promise<XTR_CATEGORY> {
     // is does the parent exist
     let cat: XTR_CATEGORY;

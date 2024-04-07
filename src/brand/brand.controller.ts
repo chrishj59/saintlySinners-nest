@@ -13,9 +13,11 @@ import { EDC_PRODUCT } from 'src/edc/entities/edc-product';
 
 import { BrandService } from './brand.service';
 import { BrandCatDto } from './dtos/brand-cat.dto';
-import { BrandIdDto } from './dtos/brand-id.dto';
+import { BrandIdDto, XtrBrandIdDto } from './dtos/brand-id.dto';
 import { BrandDto } from './dtos/brand.dto';
 import { EDC_BRAND } from 'src/edc/entities/edc-brand';
+import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
+import daysToWeeks from 'date-fns/daysToWeeks/index.js';
 
 @Controller()
 export class BrandController {
@@ -50,5 +52,12 @@ export class BrandController {
     @Query() dto: BrandIdDto,
   ): Promise<EDC_PRODUCT[] | ResponseMessageDto> {
     return this.brandService.getBrandProducts(dto);
+  }
+
+  @Get('/xtrProductByBrandId')
+  public async getxtrProdByBrandId(
+    @Query() dto: BrandIdDto,
+  ): Promise<XTR_PRODUCT[]> {
+    return await this.brandService.getXtrBrandProducts(dto);
   }
 }

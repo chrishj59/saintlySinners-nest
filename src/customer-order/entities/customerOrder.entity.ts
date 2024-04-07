@@ -77,6 +77,14 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({ name: 'total', type: 'double precision' })
   total: number;
 
+  @Column({
+    name: 'delivery_cost',
+    type: 'double precision',
+    default: 0,
+    nullable: true,
+  })
+  deliveryCost: number;
+
   @Column({ name: 'currency_code', type: 'char', length: 3 })
   currencyCode: string;
 
@@ -105,6 +113,9 @@ export class CUSTOMER_ORDER extends BaseEntity {
 
   @Column({ name: 'tracking_ref', type: 'varchar', nullable: true })
   trackingRef: string;
+
+  @Column({ name: 'status_date', type: 'date', nullable: true })
+  statusDate: Date;
 
   @ManyToOne(() => USER, (customer: USER) => customer.orders)
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })
