@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { XTR_CATEGORY } from './entity/xtr-Category.entity';
-import { ILike, MoreThan, Repository } from 'typeorm';
+import { ILike, In, MoreThan, Repository } from 'typeorm';
 import { XtrCategoryDto } from './dtos/xtr-category.dto';
 import { FindOneNumberParams } from 'src/utils/findOneParamString';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
@@ -17,6 +17,15 @@ import { XTR_PROD_ATTRIBUTE_EAN } from './entity/xtr-prod-attribute-ean.entity';
 import { XtrProductFilterDto } from './dtos/xtr-prod-filter.dto';
 import { XtrBrandNewDto } from './dtos/xtr-brand-new.dto';
 import { XtrBrandDto } from './dtos/xtr-brand.dto';
+import {
+  StockSize,
+  XtraderStockItem,
+  XtraderStockLevel,
+  xtrStockLevelUpdateResp,
+  xtraderStockLevelDto,
+} from './dtos/xtr-stock-level.dto';
+import { XtrProdStockStatusEnum } from './enum/xtrProd-status.enum';
+import { Item } from 'src/items/entity/item.entity';
 
 @Injectable()
 export class XtraderService {
@@ -493,5 +502,95 @@ export class XtraderService {
       this.logger.warn('Error getting products');
       throw new BadRequestException('Error getting products');
     }
+  }
+
+  public async updateStockLevel(
+    dto: XtraderStockLevel,
+  ): Promise<xtrStockLevelUpdateResp> {
+    this.logger.log(
+      `updateStockLevel called with dto ${JSON.stringify(dto, null, 2)}`,
+    );
+
+    const prods: XtraderStockItem[] = dto.products;
+    this.logger.log(`Number of products ${prods.length ? prods.length : 0}`);
+    const inStockItems: string[] = [];
+    const noStockItems: string[] = [];
+    const stockSizes: string[] = [];
+
+    let instockNum = 0;
+    let noStockNum = 0;
+    let stockSizeNum = 0;
+    let noStockSizeNum = 0;
+    prods.forEach((p: XtraderStockItem) => {
+      if (p.stockItem) {
+        if (p.stockItem.level === 'In Stock') {
+          this.logger.log('In Stock item');
+          inStockItems.push(p.item);
+        } else if (p.stockItem.level === 'No Stock.') {
+          this.logger.log('No Stock item');
+          noStockItems.push(p.item);
+        }
+      } else {
+        this.logger.log('Stock sizes item');
+        this.logger.log(`sizes prod ${JSON.stringify(p, null, 2)}`);
+        const item = p.item;
+        this.logger.log(`sizes item ${item}`);
+        //TODO: make sure item is a tring
+        if (item) stockSizes.push(item);
+        this.logger.log(`after found sizes rec ${stockSizes}`);
+      }
+    });
+
+    this.logger.log(
+      `InStockItems length ${inStockItems.length} noStockItems len ${noStockItems.length} stocksizes ${stockSizes.length} `,
+    );
+    if (inStockItems.length > 0) {
+      // this.logger.log(`inStockItems ${stockSizes}`);
+      let inStockRows = await this.prodRepo
+        .createQueryBuilder('xtr-product')
+        .update(XTR_PRODUCT)
+        .set({ stockStatus: XtrProdStockStatusEnum.IN })
+        .where({ model: In(inStockItems) })
+        .execute();
+      this.logger.log(`instock item array ${inStockItems}`);
+
+      this.logger.log(`Result from instock update ${inStockRows.affected}`);
+      instockNum = inStockRows.affected;
+    }
+
+    // update stock out
+    if (noStockItems.length > 0) {
+      const outStockRows = await this.prodRepo
+        .createQueryBuilder('xtr-product')
+        .update(XTR_PRODUCT)
+        .set({ stockStatus: XtrProdStockStatusEnum.OUT })
+        .where({ model: In(noStockItems) })
+        .execute();
+
+      noStockNum = outStockRows.affected;
+    }
+    if (stockSizes.length > 0) {
+      this.logger.log(`to update stockSizes ${stockSizes.length}`);
+      this.logger.log(`stockSizes ${stockSizes}`);
+      const _stockSizes = await this.prodRepo
+        .createQueryBuilder('xtr-product')
+        .leftJoinAndSelect('xtr-product.attributes', 'attributes')
+
+        .where({ model: In(stockSizes) })
+        .getMany();
+
+      this.logger.log(`_stockSizes ${JSON.stringify(_stockSizes, null, 2)}`);
+    }
+    // 'feature',
+    //     'brand',
+    //     'attributes',
+    //     'attributes.attributeValues',
+    //     'category'
+    // use update where in
+    const resp: xtrStockLevelUpdateResp = {
+      inStock: instockNum,
+      outOfStock: noStockNum,
+    };
+    return resp;
   }
 }

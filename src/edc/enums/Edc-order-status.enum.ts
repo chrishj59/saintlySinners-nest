@@ -1,7 +1,8 @@
 export enum edcOrderStatusEnum {
-  'PENDING' = 0,
+  'CREATED' = 0,
   'STRIPE_PAID' = 1,
-  'VENDOR_ORDERED' = 2,
-  'VENDOR_PAID' = 3,
-  'DELIVERED' = 4,
+  'CUST_EMAILED' = 2,
+  'VENDOR_ORDERED' = 3,
+  'VENDOR_PAID' = 4,
+  'DELIVERED' = 5,
 }

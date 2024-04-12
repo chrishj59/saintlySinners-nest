@@ -319,7 +319,7 @@ export class XTR_PRODUCT extends BaseEntity {
     () => XTR_PROD_ATTRIBUTE,
     (attr: XTR_PROD_ATTRIBUTE) => attr.product,
     {
-      cascade: ['insert', 'update'],
+      cascade: ['insert', 'update', 'soft-remove'],
     },
   )
   attributes: XTR_PROD_ATTRIBUTE[];

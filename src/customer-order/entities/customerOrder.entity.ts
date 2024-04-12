@@ -52,7 +52,7 @@ export class CUSTOMER_ORDER extends BaseEntity {
     type: 'enum',
     enum: edcOrderStatusEnum,
     nullable: true,
-    default: edcOrderStatusEnum.PENDING,
+    default: edcOrderStatusEnum.CREATED,
   })
   orderStatus: edcOrderStatusEnum;
 

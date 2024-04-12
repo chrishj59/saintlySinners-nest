@@ -29,6 +29,9 @@ export class XTR_ATTRIBUTE_VALUE extends BaseEntity {
   })
   priceAdjustment: number;
 
+  @Column({ name: 'in-stock', type: 'boolean', default: true, nullable: true })
+  inStock: boolean;
+
   @ManyToMany(() => XTR_PROD_ATTRIBUTE, (attr) => attr)
   attributes: XTR_PROD_ATTRIBUTE[];
 

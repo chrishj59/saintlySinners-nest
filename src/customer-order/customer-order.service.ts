@@ -155,6 +155,7 @@ export class CustomerOrderService {
     const models = sortedProducts.map((p) => p.model);
     const prods = await this.prodRepo
       .createQueryBuilder('xtr-product')
+      .leftJoinAndSelect('xtr-product.attributes', 'attributes')
       .where('xtr-product.model IN (:...models)', {
         models: models,
       })
@@ -269,6 +270,7 @@ export class CustomerOrderService {
     custOrder.goodsValue = orderGoodsAmount;
     custOrder.deliveryCost = deliveryCost;
     custOrder.vendGoodCost = vendorAmount;
+    custOrder.orderStatus = edcOrderStatusEnum.CREATED;
 
     custOrder.tax = orderVAtAmount;
     custOrder.total = OrderPayable;
@@ -302,7 +304,7 @@ export class CustomerOrderService {
     });
 
     if (custOrderUpdated) {
-      //TODO: create PDF invoice
+      //TODO: update order status on
       await this.createPDF(custOrderUpdated);
 
       return {
@@ -531,6 +533,16 @@ export class CustomerOrderService {
         body,
         pdfBuffer,
       );
+      orderUpdated.orderStatus = edcOrderStatusEnum.CUST_EMAILED;
+      const updatedCustInv: UpdateResult = await this.custOrderRepo.update(
+        id,
+        orderUpdated,
+      );
+      if (updatedCustInv.affected !== 1) {
+        this.logger.warn(
+          `Could not update order ${orderUpdated.orderNumber} status to customer emailed`,
+        );
+      }
     } catch (e: any) {
       this.logger.warn(
         `Failed to send customer invoice email ${JSON.stringify(e, null, 2)}`,

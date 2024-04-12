@@ -19,6 +19,10 @@ import { XTR_BRAND } from './entity/xtr-brand.entity';
 import { BrandService } from '../brand/brand.service';
 import { Brand } from '../edc/dtos/add-product.dto';
 import { XtrBrandDto } from './dtos/xtr-brand.dto';
+import {
+  XtraderStockLevel,
+  xtrStockLevelUpdateResp,
+} from './dtos/xtr-stock-level.dto';
 
 @Controller()
 export class XtraderController {
@@ -58,6 +62,13 @@ export class XtraderController {
   @Post('/xtrProd')
   async newProduct(@Body() dto: XtrProductDto): Promise<XTR_PRODUCT> {
     return this.productService.newProduct(dto);
+  }
+
+  @Post('/xtrStockLevel')
+  async updateStockLevel(
+    @Body() dto: XtraderStockLevel,
+  ): Promise<xtrStockLevelUpdateResp> {
+    return this.productService.updateStockLevel(dto);
   }
 
   @Get('/xtrProd/:id')
