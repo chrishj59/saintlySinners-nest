@@ -16,14 +16,25 @@ export class Ean {
   value: string;
 }
 export class AttributeValue {
+  @IsOptional()
   @IsNumber()
-  value: number;
+  id: number;
 
+  @IsOptional()
+  @IsNumber()
+  value: string;
+
+  @IsOptional()
   @IsString()
   title: string;
 
+  @IsOptional()
   @IsNumberString()
   priceAdjust: string;
+
+  @IsOptional()
+  @IsString()
+  ean: string;
 }
 
 export class AttributeValues {
@@ -32,10 +43,15 @@ export class AttributeValues {
   attributeValue: AttributeValue;
 }
 
-export class Attribute {
-  @IsNumber()
-  id: number;
+export class DtoProdAttribute {
+  @IsOptional()
+  @IsString()
+  id: string;
 
+  @IsOptional()
+  @IsNumber()
+  attributeId: number;
+  @IsOptional()
   @IsString()
   name: string;
 
@@ -257,5 +273,6 @@ export class XtrProductDto {
   eans: Ean[];
 
   @IsOptional()
-  attribute: Attribute;
+  @Type(() => DtoProdAttribute)
+  attributes: DtoProdAttribute;
 }

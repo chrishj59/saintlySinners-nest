@@ -8,7 +8,7 @@ import { RemoteFilesService } from 'src/remote-files/remote-files.service';
 import { PUBLIC_FILE } from 'src/remote-files/entity/publicFile.entity';
 
 import { HttpService } from '@nestjs/axios';
-import { Attribute, Ean, XtrProductDto } from './dtos/xtr-product.dto';
+import { AttributeValue, Ean, XtrProductDto } from './dtos/xtr-product.dto';
 import { XTR_PRODUCT } from './entity/xtr-product.entity';
 import { XTR_BRAND } from './entity/xtr-brand.entity';
 import { XTR_PROD_ATTRIBUTE } from './entity/xtr-prod-attribute.entity';
@@ -26,6 +26,9 @@ import {
 } from './dtos/xtr-stock-level.dto';
 import { XtrProdStockStatusEnum } from './enum/xtrProd-status.enum';
 import { Item } from 'src/items/entity/item.entity';
+import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from 'src/remote-files/entity/stockFile.entity';
+import e from 'express';
+import { isIteratable } from 'src/utils/helpers';
 
 @Injectable()
 export class XtraderService {
@@ -166,8 +169,23 @@ export class XtraderService {
     return this.catRepo.findOne({ where: { catName } });
   }
 
-  async newProduct(dto: XtrProductDto) {
-    const prod = new XTR_PRODUCT();
+  async productPost(dto: XtrProductDto) {
+    const _ = require('lodash');
+    let prod: XTR_PRODUCT;
+    let isNewProd = true;
+    const currProd = await this.prodRepo.findOne({
+      where: { id: dto.id },
+      relations: ['category', 'eans', 'attributes'],
+    });
+    this.logger.warn(`currProd ${JSON.stringify(currProd, null, 2)}`);
+    if (currProd) {
+      prod = currProd;
+      isNewProd = false;
+    } else {
+      prod = new XTR_PRODUCT();
+      isNewProd = true;
+    }
+
     prod.id = dto.id;
     prod.weight = parseFloat(dto.weight);
     prod.name = dto.name;
@@ -210,211 +228,544 @@ export class XtraderService {
     const cat = await this.getCategoryByName(dto.catName);
     prod.category = cat;
 
-    let brand = await this.getBrand(dto.brand);
-    if (!brand) {
-      const _brand = new XTR_BRAND();
-      _brand.name = dto.brand;
-      const _brandDB = await this.brandRepo.save(_brand, { reload: true });
-      brand = _brandDB;
+    if (isNewProd) {
+      let brand = await this.getBrand(dto.brand);
+      if (!brand) {
+        const _brand = new XTR_BRAND();
+        _brand.name = dto.brand;
+        const _brandDB = await this.brandRepo.save(_brand, { reload: true });
+        brand = _brandDB;
+      }
+      prod.brand = brand;
     }
-    prod.brand = brand;
 
     /** load images for product if in DTO */
-    if (dto.thumb) {
-      let thumb = await this.filesService.getXtrProdImage(dto.thumb);
-      console.log(`does thumb already exist ${JSON.stringify(thumb, null, 2)}`);
-      if (!thumb) {
-        thumb = await this.filesService.uploadXtrStockFile(
+    if (isNewProd) {
+      if (dto.thumb) {
+        let thumb = await this.filesService.getXtrProdImage(dto.thumb);
+        console.log(
+          `does thumb already exist ${JSON.stringify(thumb, null, 2)}`,
+        );
+        if (!thumb) {
+          thumb = await this.filesService.uploadXtrStockFile(
+            dto.thumb,
+            'thumb',
+            prod.id,
+          );
+        }
+
+        prod.thumb = thumb;
+      }
+    } else {
+      let _thumb: XTR_PRODUCT_IMAGE_REMOTE_FILE = prod.thumb;
+
+      if (!_thumb || _thumb.key !== dto.thumb) {
+        // update an existing thumb image
+
+        _thumb = await this.filesService.uploadXtrStockFile(
           dto.thumb,
           'thumb',
           prod.id,
         );
+        prod.thumb;
+      } else {
+        this.logger.warn(`No update required`);
       }
-
-      prod.thumb = thumb;
     }
-    let _prod = await this.prodRepo.save(prod, { reload: true });
-    if (dto.attribute) {
-      let attribute = new XTR_PROD_ATTRIBUTE();
-      attribute.attributeId = dto.attribute.id;
-      attribute.name = dto.attribute.name;
-      attribute.product = _prod;
-      attribute = await this.attrRep.save(attribute, { reload: true });
 
-      const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
-      const attrValues = dto.attribute.attributeValues;
-
-      for (const attrVal of attrValues) {
-        this.logger.warn(
-          `attrVal at start of loop ${JSON.stringify(attrVal, null, 2)}`,
-        );
-        let _attrValue = await this.attrValueRepo.findOne({
-          where: { id: attrVal.value },
-        });
-        this.logger.warn(`_attrValue ${JSON.stringify(_attrValue, null, 2)}`);
-        if (!_attrValue) {
-          _attrValue = new XTR_ATTRIBUTE_VALUE();
-          _attrValue.id = attrVal.value;
-
-          _attrValue.title = attrVal.title ? attrVal.title : ' ';
-          _attrValue.priceAdjustment = parseFloat(attrVal.priceAdjust);
-          const attrValueDB = await this.attrValueRepo.save(_attrValue, {
-            reload: true,
-          });
+    if (isNewProd) {
+      if (dto.eans) {
+        const eanArray: XTR_PROD_ATTRIBUTE_EAN[] = [];
+        for (const ean of dto.eans) {
+          const _ean = new XTR_PROD_ATTRIBUTE_EAN();
+          _ean.code = ean.ean;
+          _ean.value = ean.value;
+          _ean.product = prod;
+          this.prodEanRepo.save(_ean, { reload: true });
+          const _eanDB = await this.logger.warn(
+            `_ean is ${JSON.stringify(_ean, null, 2)}`,
+          );
+          // let eanDB = await this.prodEanRepo.findOne({
+          //   where: { code: _ean.code },
+          // });
+          // if (!eanDB) {
+          //   eanDB = await this.prodEanRepo.save(_ean, { reload: true });
+          // }
+          // eanArray.push(eanDB);
         }
-
-        attrValuesArray.push(_attrValue);
+        // this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
+        // prod.eans = eanArray;
       }
-
-      attribute.attributeValues = attrValuesArray;
-      attribute = await this.attrRep.save(attribute, { reload: true });
-    }
-
-    if (dto.eans) {
-      const eanArray: XTR_PROD_ATTRIBUTE_EAN[] = [];
-      for (const ean of dto.eans) {
-        const _ean = new XTR_PROD_ATTRIBUTE_EAN();
-        _ean.code = ean.ean;
-        _ean.value = ean.value;
-        _ean.product = prod;
-        this.prodEanRepo.save(_ean, { reload: true });
-        const _eanDB = await this.logger.warn(
-          `_ean is ${JSON.stringify(_ean, null, 2)}`,
-        );
-        // let eanDB = await this.prodEanRepo.findOne({
-        //   where: { code: _ean.code },
-        // });
-        // if (!eanDB) {
-        //   eanDB = await this.prodEanRepo.save(_ean, { reload: true });
-        // }
-        // eanArray.push(eanDB);
-      }
-      // this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
-      // prod.eans = eanArray;
+    } else {
+      const eansSame = _.isEqual(prod.eans, dto.eans);
+      this.logger.warn(`eans same ${eansSame}`);
     }
 
     console.log(`dto.ximage ${JSON.stringify(dto.ximage, null, 2)}`);
-    if (dto.ximage) {
-      let ximage = await this.filesService.getXtrProdImage(dto.ximage);
+    if (isNewProd) {
+      if (dto.ximage) {
+        let ximage = await this.filesService.getXtrProdImage(dto.ximage);
 
-      if (!ximage) {
-        ximage = await this.filesService.uploadXtrStockFile(
-          dto.ximage,
-          'ximage',
-          prod.id,
-        );
+        if (!ximage) {
+          ximage = await this.filesService.uploadXtrStockFile(
+            dto.ximage,
+            'ximage',
+            prod.id,
+          );
+        }
+        prod.ximage = ximage;
       }
-      prod.ximage = ximage;
-    }
+    } else {
+      if ((!prod.ximage && dto.ximage) || prod.ximage.key !== dto.ximage) {
+        let ximage = await this.filesService.getXtrProdImage(dto.ximage);
 
-    if (dto.ximage2) {
-      let ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
-      if (!ximage2) {
-        ximage2 = await this.filesService.uploadXtrStockFile(
-          dto.ximage2,
-          'ximage2',
-          prod.id,
-        );
-      }
-      prod.ximage2;
-    }
-    if (dto.ximage3) {
-      const ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
-      if (!ximage3) {
-        await this.filesService.uploadXtrStockFile(
-          dto.ximage3,
-          'ximage3',
-          prod.id,
-        );
-      }
-    }
-    if (dto.ximage4) {
-      const ximage4 = await this.filesService.getXtrProdImage(dto.ximage4);
-      if (!ximage4) {
-        await this.filesService.uploadXtrStockFile(
-          dto.ximage4,
-          'ximage4',
-          prod.id,
-        );
-      }
-    }
-    if (dto.ximage5) {
-      const ximage5 = await this.filesService.getXtrProdImage(dto.ximage5);
-      if (!ximage5) {
-        await this.filesService.uploadXtrStockFile(
-          dto.ximage5,
-          'ximage4',
-          prod.id,
-        );
+        if (!ximage) {
+          ximage = await this.filesService.uploadXtrStockFile(
+            dto.ximage,
+            'ximage',
+            prod.id,
+          );
+        }
+        prod.ximage = ximage;
       }
     }
 
-    if (dto.multi1) {
-      const multi1 = await this.filesService.getXtrProdImage(dto.multi1);
-      if (!multi1) {
-        await this.filesService.uploadXtrStockFile(
-          dto.multi1,
-          'multi1',
-          prod.id,
-        );
+    if (isNewProd) {
+      if (dto.ximage2) {
+        let ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
+        if (!ximage2) {
+          ximage2 = await this.filesService.uploadXtrStockFile(
+            dto.ximage2,
+            'ximage2',
+            prod.id,
+          );
+        }
+        prod.ximage2;
       }
-    }
-    if (dto.multi2) {
-      const multi2 = await this.filesService.getXtrProdImage(dto.multi2);
-      if (!multi2) {
-        await this.filesService.uploadXtrStockFile(
-          dto.multi2,
-          'multi2',
-          prod.id,
-        );
+    } else {
+      if (!_.isEqual(prod.ximage2.key, dto.ximage2)) {
+        let ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
+        if (!ximage2) {
+          ximage2 = await this.filesService.uploadXtrStockFile(
+            dto.ximage2,
+            'ximage2',
+            prod.id,
+          );
+        }
+        prod.ximage2;
       }
     }
 
-    if (dto.multi3) {
-      const multi3 = await this.filesService.getXtrProdImage(dto.multi3);
-      if (!multi3) {
-        await this.filesService.uploadXtrStockFile(
-          dto.multi3,
-          'multi3',
-          prod.id,
-        );
+    if (isNewProd) {
+      if (dto.ximage3) {
+        const ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
+        if (!ximage3) {
+          await this.filesService.uploadXtrStockFile(
+            dto.ximage3,
+            'ximage3',
+            prod.id,
+          );
+        }
+      }
+    } else {
+      this.logger.log(
+        `prod.ximage3 ${JSON.stringify(
+          prod.ximage3,
+          null,
+          2,
+        )} dto.ximage3 ${JSON.stringify(dto.ximage3, null, 2)}`,
+      );
+      if (
+        (prod.ximage3 === null && dto.ximage3.length > 0) ||
+        (prod.ximage3 && prod.ximage3.key !== dto.ximage3)
+      ) {
+        if (dto.ximage3) {
+          const ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
+          if (!ximage3) {
+            await this.filesService.uploadXtrStockFile(
+              dto.ximage3,
+              'ximage3',
+              prod.id,
+            );
+          }
+        }
       }
     }
-    if (dto.bigmulti1) {
-      const bigmulti1 = await this.filesService.getXtrProdImage(dto.bigmulti1);
-      if (!bigmulti1) {
-        await this.filesService.uploadXtrStockFile(
+
+    if (isNewProd) {
+      if (dto.ximage4) {
+        const ximage4 = await this.filesService.getXtrProdImage(dto.ximage4);
+        if (!ximage4) {
+          await this.filesService.uploadXtrStockFile(
+            dto.ximage4,
+            'ximage4',
+            prod.id,
+          );
+        }
+      }
+    } else {
+      if (
+        (prod.ximage4 === null && dto.ximage4.length > 0) ||
+        (prod.ximage4 && prod.ximage4.key !== dto.ximage4)
+      ) {
+        if (dto.ximage4) {
+          const ximage4 = await this.filesService.getXtrProdImage(dto.ximage4);
+          if (!ximage4) {
+            await this.filesService.uploadXtrStockFile(
+              dto.ximage4,
+              'ximage4',
+              prod.id,
+            );
+          }
+        }
+      }
+    }
+
+    if (isNewProd) {
+      if (dto.ximage5) {
+        const ximage5 = await this.filesService.getXtrProdImage(dto.ximage5);
+        if (!ximage5) {
+          await this.filesService.uploadXtrStockFile(
+            dto.ximage5,
+            'ximage5',
+            prod.id,
+          );
+        }
+      }
+    } else {
+      if (
+        (prod.ximage5 === null && dto.ximage5.length > 0) ||
+        (prod.ximage5 && prod.ximage5.key !== dto.ximage5)
+      ) {
+        if (dto.ximage5) {
+          const ximage5 = await this.filesService.getXtrProdImage(dto.ximage5);
+          if (!ximage5) {
+            await this.filesService.uploadXtrStockFile(
+              dto.ximage5,
+              'ximage5',
+              prod.id,
+            );
+          }
+        }
+      }
+    }
+
+    if (isNewProd) {
+      if (dto.multi1) {
+        const multi1 = await this.filesService.getXtrProdImage(dto.multi1);
+        if (!multi1) {
+          await this.filesService.uploadXtrStockFile(
+            dto.multi1,
+            'multi1',
+            prod.id,
+          );
+        }
+      }
+    } else {
+      if (
+        (prod.multi1 === null && dto.multi1.length > 0) ||
+        (prod.multi1 && prod.multi1.key !== dto.multi1)
+      ) {
+        if (dto.multi1) {
+          const multi1 = await this.filesService.getXtrProdImage(dto.multi1);
+          if (!multi1) {
+            await this.filesService.uploadXtrStockFile(
+              dto.multi1,
+              'multi1',
+              prod.id,
+            );
+          }
+        }
+      }
+    }
+
+    if (isNewProd) {
+      if (dto.multi2) {
+        const multi2 = await this.filesService.getXtrProdImage(dto.multi2);
+        if (!multi2) {
+          await this.filesService.uploadXtrStockFile(
+            dto.multi2,
+            'multi2',
+            prod.id,
+          );
+        }
+      } else {
+        if (
+          (prod.multi2 === null && dto.multi2.length > 0) ||
+          (prod.multi2 && prod.multi2.key !== dto.multi2)
+        ) {
+          if (dto.multi2) {
+            const multi2 = await this.filesService.getXtrProdImage(dto.multi2);
+            if (!multi2) {
+              await this.filesService.uploadXtrStockFile(
+                dto.multi2,
+                'multi2',
+                prod.id,
+              );
+            }
+          }
+        }
+      }
+    }
+
+    if (isNewProd) {
+      if (dto.multi3) {
+        const multi3 = await this.filesService.getXtrProdImage(dto.multi3);
+        if (!multi3) {
+          await this.filesService.uploadXtrStockFile(
+            dto.multi3,
+            'multi3',
+            prod.id,
+          );
+        }
+      }
+    } else {
+      if (
+        (prod.multi3 === null && dto.multi3.length > 0) ||
+        (prod.multi3 && prod.multi3.key !== dto.multi3)
+      ) {
+        if (dto.multi3) {
+          const multi3 = await this.filesService.getXtrProdImage(dto.multi3);
+          if (!multi3) {
+            await this.filesService.uploadXtrStockFile(
+              dto.multi3,
+              'multi3',
+              prod.id,
+            );
+          }
+        }
+      }
+    }
+
+    if (isNewProd) {
+      if (dto.bigmulti1) {
+        const bigmulti1 = await this.filesService.getXtrProdImage(
           dto.bigmulti1,
-          'bigmulti1',
-          prod.id,
         );
+        if (!bigmulti1) {
+          await this.filesService.uploadXtrStockFile(
+            dto.bigmulti1,
+            'bigmulti1',
+            prod.id,
+          );
+        }
       }
-    }
-    if (dto.bigmulti2) {
-      let bigmulti2 = await this.filesService.getXtrProdImage(dto.bigmulti2);
-      if (!bigmulti2) {
-        bigmulti2 = await this.filesService.uploadXtrStockFile(
-          dto.bigmulti2,
-          'bigmulti2',
-          prod.id,
-        );
+    } else {
+      if (
+        (prod.bigmulti1 === null && dto.bigmulti1.length > 0) ||
+        (prod.bigmulti1 && prod.bigmulti1.key !== dto.bigmulti1)
+      ) {
+        if (dto.bigmulti1) {
+          const bigmulti1 = await this.filesService.getXtrProdImage(
+            dto.bigmulti1,
+          );
+          if (!bigmulti1) {
+            await this.filesService.uploadXtrStockFile(
+              dto.bigmulti1,
+              'bigmulti1',
+              prod.id,
+            );
+          }
+        }
       }
-      prod.bigmulti2 = bigmulti2;
     }
 
-    if (dto.bigmulti3) {
-      let bigmulti3 = await this.filesService.getXtrProdImage(dto.bigmulti3);
-      if (!bigmulti3) {
-        bigmulti3 = await this.filesService.uploadXtrStockFile(
-          dto.bigmulti3,
-          'bigmulti3',
-          prod.id,
-        );
+    if (isNewProd) {
+      if (dto.bigmulti2) {
+        let bigmulti2 = await this.filesService.getXtrProdImage(dto.bigmulti2);
+        if (!bigmulti2) {
+          bigmulti2 = await this.filesService.uploadXtrStockFile(
+            dto.bigmulti2,
+            'bigmulti2',
+            prod.id,
+          );
+        }
+        prod.bigmulti2 = bigmulti2;
       }
-      prod.bigmulti3 = bigmulti3;
+    } else {
+      if (
+        (prod.bigmulti2 === null && dto.bigmulti2.length > 0) ||
+        (prod.bigmulti2 && prod.bigmulti2.key !== dto.bigmulti2)
+      ) {
+        if (dto.bigmulti2) {
+          const bigmulti2 = await this.filesService.getXtrProdImage(
+            dto.bigmulti2,
+          );
+          if (!bigmulti2) {
+            await this.filesService.uploadXtrStockFile(
+              dto.bigmulti2,
+              'image_bigmulti2',
+              prod.id,
+            );
+          }
+        }
+      }
     }
-    _prod = await this.prodRepo.save(prod, { reload: true });
+
+    if (isNewProd) {
+      if (dto.bigmulti3) {
+        let bigmulti3 = await this.filesService.getXtrProdImage(dto.bigmulti3);
+        if (!bigmulti3) {
+          bigmulti3 = await this.filesService.uploadXtrStockFile(
+            dto.bigmulti3,
+            'bigmulti3',
+            prod.id,
+          );
+        }
+        prod.bigmulti3 = bigmulti3;
+      }
+    } else {
+      if (
+        (prod.bigmulti3 === null && dto.bigmulti3.length > 0) ||
+        (prod.bigmulti3 && prod.bigmulti3.key !== dto.bigmulti3)
+      ) {
+        if (dto.bigmulti3) {
+          const bigmulti3 = await this.filesService.getXtrProdImage(
+            dto.bigmulti3,
+          );
+          if (!bigmulti3) {
+            await this.filesService.uploadXtrStockFile(
+              dto.bigmulti3,
+              'image_bigmulti3',
+              prod.id,
+            );
+          }
+        }
+      }
+    }
+    // let _prod: XTR_PRODUCT;
+    // if (isNewProd) {
+    //   _prod = await this.prodRepo.save(prod, { reload: true });
+    // } else {
+    //   _prod = prod;
+    // }
+
+    if (isNewProd) {
+      if (dto.attributes) {
+        let attribute = new XTR_PROD_ATTRIBUTE();
+        // attribute.attributeId = Number(dto.attributes.attributeValues.value);
+        // attribute.name = dto.attributes.attributeValues.title;
+        // attribute.product = prod;
+        attribute = await this.attrRep.save(attribute, { reload: true });
+
+        const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
+        const attrValues = dto.attributes.attributeValues;
+        if (isIteratable(attrValues)) {
+          // for (const attrVal of attrValues) {
+          //   this.logger.warn(
+          //     `attrVal at start of loop 505 ${JSON.stringify(
+          //       attrVal,
+          //       null,
+          //       2,
+          //     )}`,
+          //   );
+          //   let _attrValue = await this.attrValueRepo.findOne({
+          //     where: { id: attrVal.id },
+          //   });
+          //   this.logger.warn(
+          //     `_attrValue ${JSON.stringify(_attrValue, null, 2)}`,
+          //   );
+          //   // if (!_attrValue) {
+          //   //   _attrValue = new XTR_ATTRIBUTE_VALUE();
+          //   //   _attrValue.id = Number(attrVal.value);
+          //   //   _attrValue.title = attrVal.title ? attrVal.title : ' ';
+          //   //   _attrValue.priceAdjustment = parseFloat(attrVal.priceAdjust);
+          //   //   const attrValueDB = await this.attrValueRepo.save(_attrValue, {
+          //   //     reload: true,
+          //   //   });
+          //   // }
+          //   attrValuesArray.push(_attrValue);
+          // }
+        }
+
+        attribute.attributeValues = attrValuesArray;
+        attribute = await this.attrRep.save(attribute, { reload: true });
+      }
+    } else {
+      // update if a change
+
+      let prodAttributesIdx: number;
+      let prodAttributes: XTR_PROD_ATTRIBUTE;
+      if (isIteratable(prod.attributes)) {
+        prodAttributesIdx = prod.attributes.findIndex(
+          (attr: XTR_PROD_ATTRIBUTE, idx: number) => {
+            const found = attr.attributeId === Number(dto.attributes.id);
+            if (found) {
+              prodAttributes = attr;
+            }
+            return found;
+          },
+        );
+      } else {
+        this.logger.warn(`prod.attributes not an array`);
+      }
+      if (!prodAttributes) {
+        const prodAttrubutes: XTR_PROD_ATTRIBUTE[] = [];
+        // if (!prod.attributes || prod.attributes.length === 0) {
+        /** no prod attrubute so create */
+
+        if (dto.attributes) {
+          let attribute = new XTR_PROD_ATTRIBUTE();
+          attribute.attributeId = dto.attributes.attributeId;
+          attribute.name = dto.attributes.name;
+          // attribute.product = prod;
+          // attribute = await this.attrRep.save(attribute, { reload: true });
+
+          const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
+          const attrValues = dto.attributes.attributeValues;
+
+          for (const attrVal of attrValues) {
+            const _attrValue = new XTR_ATTRIBUTE_VALUE();
+            _attrValue.ean = attrVal.ean;
+            _attrValue.id = Number(attrVal.value);
+            _attrValue.atrributeValueId = Number(attrVal.value);
+            _attrValue.title = attrVal.title;
+            _attrValue.priceAdjustment = attrVal.priceAdjust;
+            if (attribute.name === 'Size') {
+              _attrValue.inStock = true;
+            }
+            attrValuesArray.push(_attrValue);
+
+            // attrValuesArray.push(_attrValue);
+          }
+
+          attribute.attributeValues = attrValuesArray;
+          prodAttrubutes.push(attribute);
+          console.log(
+            `prodAttrubutes is ${JSON.stringify(prodAttrubutes, null, 2)}`,
+          );
+          prod.attributes = prodAttrubutes;
+        }
+      } else {
+        /** neeed to update prod updates */
+        if (isIteratable(prodAttributes.attributeValues)) {
+        } else {
+          if (isIteratable(dto.attributes.attributeValues)) {
+            const prodAttributeValues: XTR_ATTRIBUTE_VALUE[] = [];
+
+            dto.attributes.attributeValues.forEach(
+              (dtoAttrVal: AttributeValue) => {
+                const _prodAttribValue = new XTR_ATTRIBUTE_VALUE();
+                _prodAttribValue.id = Number(dtoAttrVal.value);
+                _prodAttribValue.atrributeValueId = Number(dtoAttrVal.value);
+                _prodAttribValue.title = dtoAttrVal.title;
+                _prodAttribValue.priceAdjustment = dtoAttrVal.priceAdjust;
+                if (prodAttributes.name === 'Size') {
+                  _prodAttribValue.inStock = true;
+                }
+
+                prodAttributeValues.push(_prodAttribValue);
+              },
+            );
+            prodAttributes.attributeValues = prodAttributeValues;
+          }
+        }
+      }
+    }
+
+    const _prod = await this.prodRepo.save(prod, { reload: true });
     return _prod;
+    // return prod;
   }
 
   public async getProduct(id: number): Promise<XTR_PRODUCT> {
@@ -507,12 +858,8 @@ export class XtraderService {
   public async updateStockLevel(
     dto: XtraderStockLevel,
   ): Promise<xtrStockLevelUpdateResp> {
-    this.logger.log(
-      `updateStockLevel called with dto ${JSON.stringify(dto, null, 2)}`,
-    );
-
     const prods: XtraderStockItem[] = dto.products;
-    this.logger.log(`Number of products ${prods.length ? prods.length : 0}`);
+
     const inStockItems: string[] = [];
     const noStockItems: string[] = [];
     const stockSizes: string[] = [];
@@ -524,37 +871,26 @@ export class XtraderService {
     prods.forEach((p: XtraderStockItem) => {
       if (p.stockItem) {
         if (p.stockItem.level === 'In Stock') {
-          this.logger.log('In Stock item');
           inStockItems.push(p.item);
         } else if (p.stockItem.level === 'No Stock.') {
-          this.logger.log('No Stock item');
           noStockItems.push(p.item);
         }
       } else {
-        this.logger.log('Stock sizes item');
-        this.logger.log(`sizes prod ${JSON.stringify(p, null, 2)}`);
         const item = p.item;
-        this.logger.log(`sizes item ${item}`);
+
         //TODO: make sure item is a tring
         if (item) stockSizes.push(item);
-        this.logger.log(`after found sizes rec ${stockSizes}`);
       }
     });
 
-    this.logger.log(
-      `InStockItems length ${inStockItems.length} noStockItems len ${noStockItems.length} stocksizes ${stockSizes.length} `,
-    );
     if (inStockItems.length > 0) {
-      // this.logger.log(`inStockItems ${stockSizes}`);
       let inStockRows = await this.prodRepo
         .createQueryBuilder('xtr-product')
         .update(XTR_PRODUCT)
         .set({ stockStatus: XtrProdStockStatusEnum.IN })
         .where({ model: In(inStockItems) })
         .execute();
-      this.logger.log(`instock item array ${inStockItems}`);
 
-      this.logger.log(`Result from instock update ${inStockRows.affected}`);
       instockNum = inStockRows.affected;
     }
 
@@ -570,16 +906,12 @@ export class XtraderService {
       noStockNum = outStockRows.affected;
     }
     if (stockSizes.length > 0) {
-      this.logger.log(`to update stockSizes ${stockSizes.length}`);
-      this.logger.log(`stockSizes ${stockSizes}`);
       const _stockSizes = await this.prodRepo
         .createQueryBuilder('xtr-product')
         .leftJoinAndSelect('xtr-product.attributes', 'attributes')
 
         .where({ model: In(stockSizes) })
         .getMany();
-
-      this.logger.log(`_stockSizes ${JSON.stringify(_stockSizes, null, 2)}`);
     }
     // 'feature',
     //     'brand',

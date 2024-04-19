@@ -60,8 +60,8 @@ export class XtraderController {
   }
 
   @Post('/xtrProd')
-  async newProduct(@Body() dto: XtrProductDto): Promise<XTR_PRODUCT> {
-    return this.productService.newProduct(dto);
+  async productPost(@Body() dto: XtrProductDto): Promise<XTR_PRODUCT> {
+    return this.productService.productPost(dto);
   }
 
   @Post('/xtrStockLevel')

@@ -9,6 +9,7 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -28,15 +29,13 @@ export class XTR_PROD_ATTRIBUTE extends BaseEntity {
   @Column({ name: 'name', type: 'varchar', length: 10 })
   name: string;
 
-  @ManyToMany(() => XTR_ATTRIBUTE_VALUE)
-  @JoinTable({
-    name: 'xtr_attribute_value_map',
-    joinColumn: { name: 'attribute_id', referencedColumnName: 'id' },
-    inverseJoinColumn: {
-      name: 'attribute_value_id',
-      referencedColumnName: 'id',
+  @OneToMany(
+    () => XTR_ATTRIBUTE_VALUE,
+    (attrValue: XTR_ATTRIBUTE_VALUE) => attrValue.attribute,
+    {
+      cascade: true,
     },
-  })
+  )
   attributeValues: XTR_ATTRIBUTE_VALUE[];
 
   @ManyToOne(() => XTR_PRODUCT, (prod) => prod.attributes)
