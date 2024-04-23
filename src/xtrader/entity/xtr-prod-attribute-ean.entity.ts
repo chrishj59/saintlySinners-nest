@@ -19,7 +19,7 @@ export class XTR_PROD_ATTRIBUTE_EAN extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'attr_type', type: 'varchar', length: 20 })
+  @Column({ name: 'ean_code', type: 'varchar', length: 20 })
   code: string;
 
   @Column({ name: 'value', type: 'varchar', length: 30 })

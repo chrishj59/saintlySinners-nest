@@ -29,6 +29,7 @@ import { Item } from 'src/items/entity/item.entity';
 import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from 'src/remote-files/entity/stockFile.entity';
 import e from 'express';
 import { isIteratable } from 'src/utils/helpers';
+import { DtoEanType } from './types/dto.ean.type';
 
 @Injectable()
 export class XtraderService {
@@ -170,6 +171,7 @@ export class XtraderService {
   }
 
   async productPost(dto: XtrProductDto) {
+    this.logger.warn(`productPost called with ${JSON.stringify(dto, null, 2)}`);
     const _ = require('lodash');
     let prod: XTR_PRODUCT;
     let isNewProd = true;
@@ -275,33 +277,53 @@ export class XtraderService {
 
     if (isNewProd) {
       if (dto.eans) {
-        const eanArray: XTR_PROD_ATTRIBUTE_EAN[] = [];
         for (const ean of dto.eans) {
           const _ean = new XTR_PROD_ATTRIBUTE_EAN();
           _ean.code = ean.ean;
           _ean.value = ean.value;
-          _ean.product = prod;
-          this.prodEanRepo.save(_ean, { reload: true });
-          const _eanDB = await this.logger.warn(
-            `_ean is ${JSON.stringify(_ean, null, 2)}`,
-          );
-          // let eanDB = await this.prodEanRepo.findOne({
-          //   where: { code: _ean.code },
-          // });
-          // if (!eanDB) {
-          //   eanDB = await this.prodEanRepo.save(_ean, { reload: true });
-          // }
-          // eanArray.push(eanDB);
+          prod.eans.push(_ean);
         }
-        // this.logger.warn(`ean list is ${JSON.stringify(eanArray, null, 2)}`);
-        // prod.eans = eanArray;
       }
     } else {
-      const eansSame = _.isEqual(prod.eans, dto.eans);
-      this.logger.warn(`eans same ${eansSame}`);
+      if (isIteratable(dto.eans)) {
+        for (const ean of dto.eans) {
+          if (prod.eans.length === 0) {
+            // no product eans so add
+
+            const _ean = new XTR_PROD_ATTRIBUTE_EAN();
+            _ean.code = ean.ean;
+            _ean.value = ean.value;
+
+            prod.eans.push(_ean);
+          } else {
+            // there are existing eans so update existing so add
+
+            const eanIdx = prod.eans.findIndex((prodEan) => {
+              return prodEan.code === ean.ean;
+            });
+
+            if (eanIdx === -1) {
+              // ean does not exist create a new one
+
+              const _ean = new XTR_PROD_ATTRIBUTE_EAN();
+              _ean.code = ean.ean;
+              _ean.value = ean.value;
+
+              prod.eans.push(_ean);
+            } else {
+              // update the ean
+
+              const _ean = prod.eans[eanIdx];
+              _ean.code = ean.ean;
+              _ean.value = ean.value;
+
+              prod.eans[eanIdx] = _ean;
+            }
+          }
+        }
+      }
     }
 
-    console.log(`dto.ximage ${JSON.stringify(dto.ximage, null, 2)}`);
     if (isNewProd) {
       if (dto.ximage) {
         let ximage = await this.filesService.getXtrProdImage(dto.ximage);
@@ -368,13 +390,6 @@ export class XtraderService {
         }
       }
     } else {
-      this.logger.log(
-        `prod.ximage3 ${JSON.stringify(
-          prod.ximage3,
-          null,
-          2,
-        )} dto.ximage3 ${JSON.stringify(dto.ximage3, null, 2)}`,
-      );
       if (
         (prod.ximage3 === null && dto.ximage3.length > 0) ||
         (prod.ximage3 && prod.ximage3.key !== dto.ximage3)

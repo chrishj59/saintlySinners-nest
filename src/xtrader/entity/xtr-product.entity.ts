@@ -332,7 +332,7 @@ export class XTR_PRODUCT extends BaseEntity {
     () => XTR_PROD_ATTRIBUTE_EAN,
     (ean: XTR_PROD_ATTRIBUTE_EAN) => ean.product,
     {
-      cascade: ['insert', 'update', 'remove'],
+      cascade: true,
     },
   )
   eans: XTR_PROD_ATTRIBUTE_EAN[];
