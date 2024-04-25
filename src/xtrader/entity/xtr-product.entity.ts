@@ -343,6 +343,14 @@ export class XTR_PRODUCT extends BaseEntity {
   )
   orderLines: CUSTOMER_ORDER_LINE[];
 
+  @Column({
+    name: 'stripe_restricted',
+    type: 'boolean',
+    default: false,
+    nullable: true,
+  })
+  stripeRestricted: boolean;
+
   @Exclude()
   @DeleteDateColumn()
   deletedOn: Date;

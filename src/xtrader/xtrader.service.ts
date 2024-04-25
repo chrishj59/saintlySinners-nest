@@ -30,6 +30,8 @@ import { XTR_PRODUCT_IMAGE_REMOTE_FILE } from 'src/remote-files/entity/stockFile
 import e from 'express';
 import { isIteratable } from 'src/utils/helpers';
 import { DtoEanType } from './types/dto.ean.type';
+import { ProductRestrictedDto } from './dtos/xtr-prod-restricted.dto';
+import { restrProdRespType } from 'src/xtrader/types/xtrRestrictedProdResponse.type';
 
 @Injectable()
 export class XtraderService {
@@ -939,5 +941,24 @@ export class XtraderService {
       outOfStock: noStockNum,
     };
     return resp;
+  }
+
+  public async restrictedProductPost(
+    dto: ProductRestrictedDto,
+  ): Promise<restrProdRespType> {
+    const prodIds = dto.productIds;
+    const restictedRows = await this.prodRepo
+      .createQueryBuilder('xtr-product')
+      .update(XTR_PRODUCT)
+      .set({ stripeRestricted: true })
+      .where({ id: In(prodIds) })
+      .execute();
+    this.logger.log(`restictedRows ${JSON.stringify(restictedRows, null, 2)}`);
+    const updated = restictedRows.affected;
+    const restrResponse: restrProdRespType = {
+      message: 'updated:',
+      quantity: updated,
+    };
+    return restrResponse;
   }
 }

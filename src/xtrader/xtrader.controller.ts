@@ -23,6 +23,8 @@ import {
   XtraderStockLevel,
   xtrStockLevelUpdateResp,
 } from './dtos/xtr-stock-level.dto';
+import { ProductRestrictedDto } from './dtos/xtr-prod-restricted.dto';
+import { restrProdRespType } from 'src/xtrader/types/xtrRestrictedProdResponse.type';
 
 @Controller()
 export class XtraderController {
@@ -69,6 +71,13 @@ export class XtraderController {
     @Body() dto: XtraderStockLevel,
   ): Promise<xtrStockLevelUpdateResp> {
     return this.productService.updateStockLevel(dto);
+  }
+
+  @Post('/xtrRestrictedProduct')
+  async restrictedProductPost(
+    @Body() dto: ProductRestrictedDto,
+  ): Promise<restrProdRespType> {
+    return await this.productService.restrictedProductPost(dto);
   }
 
   @Get('/xtrProd/:id')
