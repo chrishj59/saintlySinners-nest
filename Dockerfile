@@ -9,4 +9,4 @@ COPY package.json .
 RUN pnpm install
 COPY . .
 
-CMD npm run start:dev
+CMD pnpm run start:dev

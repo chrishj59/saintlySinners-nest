@@ -173,15 +173,15 @@ export class XtraderService {
   }
 
   async productPost(dto: XtrProductDto) {
-    this.logger.warn(`productPost called with ${JSON.stringify(dto, null, 2)}`);
     const _ = require('lodash');
+    this.logger.log(`productPost called with id ${JSON.stringify(dto.id)}`);
     let prod: XTR_PRODUCT;
     let isNewProd = true;
     const currProd = await this.prodRepo.findOne({
       where: { id: dto.id },
       relations: ['category', 'eans', 'attributes'],
     });
-    this.logger.warn(`currProd ${JSON.stringify(currProd, null, 2)}`);
+
     if (currProd) {
       prod = currProd;
       isNewProd = false;
@@ -226,9 +226,7 @@ export class XtraderService {
     prod.washing = dto.washing;
 
     // prod.feature = dto.feature
-    console.log(
-      `prod.retailPrice ${prod.retailPrice} dto.retailPrice ${prod.retailPrice}`,
-    );
+
     const cat = await this.getCategoryByName(dto.catName);
     prod.category = cat;
 
@@ -244,19 +242,14 @@ export class XtraderService {
     }
 
     /** load images for product if in DTO */
+
     if (isNewProd) {
       if (dto.thumb) {
-        let thumb = await this.filesService.getXtrProdImage(dto.thumb);
-        console.log(
-          `does thumb already exist ${JSON.stringify(thumb, null, 2)}`,
+        const thumb = await this.filesService.uploadXtrStockFile(
+          dto.thumb,
+          'thumb',
+          prod.id,
         );
-        if (!thumb) {
-          thumb = await this.filesService.uploadXtrStockFile(
-            dto.thumb,
-            'thumb',
-            prod.id,
-          );
-        }
 
         prod.thumb = thumb;
       }
@@ -265,7 +258,7 @@ export class XtraderService {
 
       if (!_thumb || _thumb.key !== dto.thumb) {
         // update an existing thumb image
-
+        this.logger.log('update existing thumb ');
         _thumb = await this.filesService.uploadXtrStockFile(
           dto.thumb,
           'thumb',
@@ -273,7 +266,7 @@ export class XtraderService {
         );
         prod.thumb;
       } else {
-        this.logger.warn(`No update required`);
+        this.logger.warn(`No update required to thumb`);
       }
     }
 
@@ -780,7 +773,9 @@ export class XtraderService {
       }
     }
 
+    this.logger.log('before save');
     const _prod = await this.prodRepo.save(prod, { reload: true });
+    this.logger.log(`after save id: ${_prod.id}`);
     return _prod;
     // return prod;
   }
