@@ -32,6 +32,7 @@ import { isIteratable } from 'src/utils/helpers';
 import { DtoEanType } from './types/dto.ean.type';
 import { ProductRestrictedDto } from './dtos/xtr-prod-restricted.dto';
 import { restrProdRespType } from 'src/xtrader/types/xtrRestrictedProdResponse.type';
+import isThisISOWeek from 'date-fns/isThisISOWeek/index';
 
 @Injectable()
 export class XtraderService {
@@ -360,7 +361,7 @@ export class XtraderService {
         prod.ximage2;
       }
     } else {
-      if (!_.isEqual(prod.ximage2.key, dto.ximage2)) {
+      if ((!prod.ximage2 && dto.ximage2) || prod.ximage2.key !== dto.ximage2) {
         let ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
         if (!ximage2) {
           ximage2 = await this.filesService.uploadXtrStockFile(
@@ -385,10 +386,7 @@ export class XtraderService {
         }
       }
     } else {
-      if (
-        (prod.ximage3 === null && dto.ximage3.length > 0) ||
-        (prod.ximage3 && prod.ximage3.key !== dto.ximage3)
-      ) {
+      if ((!prod.ximage3 && dto.ximage3) || prod.ximage3.key !== dto.ximage3) {
         if (dto.ximage3) {
           const ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
           if (!ximage3) {
@@ -414,8 +412,14 @@ export class XtraderService {
         }
       }
     } else {
+      this.logger.log(
+        `prod.ximage4 ${JSON.stringify(
+          prod.ximage4,
+        )} dto.ximage4 ${JSON.stringify(dto.ximage4, null, 2)} `,
+      );
+
       if (
-        (prod.ximage4 === null && dto.ximage4.length > 0) ||
+        (prod.ximage4 !== null && dto.ximage4.length > 0) ||
         (prod.ximage4 && prod.ximage4.key !== dto.ximage4)
       ) {
         if (dto.ximage4) {
@@ -444,7 +448,7 @@ export class XtraderService {
       }
     } else {
       if (
-        (prod.ximage5 === null && dto.ximage5.length > 0) ||
+        (prod.ximage5 !== null && dto.ximage5.length > 0) ||
         (prod.ximage5 && prod.ximage5.key !== dto.ximage5)
       ) {
         if (dto.ximage5) {
@@ -473,7 +477,7 @@ export class XtraderService {
       }
     } else {
       if (
-        (prod.multi1 === null && dto.multi1.length > 0) ||
+        (prod.multi1 !== null && dto.multi1.length > 0) ||
         (prod.multi1 && prod.multi1.key !== dto.multi1)
       ) {
         if (dto.multi1) {
@@ -501,7 +505,7 @@ export class XtraderService {
         }
       } else {
         if (
-          (prod.multi2 === null && dto.multi2.length > 0) ||
+          (prod.multi2 !== null && dto.multi2.length > 0) ||
           (prod.multi2 && prod.multi2.key !== dto.multi2)
         ) {
           if (dto.multi2) {
@@ -531,7 +535,7 @@ export class XtraderService {
       }
     } else {
       if (
-        (prod.multi3 === null && dto.multi3.length > 0) ||
+        (prod.multi3 !== null && dto.multi3.length > 0) ||
         (prod.multi3 && prod.multi3.key !== dto.multi3)
       ) {
         if (dto.multi3) {
@@ -562,7 +566,7 @@ export class XtraderService {
       }
     } else {
       if (
-        (prod.bigmulti1 === null && dto.bigmulti1.length > 0) ||
+        (prod.bigmulti1 !== null && dto.bigmulti1.length > 0) ||
         (prod.bigmulti1 && prod.bigmulti1.key !== dto.bigmulti1)
       ) {
         if (dto.bigmulti1) {
@@ -594,7 +598,7 @@ export class XtraderService {
       }
     } else {
       if (
-        (prod.bigmulti2 === null && dto.bigmulti2.length > 0) ||
+        (prod.bigmulti2 !== null && dto.bigmulti2.length > 0) ||
         (prod.bigmulti2 && prod.bigmulti2.key !== dto.bigmulti2)
       ) {
         if (dto.bigmulti2) {
@@ -626,7 +630,7 @@ export class XtraderService {
       }
     } else {
       if (
-        (prod.bigmulti3 === null && dto.bigmulti3.length > 0) ||
+        (prod.bigmulti3 !== null && dto.bigmulti3.length > 0) ||
         (prod.bigmulti3 && prod.bigmulti3.key !== dto.bigmulti3)
       ) {
         if (dto.bigmulti3) {
@@ -643,49 +647,33 @@ export class XtraderService {
         }
       }
     }
-    // let _prod: XTR_PRODUCT;
-    // if (isNewProd) {
-    //   _prod = await this.prodRepo.save(prod, { reload: true });
-    // } else {
-    //   _prod = prod;
-    // }
 
     if (isNewProd) {
       if (dto.attributes) {
         let attribute = new XTR_PROD_ATTRIBUTE();
-        // attribute.attributeId = Number(dto.attributes.attributeValues.value);
-        // attribute.name = dto.attributes.attributeValues.title;
+
+        attribute.attributeId = Number(dto.attributes.id);
+        attribute.name = dto.attributes.name;
         // attribute.product = prod;
-        attribute = await this.attrRep.save(attribute, { reload: true });
+        // attribute = await this.attrRep.save(attribute, { reload: true });
 
         const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
+
         const attrValues = dto.attributes.attributeValues;
         if (isIteratable(attrValues)) {
-          // for (const attrVal of attrValues) {
-          //   this.logger.warn(
-          //     `attrVal at start of loop 505 ${JSON.stringify(
-          //       attrVal,
-          //       null,
-          //       2,
-          //     )}`,
-          //   );
-          //   let _attrValue = await this.attrValueRepo.findOne({
-          //     where: { id: attrVal.id },
-          //   });
-          //   this.logger.warn(
-          //     `_attrValue ${JSON.stringify(_attrValue, null, 2)}`,
-          //   );
-          //   // if (!_attrValue) {
-          //   //   _attrValue = new XTR_ATTRIBUTE_VALUE();
-          //   //   _attrValue.id = Number(attrVal.value);
-          //   //   _attrValue.title = attrVal.title ? attrVal.title : ' ';
-          //   //   _attrValue.priceAdjustment = parseFloat(attrVal.priceAdjust);
-          //   //   const attrValueDB = await this.attrValueRepo.save(_attrValue, {
-          //   //     reload: true,
-          //   //   });
-          //   // }
-          //   attrValuesArray.push(_attrValue);
-          // }
+          for (const attrVal of attrValues) {
+            let _attrValue = await this.attrValueRepo.findOne({
+              where: { id: attrVal.id },
+            });
+
+            if (!_attrValue) {
+              _attrValue = new XTR_ATTRIBUTE_VALUE();
+              _attrValue.id = Number(attrVal.value);
+              _attrValue.title = attrVal.title ? attrVal.title : ' ';
+              _attrValue.priceAdjustment = attrVal.priceAdjust;
+            }
+            attrValuesArray.push(_attrValue);
+          }
         }
 
         attribute.attributeValues = attrValuesArray;
@@ -693,7 +681,6 @@ export class XtraderService {
       }
     } else {
       // update if a change
-
       let prodAttributesIdx: number;
       let prodAttributes: XTR_PROD_ATTRIBUTE;
       if (isIteratable(prod.attributes)) {
@@ -706,9 +693,8 @@ export class XtraderService {
             return found;
           },
         );
-      } else {
-        this.logger.warn(`prod.attributes not an array`);
       }
+
       if (!prodAttributes) {
         const prodAttrubutes: XTR_PROD_ATTRIBUTE[] = [];
         // if (!prod.attributes || prod.attributes.length === 0) {
@@ -718,8 +704,6 @@ export class XtraderService {
           let attribute = new XTR_PROD_ATTRIBUTE();
           attribute.attributeId = dto.attributes.attributeId;
           attribute.name = dto.attributes.name;
-          // attribute.product = prod;
-          // attribute = await this.attrRep.save(attribute, { reload: true });
 
           const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
           const attrValues = dto.attributes.attributeValues;
@@ -735,8 +719,6 @@ export class XtraderService {
               _attrValue.inStock = true;
             }
             attrValuesArray.push(_attrValue);
-
-            // attrValuesArray.push(_attrValue);
           }
 
           attribute.attributeValues = attrValuesArray;
@@ -748,36 +730,42 @@ export class XtraderService {
         }
       } else {
         /** neeed to update prod updates */
-        if (isIteratable(prodAttributes.attributeValues)) {
-        } else {
-          if (isIteratable(dto.attributes.attributeValues)) {
-            const prodAttributeValues: XTR_ATTRIBUTE_VALUE[] = [];
 
-            dto.attributes.attributeValues.forEach(
-              (dtoAttrVal: AttributeValue) => {
-                const _prodAttribValue = new XTR_ATTRIBUTE_VALUE();
-                _prodAttribValue.id = Number(dtoAttrVal.value);
-                _prodAttribValue.atrributeValueId = Number(dtoAttrVal.value);
-                _prodAttribValue.title = dtoAttrVal.title;
-                _prodAttribValue.priceAdjustment = dtoAttrVal.priceAdjust;
-                if (prodAttributes.name === 'Size') {
-                  _prodAttribValue.inStock = true;
-                }
-
-                prodAttributeValues.push(_prodAttribValue);
-              },
+        if (!prodAttributes.attributeValues) {
+          const prodAttrValues: XTR_ATTRIBUTE_VALUE[] = [];
+          for (const attrVal of dto.attributes.attributeValues) {
+            const _prodAttrValue = new XTR_ATTRIBUTE_VALUE();
+            _prodAttrValue.atrributeValueId = Number(attrVal.value);
+            _prodAttrValue.ean = attrVal.ean;
+            _prodAttrValue.title = attrVal.title;
+            _prodAttrValue.priceAdjustment = attrVal.priceAdjust;
+            _prodAttrValue.inStock = true;
+            prodAttrValues.push(_prodAttrValue);
+          }
+          prodAttributes.attributeValues = prodAttrValues;
+        } else if (isIteratable(prodAttributes.attributeValues)) {
+          for (let prodAttrValue of prodAttributes.attributeValues) {
+            const dtoAttrValue = dto.attributes.attributeValues.find(
+              (item: AttributeValue) =>
+                item.id === prodAttrValue.atrributeValueId,
             );
-            prodAttributes.attributeValues = prodAttributeValues;
+            if (dtoAttrValue) {
+              //found in DTO attr values
+              prodAttrValue.atrributeValueId = Number(dtoAttrValue.value);
+              prodAttrValue.ean = dtoAttrValue.ean;
+              prodAttrValue.priceAdjustment = dtoAttrValue.priceAdjust;
+              prodAttrValue.title = dtoAttrValue.title;
+            } else {
+              prodAttrValue = null;
+            }
           }
         }
       }
     }
 
-    this.logger.log('before save');
     const _prod = await this.prodRepo.save(prod, { reload: true });
-    this.logger.log(`after save id: ${_prod.id}`);
+
     return _prod;
-    // return prod;
   }
 
   public async getProduct(id: number): Promise<XTR_PRODUCT> {
@@ -880,6 +868,7 @@ export class XtraderService {
     let noStockNum = 0;
     let stockSizeNum = 0;
     let noStockSizeNum = 0;
+
     prods.forEach((p: XtraderStockItem) => {
       if (p.stockItem) {
         if (p.stockItem.level === 'In Stock') {
