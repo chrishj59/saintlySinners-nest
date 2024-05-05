@@ -877,15 +877,16 @@ export class XtraderService {
   public async getProductsFiltered(
     filterValue: XtrProductFilterDto,
   ): Promise<XTR_PRODUCT[]> {
-    const title = filterValue.searchParam;
+    const searchParam = filterValue.searchParam;
+
     try {
       const products = await this.prodRepo.find({
         where: [
           {
-            name: ILike(`%${title}%`),
+            name: ILike(`%${searchParam}%`),
           },
           {
-            description: ILike(`%${title}%`),
+            description: ILike(`%${searchParam}%`),
           },
         ],
 
@@ -905,7 +906,7 @@ export class XtraderService {
           'feature',
           'brand',
           'attributes',
-          'atrributes.attributeValues',
+          'attributes.attributeValues',
           'category',
           'eans',
         ],
