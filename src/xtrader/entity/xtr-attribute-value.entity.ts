@@ -14,6 +14,7 @@ import {
   VersionColumn,
 } from 'typeorm';
 import { XTR_PROD_ATTRIBUTE } from './xtr-prod-attribute.entity';
+import { XtrProdStockStatusEnum } from '../enum/xtrProd-status.enum';
 
 @Entity({ name: 'xtr-attribute-value' })
 export class XTR_ATTRIBUTE_VALUE extends BaseEntity {
@@ -42,8 +43,14 @@ export class XTR_ATTRIBUTE_VALUE extends BaseEntity {
   @Column({ name: 'ean', type: 'varchar', length: 13, nullable: true })
   ean: string;
 
-  @Column({ name: 'in_stock', type: 'boolean', nullable: true })
-  inStock: boolean;
+  @Column({
+    name: 'stock_status',
+    type: 'enum',
+    enum: XtrProdStockStatusEnum,
+
+    default: XtrProdStockStatusEnum.IN,
+  })
+  stockStatus: XtrProdStockStatusEnum;
 
   @ManyToOne(() => XTR_PROD_ATTRIBUTE, (attr) => attr)
   @JoinColumn({ name: 'attribute_id', referencedColumnName: 'id' })

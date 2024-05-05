@@ -55,4 +55,6 @@ export class XtraderStockLevel {
 export type xtrStockLevelUpdateResp = {
   inStock: number;
   outOfStock: number;
+  inStockSize: number;
+  outOfStockSize: number;
 };

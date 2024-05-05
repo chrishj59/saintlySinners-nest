@@ -56,7 +56,7 @@ export class DtoProdAttribute {
   name: string;
 
   @IsOptional()
-  @Type(() => AttributeValues)
+  @Type(() => AttributeValue)
   attributeValues: AttributeValue[];
 }
 

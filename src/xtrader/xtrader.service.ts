@@ -156,7 +156,9 @@ export class XtraderService {
 
       return cat;
     } catch (err) {
-      console.log(`Error getting one category ${JSON.stringify(err, null, 2)}`);
+      console.warn(
+        `Error getting one category ${JSON.stringify(err, null, 2)}`,
+      );
       throw new BadRequestException(
         `Error getting one category ${JSON.stringify(err, null, 2)}`,
       );
@@ -174,8 +176,7 @@ export class XtraderService {
   }
 
   async productPost(dto: XtrProductDto) {
-    const _ = require('lodash');
-    this.logger.log(`productPost called with id ${JSON.stringify(dto.id)}`);
+    // const _ = require('lodash');
     let prod: XTR_PRODUCT;
     let isNewProd = true;
     const currProd = await this.prodRepo.findOne({
@@ -259,21 +260,22 @@ export class XtraderService {
 
       if (!_thumb || _thumb.key !== dto.thumb) {
         // update an existing thumb image
-        this.logger.log('update existing thumb ');
         _thumb = await this.filesService.uploadXtrStockFile(
           dto.thumb,
           'thumb',
           prod.id,
         );
         prod.thumb;
-      } else {
-        this.logger.warn(`No update required to thumb`);
       }
     }
 
     if (isNewProd) {
       if (dto.eans) {
         for (const ean of dto.eans) {
+          if (!prod.eans) {
+            const _eans: XTR_PROD_ATTRIBUTE_EAN[] = [];
+            prod.eans = _eans;
+          }
           const _ean = new XTR_PROD_ATTRIBUTE_EAN();
           _ean.code = ean.ean;
           _ean.value = ean.value;
@@ -330,21 +332,29 @@ export class XtraderService {
             'ximage',
             prod.id,
           );
+          prod.ximage = ximage;
         }
-        prod.ximage = ximage;
       }
     } else {
-      if ((!prod.ximage && dto.ximage) || prod.ximage.key !== dto.ximage) {
+      if (
+        (prod.ximage === null && dto.ximage.length > 0) ||
+        (prod.ximage && prod.ximage.key !== dto.ximage)
+      ) {
         let ximage = await this.filesService.getXtrProdImage(dto.ximage);
-
         if (!ximage) {
+          /** only create Ximage if one does not exist */
           ximage = await this.filesService.uploadXtrStockFile(
             dto.ximage,
             'ximage',
             prod.id,
           );
+          prod.ximage = ximage;
         }
-        prod.ximage = ximage;
+        if (prod.ximage === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.ximage} to multiple products`,
+          );
+        }
       }
     }
 
@@ -357,20 +367,29 @@ export class XtraderService {
             'ximage2',
             prod.id,
           );
+          prod.ximage2 = ximage2;
         }
-        prod.ximage2;
       }
     } else {
-      if ((!prod.ximage2 && dto.ximage2) || prod.ximage2.key !== dto.ximage2) {
+      if (
+        (prod.ximage2 === null && dto.ximage2.length > 0) ||
+        (prod.ximage2 && prod.ximage2.key !== dto.ximage2)
+      ) {
         let ximage2 = await this.filesService.getXtrProdImage(dto.ximage2);
         if (!ximage2) {
+          /** only create Ximage if one does not exist */
           ximage2 = await this.filesService.uploadXtrStockFile(
             dto.ximage2,
             'ximage2',
             prod.id,
           );
+          prod.ximage2 = ximage2;
         }
-        prod.ximage2;
+        if (prod.ximage2 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.ximage2} to multiple products`,
+          );
+        }
       }
     }
 
@@ -383,19 +402,28 @@ export class XtraderService {
             'ximage3',
             prod.id,
           );
+          prod.ximage3 = ximage3;
         }
       }
     } else {
-      if ((!prod.ximage3 && dto.ximage3) || prod.ximage3.key !== dto.ximage3) {
-        if (dto.ximage3) {
-          const ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
-          if (!ximage3) {
-            await this.filesService.uploadXtrStockFile(
-              dto.ximage3,
-              'ximage3',
-              prod.id,
-            );
-          }
+      if (
+        (prod.ximage3 === null && dto.ximage3.length > 0) ||
+        (prod.ximage3 && prod.ximage3.key !== dto.ximage3)
+      ) {
+        let ximage3 = await this.filesService.getXtrProdImage(dto.ximage3);
+        if (!ximage3) {
+          /** only create Ximage if one does not exist */
+          ximage3 = await this.filesService.uploadXtrStockFile(
+            dto.ximage3,
+            'ximage3',
+            prod.id,
+          );
+          prod.ximage3 = ximage3;
+        }
+        if (prod.ximage3 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.ximage3} to multiple products`,
+          );
         }
       }
     }
@@ -409,28 +437,28 @@ export class XtraderService {
             'ximage4',
             prod.id,
           );
+          prod.ximage4 = ximage4;
         }
       }
     } else {
-      this.logger.log(
-        `prod.ximage4 ${JSON.stringify(
-          prod.ximage4,
-        )} dto.ximage4 ${JSON.stringify(dto.ximage4, null, 2)} `,
-      );
-
       if (
-        (prod.ximage4 !== null && dto.ximage4.length > 0) ||
+        (prod.ximage4 === null && dto.ximage4.length > 0) ||
         (prod.ximage4 && prod.ximage4.key !== dto.ximage4)
       ) {
-        if (dto.ximage4) {
-          const ximage4 = await this.filesService.getXtrProdImage(dto.ximage4);
-          if (!ximage4) {
-            await this.filesService.uploadXtrStockFile(
-              dto.ximage4,
-              'ximage4',
-              prod.id,
-            );
-          }
+        let ximage4 = await this.filesService.getXtrProdImage(dto.ximage4);
+        if (!ximage4) {
+          /** only create Ximage if one does not exist */
+          ximage4 = await this.filesService.uploadXtrStockFile(
+            dto.ximage4,
+            'ximage4',
+            prod.id,
+          );
+          prod.ximage4 = ximage4;
+        }
+        if (prod.ximage4 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.ximage4} to multiple products`,
+          );
         }
       }
     }
@@ -444,22 +472,28 @@ export class XtraderService {
             'ximage5',
             prod.id,
           );
+          prod.ximage5 = ximage5;
         }
       }
     } else {
       if (
-        (prod.ximage5 !== null && dto.ximage5.length > 0) ||
+        (prod.ximage5 === null && dto.ximage5.length > 0) ||
         (prod.ximage5 && prod.ximage5.key !== dto.ximage5)
       ) {
-        if (dto.ximage5) {
-          const ximage5 = await this.filesService.getXtrProdImage(dto.ximage5);
-          if (!ximage5) {
-            await this.filesService.uploadXtrStockFile(
-              dto.ximage5,
-              'ximage5',
-              prod.id,
-            );
-          }
+        let ximage5 = await this.filesService.getXtrProdImage(dto.ximage5);
+        if (!ximage5) {
+          /** only create Ximage if one does not exist */
+          ximage5 = await this.filesService.uploadXtrStockFile(
+            dto.ximage5,
+            'ximage5',
+            prod.id,
+          );
+          prod.ximage5 = ximage5;
+        }
+        if (prod.ximage5 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.ximage5} to multiple products`,
+          );
         }
       }
     }
@@ -473,22 +507,28 @@ export class XtraderService {
             'multi1',
             prod.id,
           );
+          prod.multi1 = multi1;
         }
       }
     } else {
       if (
-        (prod.multi1 !== null && dto.multi1.length > 0) ||
+        (prod.multi1 === null && dto.multi1.length > 0) ||
         (prod.multi1 && prod.multi1.key !== dto.multi1)
       ) {
-        if (dto.multi1) {
-          const multi1 = await this.filesService.getXtrProdImage(dto.multi1);
-          if (!multi1) {
-            await this.filesService.uploadXtrStockFile(
-              dto.multi1,
-              'multi1',
-              prod.id,
-            );
-          }
+        let multi1 = await this.filesService.getXtrProdImage(dto.multi1);
+        if (!multi1) {
+          /** only create Ximage if one does not exist */
+          multi1 = await this.filesService.uploadXtrStockFile(
+            dto.multi1,
+            'multi1',
+            prod.id,
+          );
+          prod.multi1 = multi1;
+        }
+        if (prod.multi1 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.multi1} to multiple products`,
+          );
         }
       }
     }
@@ -502,21 +542,27 @@ export class XtraderService {
             'multi2',
             prod.id,
           );
+          prod.multi2 = multi2;
         }
       } else {
         if (
-          (prod.multi2 !== null && dto.multi2.length > 0) ||
+          (prod.multi2 === null && dto.multi2.length > 0) ||
           (prod.multi2 && prod.multi2.key !== dto.multi2)
         ) {
-          if (dto.multi2) {
-            const multi2 = await this.filesService.getXtrProdImage(dto.multi2);
-            if (!multi2) {
-              await this.filesService.uploadXtrStockFile(
-                dto.multi2,
-                'multi2',
-                prod.id,
-              );
-            }
+          let multi2 = await this.filesService.getXtrProdImage(dto.multi2);
+          if (!multi2) {
+            /** only create Ximage if one does not exist */
+            multi2 = await this.filesService.uploadXtrStockFile(
+              dto.multi2,
+              'multi2',
+              prod.id,
+            );
+            prod.multi2 = multi2;
+          }
+          if (prod.multi2 === null) {
+            this.logger.warn(
+              `attempt to assign ${dto.multi2} to multiple products`,
+            );
           }
         }
       }
@@ -531,22 +577,28 @@ export class XtraderService {
             'multi3',
             prod.id,
           );
+          prod.multi3 = multi3;
         }
       }
     } else {
       if (
-        (prod.multi3 !== null && dto.multi3.length > 0) ||
+        (prod.multi3 === null && dto.multi3.length > 0) ||
         (prod.multi3 && prod.multi3.key !== dto.multi3)
       ) {
-        if (dto.multi3) {
-          const multi3 = await this.filesService.getXtrProdImage(dto.multi3);
-          if (!multi3) {
-            await this.filesService.uploadXtrStockFile(
-              dto.multi3,
-              'multi3',
-              prod.id,
-            );
-          }
+        let multi3 = await this.filesService.getXtrProdImage(dto.multi3);
+        if (!multi3) {
+          /** only create Ximage if one does not exist */
+          multi3 = await this.filesService.uploadXtrStockFile(
+            dto.multi3,
+            'multi3',
+            prod.id,
+          );
+          prod.multi3 = multi3;
+        }
+        if (prod.multi3 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.multi3} to multiple products`,
+          );
         }
       }
     }
@@ -562,24 +614,28 @@ export class XtraderService {
             'bigmulti1',
             prod.id,
           );
+          prod.bigmulti1 = bigmulti1;
         }
       }
     } else {
       if (
-        (prod.bigmulti1 !== null && dto.bigmulti1.length > 0) ||
+        (prod.bigmulti1 === null && dto.bigmulti1.length > 0) ||
         (prod.bigmulti1 && prod.bigmulti1.key !== dto.bigmulti1)
       ) {
-        if (dto.bigmulti1) {
-          const bigmulti1 = await this.filesService.getXtrProdImage(
+        let bigmulti1 = await this.filesService.getXtrProdImage(dto.bigmulti1);
+        if (!bigmulti1) {
+          /** only create Ximage if one does not exist */
+          bigmulti1 = await this.filesService.uploadXtrStockFile(
             dto.bigmulti1,
+            'bigmulti1',
+            prod.id,
           );
-          if (!bigmulti1) {
-            await this.filesService.uploadXtrStockFile(
-              dto.bigmulti1,
-              'bigmulti1',
-              prod.id,
-            );
-          }
+          prod.bigmulti1 = bigmulti1;
+        }
+        if (prod.bigmulti1 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.bigmulti1} to multiple products`,
+          );
         }
       }
     }
@@ -587,31 +643,35 @@ export class XtraderService {
     if (isNewProd) {
       if (dto.bigmulti2) {
         let bigmulti2 = await this.filesService.getXtrProdImage(dto.bigmulti2);
+
         if (!bigmulti2) {
           bigmulti2 = await this.filesService.uploadXtrStockFile(
             dto.bigmulti2,
             'bigmulti2',
             prod.id,
           );
+          prod.bigmulti2 = bigmulti2;
         }
-        prod.bigmulti2 = bigmulti2;
       }
     } else {
       if (
-        (prod.bigmulti2 !== null && dto.bigmulti2.length > 0) ||
+        (prod.bigmulti2 === null && dto.bigmulti2.length > 0) ||
         (prod.bigmulti2 && prod.bigmulti2.key !== dto.bigmulti2)
       ) {
-        if (dto.bigmulti2) {
-          const bigmulti2 = await this.filesService.getXtrProdImage(
+        let bigmulti2 = await this.filesService.getXtrProdImage(dto.bigmulti2);
+        if (!bigmulti2) {
+          /** only create Ximage if one does not exist */
+          bigmulti2 = await this.filesService.uploadXtrStockFile(
             dto.bigmulti2,
+            'bigmulti2',
+            prod.id,
           );
-          if (!bigmulti2) {
-            await this.filesService.uploadXtrStockFile(
-              dto.bigmulti2,
-              'image_bigmulti2',
-              prod.id,
-            );
-          }
+          // prod.bigmulti2 = bigmulti2;
+        }
+        if (prod.bigmulti2 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.bigmulti2} to multiple products`,
+          );
         }
       }
     }
@@ -625,25 +685,28 @@ export class XtraderService {
             'bigmulti3',
             prod.id,
           );
+          prod.bigmulti3 = bigmulti3;
         }
-        prod.bigmulti3 = bigmulti3;
       }
     } else {
       if (
-        (prod.bigmulti3 !== null && dto.bigmulti3.length > 0) ||
+        (prod.bigmulti3 === null && dto.bigmulti3.length > 0) ||
         (prod.bigmulti3 && prod.bigmulti3.key !== dto.bigmulti3)
       ) {
-        if (dto.bigmulti3) {
-          const bigmulti3 = await this.filesService.getXtrProdImage(
+        let bigmulti3 = await this.filesService.getXtrProdImage(dto.bigmulti3);
+        if (!bigmulti3) {
+          /** only create Ximage if one does not exist */
+          bigmulti3 = await this.filesService.uploadXtrStockFile(
             dto.bigmulti3,
+            'bigmulti3',
+            prod.id,
           );
-          if (!bigmulti3) {
-            await this.filesService.uploadXtrStockFile(
-              dto.bigmulti3,
-              'image_bigmulti3',
-              prod.id,
-            );
-          }
+          prod.bigmulti3 = bigmulti3;
+        }
+        if (prod.bigmulti3 === null) {
+          this.logger.warn(
+            `attempt to assign ${dto.bigmulti3} to multiple products`,
+          );
         }
       }
     }
@@ -716,16 +779,14 @@ export class XtraderService {
             _attrValue.title = attrVal.title;
             _attrValue.priceAdjustment = attrVal.priceAdjust;
             if (attribute.name === 'Size') {
-              _attrValue.inStock = true;
+              _attrValue.stockStatus = XtrProdStockStatusEnum.IN;
             }
             attrValuesArray.push(_attrValue);
           }
 
           attribute.attributeValues = attrValuesArray;
           prodAttrubutes.push(attribute);
-          console.log(
-            `prodAttrubutes is ${JSON.stringify(prodAttrubutes, null, 2)}`,
-          );
+
           prod.attributes = prodAttrubutes;
         }
       } else {
@@ -739,16 +800,18 @@ export class XtraderService {
             _prodAttrValue.ean = attrVal.ean;
             _prodAttrValue.title = attrVal.title;
             _prodAttrValue.priceAdjustment = attrVal.priceAdjust;
-            _prodAttrValue.inStock = true;
+            _prodAttrValue.stockStatus = XtrProdStockStatusEnum.IN;
             prodAttrValues.push(_prodAttrValue);
           }
           prodAttributes.attributeValues = prodAttrValues;
         } else if (isIteratable(prodAttributes.attributeValues)) {
           for (let prodAttrValue of prodAttributes.attributeValues) {
+            const _dtoAttattributeValues: any = dto.attributes.attributeValues;
             const dtoAttrValue = dto.attributes.attributeValues.find(
               (item: AttributeValue) =>
                 item.id === prodAttrValue.atrributeValueId,
             );
+
             if (dtoAttrValue) {
               //found in DTO attr values
               prodAttrValue.atrributeValueId = Number(dtoAttrValue.value);
@@ -862,28 +925,64 @@ export class XtraderService {
 
     const inStockItems: string[] = [];
     const noStockItems: string[] = [];
-    const stockSizes: string[] = [];
+    const inSizesIds: number[] = [];
+    const noSizesIds: number[] = [];
 
     let instockNum = 0;
     let noStockNum = 0;
-    let stockSizeNum = 0;
+    let inStockSizeNum = 0;
     let noStockSizeNum = 0;
 
-    prods.forEach((p: XtraderStockItem) => {
+    for (const p of prods) {
+      // prods.forEach((p: XtraderStockItem) => {
       if (p.stockItem) {
         if (p.stockItem.level === 'In Stock') {
           inStockItems.push(p.item);
         } else if (p.stockItem.level === 'No Stock.') {
           noStockItems.push(p.item);
         }
-      } else {
-        const item = p.item;
-
-        //TODO: make sure item is a tring
-        if (item) stockSizes.push(item);
       }
-    });
+      if (p.stockSizes) {
+        const sizes: StockSize[] = p.stockSizes;
+        if (sizes.length > 0) {
+          const prodAttributes = await this.prodRepo.findOne({
+            select: {
+              attributes: {
+                id: true,
+                name: true,
+                attributeValues: {
+                  id: true,
+                  title: true,
+                  stockStatus: true,
+                },
+              },
+            },
+            relations: ['attributes', 'attributes.attributeValues'],
+            where: {
+              model: p.item,
+            },
+          });
 
+          const sizeAttr = prodAttributes.attributes.find(
+            (item) => item.name === 'Size',
+          );
+
+          if (sizeAttr && sizeAttr.attributeValues) {
+            for (const sizeAttrItem of sizeAttr.attributeValues) {
+              for (const dtoSizeAttr of p.stockSizes) {
+                if (dtoSizeAttr.size === sizeAttrItem.title) {
+                  if (dtoSizeAttr.level === 'In Stock') {
+                    inSizesIds.push(sizeAttrItem.id);
+                  } else {
+                    noSizesIds.push(sizeAttrItem.id);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     if (inStockItems.length > 0) {
       let inStockRows = await this.prodRepo
         .createQueryBuilder('xtr-product')
@@ -906,23 +1005,34 @@ export class XtraderService {
 
       noStockNum = outStockRows.affected;
     }
-    if (stockSizes.length > 0) {
-      const _stockSizes = await this.prodRepo
-        .createQueryBuilder('xtr-product')
-        .leftJoinAndSelect('xtr-product.attributes', 'attributes')
 
-        .where({ model: In(stockSizes) })
-        .getMany();
+    if (inSizesIds.length > 0) {
+      const inStockSizeRows = await this.attrValueRepo
+        .createQueryBuilder('xtr-attribute-value')
+        .update(XTR_ATTRIBUTE_VALUE)
+        .set({ stockStatus: XtrProdStockStatusEnum.IN })
+        .where({ id: In(inSizesIds) })
+        .execute();
+
+      inStockSizeNum = inStockSizeRows.affected;
     }
-    // 'feature',
-    //     'brand',
-    //     'attributes',
-    //     'attributes.attributeValues',
-    //     'category'
-    // use update where in
+
+    if (noSizesIds.length > 0) {
+      const noStockSizeRows = await this.attrValueRepo
+        .createQueryBuilder('xtr-attribute-value')
+        .update(XTR_ATTRIBUTE_VALUE)
+        .set({ stockStatus: XtrProdStockStatusEnum.OUT })
+        .where({ id: In(noSizesIds) })
+        .execute();
+
+      noStockSizeNum = noStockSizeRows.affected;
+    }
+
     const resp: xtrStockLevelUpdateResp = {
       inStock: instockNum,
       outOfStock: noStockNum,
+      inStockSize: inStockSizeNum,
+      outOfStockSize: noStockSizeNum,
     };
     return resp;
   }
@@ -937,7 +1047,6 @@ export class XtraderService {
       .set({ stripeRestricted: true })
       .where({ id: In(prodIds) })
       .execute();
-    this.logger.log(`restictedRows ${JSON.stringify(restictedRows, null, 2)}`);
     const updated = restictedRows.affected;
     const restrResponse: restrProdRespType = {
       message: 'updated:',
