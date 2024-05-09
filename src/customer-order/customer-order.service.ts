@@ -195,8 +195,8 @@ export class CustomerOrderService {
         invLine.quantity = _prods.quantity;
         invLine.vatRate = Number(process.env.VAT_STD) / 100;
         invLine.lineTotal = _lineTotal;
-        invLine.attributeName = _prods.attributeName;
-        invLine.attributeValue = _prods.attributeValue;
+        invLine.attributeStr = _prods.attributeStr;
+
         inv_lines.push(invLine);
       });
     }
@@ -448,11 +448,41 @@ export class CustomerOrderService {
   private async sendOrderToXtrader(
     customerOrder: CUSTOMER_ORDER,
   ): Promise<XTRADER_RESULT_INTERFACE> {
+    this.logger.log(
+      `sendOrderToXtrader called with ${JSON.stringify(
+        customerOrder,
+        null,
+        2,
+      )}`,
+    );
     const vendorCode = process.env.XTRADER_CODE;
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
     const xtaderPassword = process.env.XTRADER_PASSWORD;
     const accountid = process.env.XTRADER_ACCOUNT_ID;
-
+    this.logger.log(
+      `sendOrderToXtrader called with customerOrder ${JSON.stringify(
+        customerOrder,
+        null,
+        2,
+      )}`,
+    );
+    let productStr = '';
+    this.logger.log(
+      `customerOrder.lines ${JSON.stringify(customerOrder.lines, null, 2)}`,
+    );
+    if (isIteratable(customerOrder.orderLines)) {
+      this.logger.log('process customerOrder.orderLines');
+      for (const line of customerOrder.orderLines) {
+        this.logger.log(`orderLine ${JSON.stringify(line, null, 2)}`);
+        const _attrStr = `${line.prodRef}${line.attributeStr}:${line.quantity}`;
+        this.logger.log(`_attrStr ${_attrStr}`);
+        productStr = _attrStr;
+        console.log(`productStr end of line loop ${productStr}`);
+      }
+    }
+    console.log(`productStr end of all lines ${productStr}`);
+    productStr.trim();
+    console.log(`productStr ${productStr}`);
     const xtrData = {
       Type: 'ORDEREXTOC',
       testingmode: true,
@@ -473,7 +503,8 @@ export class CustomerOrderService {
       deliveryPostcode: 'NW13 8AQ',
       deliveryCountry: 'GB',
       ProductCodes: 'MODEL',
-      Products: 'GO-4:1',
+      // Products: 'GO-4:1',
+      Products: productStr,
     };
 
     const rs = await axios.post<string>(`${process.env.XTRADER_URL}`, xtrData, {
@@ -497,6 +528,13 @@ export class CustomerOrderService {
     id: string,
     custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
+    this.logger.log(
+      `customerOrderPaid called with id: ${id}, custOrder: ${JSON.stringify(
+        custOrder,
+        null,
+        2,
+      )}`,
+    );
     const customerOrder = await this.custOrderRepo.findOne({ where: { id } });
     if (!customerOrder) {
       throw new BadRequestException(`Order does not exists for id: ${id}`);
@@ -548,7 +586,7 @@ export class CustomerOrderService {
         `Failed to send customer invoice email ${JSON.stringify(e, null, 2)}`,
       );
     }
-
+    this.logger.warn(`orderUpdated ${JSON.stringify(orderUpdated, null, 2)}`);
     const xtraderStatus = await this.sendOrderToXtrader(orderUpdated);
 
     if (xtraderStatus.status === 'DOSuccess') {

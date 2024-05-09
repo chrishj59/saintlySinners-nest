@@ -82,8 +82,9 @@ class Customer {
 export class Product {
   model: string;
   quantity: number;
-  attributeName?: string;
-  attributeValue?: string;
+  // attributeName?: string;
+  // attributeValue?: string;
+  attributeStr: string;
 }
 export class Products {
   // @ValidateNested({ each: true })

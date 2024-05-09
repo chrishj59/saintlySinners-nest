@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Header,
+  Logger,
   Param,
   Patch,
   Post,
@@ -27,7 +28,7 @@ import { CustOrderUpdatedResponseDto } from 'src/dtos/cust-order-updated.respons
 @Controller()
 export class CustomerOrderController {
   constructor(private customerService: CustomerOrderService) {}
-
+  logger = new Logger('CustomerOrderController');
   @Get('/order')
   async getOrder(): Promise<CUSTOMER_ORDER[]> {
     return await this.customerService.getOrders();
@@ -37,6 +38,7 @@ export class CustomerOrderController {
   async saveOrder(
     @Body() dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
+    this.logger.log(`dto received ${JSON.stringify(dto, null, 2)}`);
     return await this.customerService.saveOrder(dto);
   }
 

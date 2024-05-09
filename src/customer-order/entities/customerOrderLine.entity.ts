@@ -42,11 +42,13 @@ export class CUSTOMER_ORDER_LINE extends BaseEntity {
   @Column({ name: 'description' })
   description: string;
 
-  @Column({ name: 'attrib_name', type: 'varchar', length: 20, nullable: true })
-  attributeName: string;
-
-  @Column({ name: 'attrib_value', type: 'varchar', length: 50, nullable: true })
-  attributeValue: string;
+  @Column({
+    name: 'xtrader_attrubute_str',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  attributeStr: string;
 
   @Column({ name: 'vat_rate', type: 'double precision' })
   vatRate: number;
