@@ -24,4 +24,10 @@ export class XtraderCategoryService {
       order: { childCategories: { catName: 'ASC' } },
     });
   }
+
+  public async getCategories(): Promise<XTR_CATEGORY[]> {
+    return this.catRepo.find({
+      order: { catName: 'ASC' },
+    });
+  }
 }

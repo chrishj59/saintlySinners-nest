@@ -200,38 +200,6 @@ export class CustomerOrderService {
         inv_lines.push(invLine);
       });
     }
-    // const _artnrs: string[] = dto.products;
-    // _artnrs.map((el) => {
-    //   const prod = prods.find((p: EDC_PRODUCT) => p.artnr === el);
-    //   if (prod === undefined) {
-    //     this.logger.warn(`could not find prod with artner: ${el}`);
-    //   } else {
-    //     inv_lines.findIndex;
-    //     const invLineIdx = inv_lines.findIndex(
-    //       (invEl: CUSTOMER_ORDER_LINE) => invEl.prodRef === el,
-    //     );
-    //     if (invLineIdx === -1) {
-    //       const _invLine: CUSTOMER_ORDER_LINE = new CUSTOMER_ORDER_LINE();
-    //       (_invLine.prodRef = prod.artnr),
-    //         (_invLine.description = prod.title),
-    //         (_invLine.quantity = 1),
-    //         (_invLine.price = prod.b2c.toString()),
-    //         (_invLine.vatRate = prod.vatRateUk / 100),
-    //         (_invLine.lineTotal = prod.b2c.toString());
-    //       _invLine.edcProduct = prod;
-
-    //       inv_lines.push(_invLine);
-    //     } else {
-    //       const _invLine: CUSTOMER_ORDER_LINE = inv_lines[invLineIdx];
-    //       _invLine.quantity++;
-
-    //       _invLine.lineTotal = (
-    //         parseFloat(_invLine.price) * _invLine.quantity
-    //       ).toString();
-    //       inv_lines[invLineIdx] = _invLine;
-    //     }
-    //   }
-    // });
 
     /** Calculate order total net, vat and payable */
     inv_lines.map((line: CUSTOMER_ORDER_LINE) => {
@@ -448,41 +416,23 @@ export class CustomerOrderService {
   private async sendOrderToXtrader(
     customerOrder: CUSTOMER_ORDER,
   ): Promise<XTRADER_RESULT_INTERFACE> {
-    this.logger.log(
-      `sendOrderToXtrader called with ${JSON.stringify(
-        customerOrder,
-        null,
-        2,
-      )}`,
-    );
     const vendorCode = process.env.XTRADER_CODE;
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
     const xtaderPassword = process.env.XTRADER_PASSWORD;
     const accountid = process.env.XTRADER_ACCOUNT_ID;
-    this.logger.log(
-      `sendOrderToXtrader called with customerOrder ${JSON.stringify(
-        customerOrder,
-        null,
-        2,
-      )}`,
-    );
+
     let productStr = '';
-    this.logger.log(
-      `customerOrder.lines ${JSON.stringify(customerOrder.lines, null, 2)}`,
-    );
+
     if (isIteratable(customerOrder.orderLines)) {
-      this.logger.log('process customerOrder.orderLines');
       for (const line of customerOrder.orderLines) {
-        this.logger.log(`orderLine ${JSON.stringify(line, null, 2)}`);
         const _attrStr = `${line.prodRef}${line.attributeStr}:${line.quantity}`;
-        this.logger.log(`_attrStr ${_attrStr}`);
+
         productStr = _attrStr;
-        console.log(`productStr end of line loop ${productStr}`);
       }
     }
-    console.log(`productStr end of all lines ${productStr}`);
+
     productStr.trim();
-    console.log(`productStr ${productStr}`);
+
     const xtrData = {
       Type: 'ORDEREXTOC',
       testingmode: true,
@@ -503,7 +453,6 @@ export class CustomerOrderService {
       deliveryPostcode: 'NW13 8AQ',
       deliveryCountry: 'GB',
       ProductCodes: 'MODEL',
-      // Products: 'GO-4:1',
       Products: productStr,
     };
 
@@ -528,13 +477,6 @@ export class CustomerOrderService {
     id: string,
     custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
-    this.logger.log(
-      `customerOrderPaid called with id: ${id}, custOrder: ${JSON.stringify(
-        custOrder,
-        null,
-        2,
-      )}`,
-    );
     const customerOrder = await this.custOrderRepo.findOne({ where: { id } });
     if (!customerOrder) {
       throw new BadRequestException(`Order does not exists for id: ${id}`);

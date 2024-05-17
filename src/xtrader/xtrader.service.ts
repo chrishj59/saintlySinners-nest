@@ -964,6 +964,10 @@ export class XtraderService {
             },
           });
 
+          if (!prodAttributes) {
+            this.logger.log(`p `);
+            continue;
+          }
           const sizeAttr = prodAttributes.attributes.find(
             (item) => item.name === 'Size',
           );

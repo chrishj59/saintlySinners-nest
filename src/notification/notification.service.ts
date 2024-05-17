@@ -46,7 +46,6 @@ export class NotificationService {
       );
       throw new BadRequestException(`Could not send notify email to ${email}`);
     }
-    this.logger.warn('after this.transporter.sendMail ');
   }
 
   async customerOrderStatusUpdateEmail(
@@ -54,8 +53,6 @@ export class NotificationService {
     subject: string,
     html: string,
   ) {
-    this.logger.log(`customer Status Email called `);
-
     const ses = new aws.SES({
       apiVersion: '2010-12-01',
       region: 'eu-west-2',
@@ -69,26 +66,12 @@ export class NotificationService {
       SES: { ses, aws },
     });
     try {
-      await transporter.sendMail(
-        {
-          from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
-          to: email,
-          subject,
-          html,
-        },
-        // ,
-        // (err, info) => {
-        //   this.logger.log(`error ${JSON.stringify(err, null, 2)}`);
-        //   this.logger.log(`envelope ${JSON.stringify(info.envelope, null, 2)}`);
-        //   this.logger.log(
-        //     `customer order Update messageid: ${JSON.stringify(
-        //       info.messageId,
-        //       null,
-        //       2,
-        //     )}`,
-        //   );
-        // },
-      );
+      await transporter.sendMail({
+        from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
+        to: email,
+        subject,
+        html,
+      });
     } catch (e: any) {
       this.logger.log(
         `Could not send customerOrderStatus email ${JSON.stringify(
@@ -125,9 +108,8 @@ export class NotificationService {
       SES: { ses, aws },
     });
 
-    this.logger.log('call transporter.sendMail');
     try {
-      await transporter.sendMail(
+      const status = await transporter.sendMail(
         {
           from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
           to: email,
@@ -141,6 +123,7 @@ export class NotificationService {
             },
           ],
         },
+
         // (err, info) => {
         //   this.logger.log(`error ${JSON.stringify(err, null, 2)}`);
         //   this.logger.log(`envelope ${JSON.stringify(info.envelope, null, 2)}`);
@@ -154,7 +137,7 @@ export class NotificationService {
         // },
       );
     } catch (e: any) {
-      this.logger.log(
+      this.logger.warn(
         `Could not send CustomerInvoceEmail email ${JSON.stringify(
           e,
           null,

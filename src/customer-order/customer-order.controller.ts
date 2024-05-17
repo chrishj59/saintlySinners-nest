@@ -38,7 +38,9 @@ export class CustomerOrderController {
   async saveOrder(
     @Body() dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
-    this.logger.log(`dto received ${JSON.stringify(dto, null, 2)}`);
+    this.logger.log(
+      `save customer order dto received ${JSON.stringify(dto, null, 2)}`,
+    );
     return await this.customerService.saveOrder(dto);
   }
 

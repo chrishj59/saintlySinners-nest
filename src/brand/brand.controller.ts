@@ -18,11 +18,12 @@ import { BrandDto } from './dtos/brand.dto';
 import { EDC_BRAND } from 'src/edc/entities/edc-brand';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import daysToWeeks from 'date-fns/daysToWeeks/index.js';
+import { Logger } from '@nestjs/common';
 
 @Controller()
 export class BrandController {
   constructor(private brandService: BrandService) {}
-
+  logger = new Logger('Brand Controller');
   @Get('/brand')
   public async getBrands(
     @Query() dto: BrandCatDto,

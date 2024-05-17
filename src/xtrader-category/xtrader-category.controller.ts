@@ -7,9 +7,14 @@ import { FindOneNumberParams } from 'src/utils/findOneParamString';
 export class XtraderCategoryController {
   constructor(private readonly categoryService: XtraderCategoryService) {}
 
-  @Get('/xtrCategories')
+  @Get('/getCategoryById')
   public async allCategories(): Promise<XTR_CATEGORY[]> {
     return null;
+  }
+
+  @Get('/xtrCategories')
+  public async getCategories(): Promise<XTR_CATEGORY[]> {
+    return await this.categoryService.getCategories();
   }
 
   @Get('/xtrCategory-Menu')
