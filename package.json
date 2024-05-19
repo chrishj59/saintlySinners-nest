@@ -9,6 +9,7 @@
     "preinstall": "npm install -g pnpm",
     "prebuild": "rimraf dist",
     "build": "pnpm install && pnpm run && nest build",
+    "build:digitalocean": "pnpm install --production=false && pnpm run build && rm -rf node_modules && pnpm install --production --frozen-lockfile",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "NODE_ENV=development nest start --watch  ",
