@@ -6,8 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prebuild": "rimraf dist",
-    "build": "nest build",
+    "preinstall": "npm install -g pnpm",
+    "prebuild": "rimraf dist &&  ",
+    "build": "pnpm install && pnpm run build && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "NODE_ENV=development nest start --watch  ",
@@ -99,6 +100,10 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "4.0.0",
     "typescript": "^4.9.5"
+  },
+  "engines": {
+    "node": "20.9.0",
+    "pnpm": "9.1.1"
   },
   "jest": {
     "moduleFileExtensions": [
