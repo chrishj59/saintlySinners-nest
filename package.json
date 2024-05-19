@@ -7,8 +7,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "preinstall": "npm install -g pnpm",
-    "prebuild": "rimraf dist &&  ",
-    "build": "pnpm install && pnpm run build && nest build",
+    "prebuild": "rimraf dist",
+    "build": " pnpm install && pnpm run && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "NODE_ENV=development nest start --watch  ",
