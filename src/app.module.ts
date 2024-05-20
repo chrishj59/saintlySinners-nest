@@ -52,9 +52,9 @@ import { AwsModule } from './aws/aws.module';
         // EDC_ACCOUNT_API_KEY: Joi.string(),
         // SS_INV_URL: Joi.string(),
         SMTP_USER: Joi.string().required(),
-        GOOGLE_OAUTH_CLIENT_ID: Joi.string().required(),
-        GOOGLE_OAUTH_CLIENT_SECRET: Joi.string().required(),
-        GOOGLE_OAUTH_REFRESH_TOKEN: Joi.string().required(),
+        // GOOGLE_OAUTH_CLIENT_ID: Joi.string().required(),
+        // GOOGLE_OAUTH_CLIENT_SECRET: Joi.string().required(),
+        // GOOGLE_OAUTH_REFRESH_TOKEN: Joi.string().required(),
       }),
     }),
     AwsSdkModule.register({
