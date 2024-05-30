@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
+const fs = require('fs');
 
 @Module({
   imports: [
@@ -21,6 +22,12 @@ import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLi
         schema: 'ss',
         autoLoadEntities: true,
         logging: true,
+        ssl: {
+          rejectUnauthorized: false,
+          ca: fs
+            .readFileSync(`${process.cwd()}/src/database/ca-certificate-db.crt`)
+            .toString(),
+        },
       }),
     }),
   ],

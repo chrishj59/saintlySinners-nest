@@ -31,7 +31,10 @@ import { AwsModule } from './aws/aws.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: `.${process.env.NODE_ENV}.env`,
+
       validationSchema: Joi.object({
+        NODE_ENV: Joi.string().valid('development', 'do-dev', 'production'),
         POSTGRES_HOST: Joi.string().required(),
         POSTGRES_PORT: Joi.number().required(),
         POSTGRES_USER: Joi.string().required(),
