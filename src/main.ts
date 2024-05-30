@@ -6,7 +6,6 @@ import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 
-//import { config } from 'aws-sdk';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const { auth } = require('express-oauth2-jwt-bearer');
@@ -24,7 +23,7 @@ async function bootstrap() {
 
   app.useGlobalFilters();
   const jwtCheck = auth({
-    audience: 'http://localhost:8000/saintlySinners',
+    audience: 'http://localhost:3010/saintlySinners',
     issuerBaseURL: 'https://dev-2vubuto6.eu.auth0.com/',
     tokenSigningAlg: 'RS256',
   });
@@ -52,7 +51,7 @@ async function bootstrap() {
       },
     }),
   );
-  //const configService = app.get(ConfigService);
+
   const port = configService.get('PORT');
 
   await app.listen(port);
