@@ -327,12 +327,10 @@ export class RemoteFilesService {
 
   async uploadXtrStockFile(fileName: string, category: string, prodId: number) {
     const imgUrl = `${process.env.XTRADER_IMG_URL}${fileName}`;
-    this.logger.log(
-      `uploadXtrStockFile called with filename: ${fileName} cat ${category} and prod with id ${prodId}`,
-    );
+
     const fileNameParts = fileName.split('.');
     const fileType = fileNameParts[1];
-    this.logger.log(`file category: ${category} fileType: ${fileType}`);
+
     let thumbId: number;
 
     let ximage: number;
@@ -385,7 +383,7 @@ export class RemoteFilesService {
         bigmulti3 = prodId;
         break;
     }
-    this.logger.log(`ximageid after switch ${ximage}`);
+
     let imgFileBuff: Buffer;
     try {
       let imgFile = await this.httpService.axiosRef.get(imgUrl, {

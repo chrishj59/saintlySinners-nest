@@ -45,3 +45,6 @@ docker.env
 # allow local-dev.env
 # !config/env/local-dev.env
 
+# Server certs
+server.*
+

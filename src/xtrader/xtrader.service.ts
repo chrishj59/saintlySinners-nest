@@ -44,7 +44,7 @@ export class XtraderService {
     @InjectRepository(XTR_PRODUCT)
     private prodRepo: Repository<XTR_PRODUCT>,
     @InjectRepository(XTR_PROD_ATTRIBUTE)
-    private attrRep: Repository<XTR_PROD_ATTRIBUTE>,
+    private attrRepo: Repository<XTR_PROD_ATTRIBUTE>,
     @InjectRepository(XTR_ATTRIBUTE_VALUE)
     private attrValueRepo: Repository<XTR_ATTRIBUTE_VALUE>,
     @InjectRepository(XTR_PROD_ATTRIBUTE_EAN)
@@ -176,12 +176,19 @@ export class XtraderService {
   }
 
   async productPost(dto: XtrProductDto) {
+    this.logger.log(`called productPost with ${JSON.stringify(dto, null, 2)}`);
+
     // const _ = require('lodash');
     let prod: XTR_PRODUCT;
     let isNewProd = true;
     const currProd = await this.prodRepo.findOne({
       where: { id: dto.id },
-      relations: ['category', 'eans', 'attributes'],
+      relations: [
+        'category',
+        'eans',
+        'attributes',
+        'attributes.attributeValues',
+      ],
     });
 
     if (currProd) {
@@ -710,55 +717,124 @@ export class XtraderService {
         }
       }
     }
-
+    this.logger.log(`product post start attribute processing`);
     if (isNewProd) {
+      this.logger.log('new product');
       if (dto.attributes) {
         let attribute = new XTR_PROD_ATTRIBUTE();
-
+        const prodAttributes: XTR_PROD_ATTRIBUTE[] = [];
         attribute.attributeId = Number(dto.attributes.id);
         attribute.name = dto.attributes.name;
+        console.log(`attribute.name ${attribute.name}`);
         // attribute.product = prod;
         // attribute = await this.attrRep.save(attribute, { reload: true });
 
         const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
 
-        const attrValues = dto.attributes.attributeValues;
+        const attrValues: AttributeValue[] = dto.attributes.attributeValues;
+        console.log(`attrValues ${JSON.stringify(attrValues, null, 2)}`);
         if (isIteratable(attrValues)) {
+          this.logger.log('iterable');
+
           for (const attrVal of attrValues) {
             let _attrValue = await this.attrValueRepo.findOne({
               where: { id: attrVal.id },
             });
-
+            this.logger.log(
+              `_attrValue ${JSON.stringify(_attrValue, null, 2)}`,
+            );
             if (!_attrValue) {
+              this.logger.log(`in !_attrValue`);
               _attrValue = new XTR_ATTRIBUTE_VALUE();
-              _attrValue.id = Number(attrVal.value);
+              // _attrValue.id = Number(attrVal.value);
+              _attrValue.atrributeValueId = attrVal.atrributeValueId;
               _attrValue.title = attrVal.title ? attrVal.title : ' ';
-              _attrValue.priceAdjustment = attrVal.priceAdjust;
+              _attrValue.priceAdjustment = attrVal.priceAdjustment;
+              this.logger.log(
+                `end new  _attrValue ${JSON.stringify(_attrValue, null, 2)}`,
+              );
             }
+            this.logger.log(
+              `_attrValue2 ${JSON.stringify(_attrValue, null, 2)}`,
+            );
             attrValuesArray.push(_attrValue);
+            this.logger.log(
+              `attrValuesArray ${JSON.stringify(attrValuesArray, null, 2)}`,
+            );
           }
+        } else {
+          this.logger.log('not iterable');
         }
 
         attribute.attributeValues = attrValuesArray;
-        attribute = await this.attrRep.save(attribute, { reload: true });
+
+        prodAttributes.push(attribute);
+        prod.attributes = prodAttributes;
+        this.logger.log(
+          `prod.attributes ${JSON.stringify(prod.attributes, null, 2)}`,
+        );
+        // attribute = await this.attrRep.save(attribute, { reload: true });
       }
     } else {
+      this.logger.log(
+        `update product dto product ${JSON.stringify(dto, null, 2)} `,
+      );
+      if (!dto.attributes) {
+        this.logger.log('remove any attributes from prod');
+        if (isIteratable(prod.attributes)) {
+          // if both dto and prod has no attributes - do nothing
+          for (const prodAttrib of prod.attributes) {
+            await this.attrRepo.remove(prodAttrib);
+          }
+        } else {
+          //dto has attribute so need to update or add to prod
+          const dtoAttribute = dto.attributes;
+          const prodAttribute = prod.attributes.find(
+            (prodAttrib) => prodAttrib.attributeId === dtoAttribute.attributeId,
+          );
+          if (prodAttribute) {
+            prodAttribute.name = dtoAttribute.name;
+            const dtoAttibValues = dtoAttribute.attributeValues;
+            this.logger.log(`dtoAttibValues ${JSON.stringify(dtoAttibValues)}`);
+            const prodAttribValues = prodAttribute.attributeValues;
+            this.logger.log(
+              `prodAttribValues ${JSON.stringify(prodAttribValues, null, 2)}`,
+            );
+            if (isIteratable(dtoAttibValues)) {
+              for (const dtoAttribVal of dtoAttibValues) {
+                const prodAttribVal = prodAttribValues.find(
+                  (prodAttibVal) =>
+                    prodAttibVal.atrributeValueId ===
+                    dtoAttribVal.atrributeValueId,
+                );
+                if (prodAttribVal) {
+                  this.logger.log('Found prod attrib - need to update');
+                  prodAttribVal.priceAdjustment = dtoAttribVal.priceAdjustment;
+                  prodAttribVal.ean = dtoAttribVal.ean;
+                  prodAttribVal.title = dtoAttribVal.title;
+                } else {
+                  this.logger.log('not found prod attrib - need to add');
+                }
+              }
+            }
+          } else {
+            this.logger.log('prod attrib not found');
+          }
+        }
+      }
       // update if a change
       let prodAttributesIdx: number;
-      let prodAttributes: XTR_PROD_ATTRIBUTE;
-      if (isIteratable(prod.attributes)) {
-        prodAttributesIdx = prod.attributes.findIndex(
-          (attr: XTR_PROD_ATTRIBUTE, idx: number) => {
-            const found = attr.attributeId === Number(dto.attributes.id);
-            if (found) {
-              prodAttributes = attr;
-            }
-            return found;
-          },
-        );
-      }
+      let prodAttributes: XTR_PROD_ATTRIBUTE[] = prod.attributes;
 
+      this.logger.log(
+        `prodAttributes ${JSON.stringify(prodAttributes, null, 2)}`,
+      );
+      const dtoAttributes = dto.attributes;
+      this.logger.log(
+        `dtoAttributes ${JSON.stringify(dtoAttributes, null, 2)}`,
+      );
       if (!prodAttributes) {
+        this.logger.log('no prodAttributes so create');
         const prodAttrubutes: XTR_PROD_ATTRIBUTE[] = [];
         // if (!prod.attributes || prod.attributes.length === 0) {
         /** no prod attrubute so create */
@@ -774,10 +850,10 @@ export class XtraderService {
           for (const attrVal of attrValues) {
             const _attrValue = new XTR_ATTRIBUTE_VALUE();
             _attrValue.ean = attrVal.ean;
-            _attrValue.id = Number(attrVal.value);
+            // _attrValue.id = Number(attrVal.value);
             _attrValue.atrributeValueId = Number(attrVal.value);
             _attrValue.title = attrVal.title;
-            _attrValue.priceAdjustment = attrVal.priceAdjust;
+            _attrValue.priceAdjustment = attrVal.priceAdjustment;
             if (attribute.name === 'Size') {
               _attrValue.stockStatus = XtrProdStockStatusEnum.IN;
             }
@@ -791,38 +867,100 @@ export class XtraderService {
         }
       } else {
         /** neeed to update prod updates */
-
-        if (!prodAttributes.attributeValues) {
-          const prodAttrValues: XTR_ATTRIBUTE_VALUE[] = [];
-          for (const attrVal of dto.attributes.attributeValues) {
-            const _prodAttrValue = new XTR_ATTRIBUTE_VALUE();
-            _prodAttrValue.atrributeValueId = Number(attrVal.value);
-            _prodAttrValue.ean = attrVal.ean;
-            _prodAttrValue.title = attrVal.title;
-            _prodAttrValue.priceAdjustment = attrVal.priceAdjust;
-            _prodAttrValue.stockStatus = XtrProdStockStatusEnum.IN;
-            prodAttrValues.push(_prodAttrValue);
-          }
-          prodAttributes.attributeValues = prodAttrValues;
-        } else if (isIteratable(prodAttributes.attributeValues)) {
-          for (let prodAttrValue of prodAttributes.attributeValues) {
-            const _dtoAttattributeValues: any = dto.attributes.attributeValues;
-            const dtoAttrValue = dto.attributes.attributeValues.find(
-              (item: AttributeValue) =>
-                item.id === prodAttrValue.atrributeValueId,
-            );
-
-            if (dtoAttrValue) {
-              //found in DTO attr values
-              prodAttrValue.atrributeValueId = Number(dtoAttrValue.value);
-              prodAttrValue.ean = dtoAttrValue.ean;
-              prodAttrValue.priceAdjustment = dtoAttrValue.priceAdjust;
-              prodAttrValue.title = dtoAttrValue.title;
-            } else {
-              prodAttrValue = null;
+        this.logger.log(
+          `update product with attributes ${JSON.stringify(
+            prodAttributes,
+            null,
+            2,
+          )}`,
+        );
+        this.logger.log(
+          `dto attributes ${JSON.stringify(dto.attributes, null, 2)}`,
+        );
+        const prodAttrib = prodAttributes.find(
+          (prodAttribute) =>
+            prodAttribute.attributeId === dtoAttributes.attributeId,
+        );
+        if (prodAttrib) {
+          this.logger.log(
+            `found prodAttribute ${JSON.stringify(prodAttrib, null, 2)}`,
+          );
+          prodAttrib.name = dto.attributes.name;
+          if (isIteratable)
+            for (const dtoAttribVal of dto.attributes.attributeValues) {
+              this.logger.log(
+                `check dtoAttribVal ${JSON.stringify(dtoAttribVal, null, 2)}`,
+              );
+              if (prodAttrib.attributeValues) {
+                const prodAttribVal = prodAttrib.attributeValues.find(
+                  (attribVal) =>
+                    attribVal.atrributeValueId ===
+                    dtoAttribVal.atrributeValueId,
+                );
+                if (prodAttribVal) {
+                  this.logger.log(
+                    `Found prodAttrVal ${JSON.stringify(
+                      prodAttribVal,
+                      null,
+                      2,
+                    )}`,
+                  );
+                  prodAttribVal.ean = dtoAttribVal.ean;
+                  prodAttribVal.priceAdjustment = dtoAttribVal.priceAdjustment;
+                  prodAttribVal.title = dtoAttribVal.title;
+                } else {
+                  this.logger.log('No  prodAttrVal so need to create');
+                  const _prodAttribVal = new XTR_ATTRIBUTE_VALUE();
+                  _prodAttribVal.ean = dtoAttribVal.ean;
+                  _prodAttribVal.priceAdjustment = dtoAttribVal.priceAdjustment;
+                  _prodAttribVal.title = dtoAttribVal.title;
+                  _prodAttribVal.attribute = prodAttrib;
+                }
+              } else {
+                this.logger.warn('No prodAttrib.attributeValues');
+              }
             }
-          }
+        } else {
+          this.logger.log('Could not find prodAttribute - need to create');
         }
+        // if (!prodAttributes) {
+        //   this.logger.log('no existing attributes');
+        //   const prodAttrValues: XTR_ATTRIBUTE_VALUE[] = [];
+
+        //   for (const attrVal of dto.attributes.attributeValues) {
+        //     const _prodAttrValue = new XTR_ATTRIBUTE_VALUE();
+        //     _prodAttrValue.atrributeValueId = Number(attrVal.value);
+        //     _prodAttrValue.ean = attrVal.ean;
+        //     _prodAttrValue.title = attrVal.title;
+        //     _prodAttrValue.priceAdjustment = attrVal.priceAdjustment;
+        //     _prodAttrValue.stockStatus = XtrProdStockStatusEnum.IN;
+        //     prodAttrValues.push(_prodAttrValue);
+        //   }
+
+        //   // prodAttributes.attributeValues = prodAttrValues;
+        // } else {
+        //   this.logger.log('existing attributes to update');
+
+        // }
+        // else if (isIteratable(prodAttributes.attributeValues)) {
+        //   for (let prodAttrValue of prodAttributes.attributeValues) {
+        //     const _dtoAttattributeValues: any = dto.attributes.attributeValues;
+        //     const dtoAttrValue = dto.attributes.attributeValues.find(
+        //       (item: AttributeValue) =>
+        //         item.id === prodAttrValue.atrributeValueId,
+        //     );
+
+        //     if (dtoAttrValue) {
+        //       //found in DTO attr values
+        //       prodAttrValue.atrributeValueId = Number(dtoAttrValue.value);
+        //       prodAttrValue.ean = dtoAttrValue.ean;
+        //       prodAttrValue.priceAdjustment = dtoAttrValue.priceAdjustment;
+        //       prodAttrValue.title = dtoAttrValue.title;
+        //     } else {
+        //       prodAttrValue = null;
+        //     }
+        //   }
+        // }
       }
     }
 

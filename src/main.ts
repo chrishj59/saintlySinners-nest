@@ -1,4 +1,8 @@
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  ValidationPipe,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
@@ -53,7 +57,7 @@ async function bootstrap() {
   );
 
   const port = configService.get('PORT');
-
+  console.log(`listen on port ${port}`);
   await app.listen(port);
 }
 bootstrap();

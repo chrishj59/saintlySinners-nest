@@ -28,9 +28,12 @@ export class AttributeValue {
   @IsString()
   title: string;
 
+  @IsNumber()
+  atrributeValueId: number;
+
   @IsOptional()
   @IsNumberString()
-  priceAdjust: string;
+  priceAdjustment: string;
 
   @IsOptional()
   @IsString()

@@ -47,7 +47,7 @@ export class XTR_ATTRIBUTE_VALUE extends BaseEntity {
     name: 'stock_status',
     type: 'enum',
     enum: XtrProdStockStatusEnum,
-
+    nullable: true,
     default: XtrProdStockStatusEnum.IN,
   })
   stockStatus: XtrProdStockStatusEnum;
