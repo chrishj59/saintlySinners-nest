@@ -75,38 +75,6 @@ export class CategoryService {
           categoryid: categoryid,
         })
         .getMany();
-      this.logger.log(
-        `category number of prods found ${JSON.stringify(
-          products.length,
-          null,
-          2,
-        )}`,
-      );
-      // try {
-      //   products = await query
-      //     .leftJoinAndSelect('xtr-product.attributes', 'attributes')
-      //     .leftJoinAndSelect('xtr-product.eans', 'eans')
-
-      //     .andWhere('category_id = :categoryid', {
-      //       categoryid: categoryid,
-      //     })
-      //     .getMany();
-      // products = await query
-      //   .leftJoinAndSelect('edc_product.images', 'images')
-      //   .leftJoinAndSelect('edc_product.variants', 'variants')
-      //   .leftJoinAndSelect('edc_product.defaultCategory', 'defaultCategory')
-      //   .leftJoinAndSelect('edc_product.newCategories', 'newCategories')
-      //   .andWhere('newCategories.id = :categoryid', {
-      //     categoryid: categoryid,
-      //   })
-      //   .getMany();
-      // products = products.map((p) => {
-      //   p.b2c = parseFloat(p.b2c.toFixed(2));
-      //   if (!p.defaultCategory) {
-      //     p.defaultCategory = p.newCategories[0];
-      //   }
-      //   return p;
-      // });
     } catch (e) {
       this.logger.warn('get products error');
       this.logger.warn(e);
@@ -114,7 +82,6 @@ export class CategoryService {
     }
 
     if (products) {
-      this.logger.log(`number of products to return ${products.length}`);
       return products;
     } else {
       return {

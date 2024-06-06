@@ -960,8 +960,6 @@ export class CustomerOrderService {
   }
 
   async getOrders(): Promise<CUSTOMER_ORDER[]> {
-    this.logger.log('getOrders called');
-
     const orders = await this.custOrderRepo.find({ relations: ['customer'] });
     return orders;
   }

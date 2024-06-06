@@ -618,10 +618,6 @@ export class EdcService {
   // }
 
   async productFiltered(search: EdcProductDto) {
-    this.logger.log(
-      `productFiltered called with search ${JSON.stringify(search, null, 2)}`,
-    );
-
     const title = search.id;
     try {
       const products = await this.productRepository.find({

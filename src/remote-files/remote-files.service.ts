@@ -303,9 +303,7 @@ export class RemoteFilesService {
     try {
       const resp = await client.send(putCommand);
       const result = resp.$metadata.httpStatusCode;
-      this.logger.log(
-        `upload invoice pdf result ${JSON.stringify(result, null, 2)}`,
-      );
+
       let newFile = this.custInvRepo.create({
         key: key,
         order: { id: orderId },

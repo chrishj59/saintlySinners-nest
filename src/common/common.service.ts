@@ -75,9 +75,6 @@ export class CommonService {
   public async addDeliveryRemoteLocation(
     dto: DeliveryRemoteLocationDto,
   ): Promise<DELIVERY_REMOTE_LOCATION> {
-    this.logger.log(
-      `addDeliveryRemoteLocation called with ${JSON.stringify(dto, null, 2)}`,
-    );
     const deliveryCharge = await this.delChargeRepository.findOne({
       where: { id: dto.deliveryId },
     });
@@ -95,9 +92,7 @@ export class CommonService {
         deliveryCharge: { id: dto.deliveryId },
       },
     });
-    this.logger.log(
-      `addremote location found ${JSON.stringify(remoteDelCharge, null, 2)}`,
-    );
+
     if (!remoteDelCharge) {
       remoteDelCharge = new DELIVERY_REMOTE_LOCATION();
     }
@@ -118,13 +113,6 @@ export class CommonService {
   public async updateDeliveryRemoteLocation(
     dto: DeliveryRemoteLocationUpdateDto,
   ): Promise<DELIVERY_REMOTE_LOCATION> {
-    this.logger.log(
-      `updateDeliveryRemoteLocation called with ${JSON.stringify(
-        dto,
-        null,
-        2,
-      )}`,
-    );
     // const deliveryCharge = await this.delChargeRepository.findOne({
     //   where: { id: dto.deliveryId },
     // });

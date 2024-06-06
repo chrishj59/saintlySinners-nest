@@ -15,10 +15,6 @@ export class NotificationService {
   logger = new Logger('NotificationService');
 
   async notifyEmail({ email, subject, text }: NotifyEmailDto) {
-    this.logger.log(
-      `notifyEmail called with email ${email} subject: ${subject} `,
-    );
-
     const ses = new aws.SES({
       apiVersion: '2010-12-01',
       region: process.env.AWS_REGION,
@@ -32,7 +28,6 @@ export class NotificationService {
       SES: { ses, aws },
     });
 
-    this.logger.log('call transporter.sendMail');
     try {
       await transporter.sendMail({
         from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
@@ -41,7 +36,7 @@ export class NotificationService {
         text,
       });
     } catch (e: any) {
-      this.logger.log(
+      this.logger.warn(
         `Could not send notifyEmail email ${JSON.stringify(e, null, 2)}`,
       );
       throw new BadRequestException(`Could not send notify email to ${email}`);
@@ -73,7 +68,7 @@ export class NotificationService {
         html,
       });
     } catch (e: any) {
-      this.logger.log(
+      this.logger.warn(
         `Could not send customerOrderStatus email ${JSON.stringify(
           e,
           null,
@@ -92,7 +87,7 @@ export class NotificationService {
     html: string,
     pdfData: Buffer,
   ) {
-    this.logger.log(
+    this.logger.warn(
       `customerInvoiceEmail called with pdfData length ${pdfData.byteLength}`,
     );
     const ses = new aws.SES({
@@ -109,33 +104,19 @@ export class NotificationService {
     });
 
     try {
-      const status = await transporter.sendMail(
-        {
-          from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
-          to: email,
-          subject,
-          html,
-          attachments: [
-            {
-              filename: 'Invoice.pdf',
-              contentType: 'application/pdf',
-              content: pdfData,
-            },
-          ],
-        },
-
-        // (err, info) => {
-        //   this.logger.log(`error ${JSON.stringify(err, null, 2)}`);
-        //   this.logger.log(`envelope ${JSON.stringify(info.envelope, null, 2)}`);
-        //   this.logger.log(
-        //     `customer email messageid: ${JSON.stringify(
-        //       info.messageId,
-        //       null,
-        //       2,
-        //     )}`,
-        //   );
-        // },
-      );
+      const status = await transporter.sendMail({
+        from: `SaintlySinners <${process.env.ADMIN_EMAIL}>`,
+        to: email,
+        subject,
+        html,
+        attachments: [
+          {
+            filename: 'Invoice.pdf',
+            contentType: 'application/pdf',
+            content: pdfData,
+          },
+        ],
+      });
     } catch (e: any) {
       this.logger.warn(
         `Could not send CustomerInvoceEmail email ${JSON.stringify(
