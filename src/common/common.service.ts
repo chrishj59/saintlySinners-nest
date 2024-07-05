@@ -155,6 +155,7 @@ export class CommonService {
     const country = await this.countryRepository.findOne({
       where: { id: dto.countryId },
     });
+
     delCharge.country = country;
     delCharge.courier = courier;
     delCharge.maxWeight = dto.maxWeight;
@@ -169,9 +170,11 @@ export class CommonService {
       where: { id: dto.vendorId },
     });
     delCharge.vendor = vendor;
+
     const _delCharge = this.delChargeRepository.save(delCharge, {
       reload: true,
     });
+
     return _delCharge;
   }
 
@@ -250,9 +253,11 @@ export class CommonService {
     });
   }
   public async saveCountry(dto: CountryUpdateDTO): Promise<number> {
+    this.logger.log(`saveCountry called with ${JSON.stringify(dto, null, 2)}`);
     const { affected } = await this.countryRepository.update(
       { id: dto.id },
-      { edcCountryCode: dto.edcCountryCode },
+      // { edcCountryCode: dto.edcCountryCode },
+      { deliveryActive: dto.deliveryActive },
     );
     return affected;
   }
