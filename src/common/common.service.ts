@@ -179,10 +179,12 @@ export class CommonService {
   }
 
   public async allDeliveryCharges(): Promise<DeliveryCharge[]> {
-    return await this.delChargeRepository.find({
+    const charges = await this.delChargeRepository.find({
       relations: ['vendor', 'country', 'courier', 'remoteLocations'],
       order: { courier: { name: 'ASC' } },
     });
+
+    return charges;
   }
 
   public async updateDeliveyCharge(
