@@ -21,6 +21,9 @@ export class DeliveryChargeDto {
   countryId: number;
 
   @IsString()
+  shippingModule: string;
+
+  @IsString()
   uom: string;
 
   @IsNumber()

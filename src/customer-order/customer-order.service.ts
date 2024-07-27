@@ -423,6 +423,8 @@ export class CustomerOrderService {
 
     let productStr = '';
 
+    const cust1Time = customerOrder.customerOneTime;
+
     if (isIteratable(customerOrder.orderLines)) {
       for (const line of customerOrder.orderLines) {
         const _attrStr = `${line.prodRef}${line.attributeStr}:${line.quantity}`;
@@ -435,7 +437,7 @@ export class CustomerOrderService {
 
     const xtrData = {
       Type: 'ORDEREXTOC',
-      testingmode: true,
+      testingmode: process.env.XTRADER_TEST_MODE,
       VendorCode: process.env.XTRADER_ACCOUNT_ID, //55922,
       VendorTxCode: 'IDWEB-126284-TESTMODE-5628-20100304022456',
       VenderPass: process.env.XTRADER_VENDOR_PASS, //5886106859,
@@ -444,13 +446,21 @@ export class CustomerOrderService {
       //'FkeOh0dx4EVrlXTn1TP%3D%3DgMwIzMxIjM5ADOwIDNyMVbWVXSGR2bZdFezpFWshTTU',
       ShippingModule: 'tracked24',
       postage: 1,
-      customerFirstName: 'Bob',
-      customerLastName: 'Smith',
-      deliveryAddress1: '12 Balaam Street',
-      deliveryAddress2: '',
-      deliveryTown: 'Plaistow',
-      deliveryCounty: 'London',
-      deliveryPostcode: 'NW13 8AQ',
+      customerFirstName: cust1Time.firstName,
+      customerLastName: cust1Time.lastName,
+      deliveryAddress1: cust1Time.street,
+      deliveryAddress2: cust1Time.street2,
+      deliveryTown: cust1Time.city,
+      deliveryCounty: cust1Time.county,
+      deliveryPostcode: cust1Time.postCode,
+
+      // customerFirstName: 'Bob',
+      // customerLastName: 'Smith',
+      // deliveryAddress1: '12 Balaam Street',
+      // deliveryAddress2: '',
+      // deliveryTown: 'Plaistow',
+      // deliveryCounty: 'London',
+      // deliveryPostcode: 'NW13 8AQ',
       deliveryCountry: 'GB',
       ProductCodes: 'MODEL',
       Products: productStr,

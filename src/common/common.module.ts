@@ -12,6 +12,7 @@ import { DeliveryCharge } from './entity/delivery-charges.entity';
 import { DeliveryCourier } from './entity/delivery-courier.entity';
 import { LangIso639 } from './entity/iso_639_lang.entity';
 import { DELIVERY_REMOTE_LOCATION } from './entity/delivery-remote-location';
+import { CUSTOMER_ORDER_DELIVERY } from 'src/customer-order/entities/customerOrderDelivery.entity';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { DELIVERY_REMOTE_LOCATION } from './entity/delivery-remote-location';
       DeliveryCourier,
       PRODUCT_VENDOR,
       DELIVERY_REMOTE_LOCATION,
+      CUSTOMER_ORDER_DELIVERY,
     ]),
   ],
   controllers: [CommonController],

@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Post,
   Put,
@@ -33,6 +34,7 @@ import { DELIVERY_REMOTE_LOCATION } from './entity/delivery-remote-location';
 export class CommonController {
   constructor(private readonly commonService: CommonService) {}
 
+  logger = new Logger(`CommonController`);
   @Post('/countryLoad')
   public async loadCountry(@Body() dto: CountryDto): Promise<Country> {
     return this.commonService.addCountry(dto);
@@ -73,6 +75,9 @@ export class CommonController {
 
   @Put('/deliveryCharge')
   public async updateDeliveryCharge(@Body() dto: DeliveryChargeDto) {
+    this.logger.log(
+      `put deliveryCharge called with ${JSON.stringify(dto, null, 2)} `,
+    );
     return await this.commonService.updateDeliveyCharge(dto);
   }
 

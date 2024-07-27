@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
   Put,
   Query,
+  Req,
 } from '@nestjs/common';
 import { XtrCategoryDto } from './dtos/xtr-category.dto';
 import { XtraderService } from './xtrader.service';
@@ -25,6 +27,8 @@ import {
 } from './dtos/xtr-stock-level.dto';
 import { ProductRestrictedDto } from './dtos/xtr-prod-restricted.dto';
 import { restrProdRespType } from 'src/xtrader/types/xtrRestrictedProdResponse.type';
+import { request } from 'http';
+import { Request } from 'express';
 
 @Controller()
 export class XtraderController {
@@ -33,14 +37,15 @@ export class XtraderController {
     private readonly categoryService: XtraderService,
     private readonly productService: XtraderService,
   ) {}
-
+  logger = new Logger('XtraderController');
   @Get('/xtrBrand')
   async getAllBrands(): Promise<XTR_BRAND[]> {
     return this.brandService.getAllBrands();
   }
 
   @Get('/xtrBrandsHomePage')
-  async getHomePageBrands(): Promise<XTR_BRAND[]> {
+  async getHomePageBrands(@Req() request: Request): Promise<XTR_BRAND[]> {
+    this.logger.log(`xtrBrandsHomePage called from ip ${request.ip}`);
     return await this.brandService.getHomePageBrands();
   }
 

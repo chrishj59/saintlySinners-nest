@@ -18,6 +18,7 @@ import { Country } from './country.entity';
 import { DeliveryCourier } from './delivery-courier.entity';
 import { DELIVERY_REMOTE_LOCATION } from './delivery-remote-location';
 import { boolean } from 'joi';
+import { CUSTOMER_ORDER_DELIVERY } from 'src/customer-order/entities/customerOrderDelivery.entity';
 
 @Entity({ name: 'delivery-charge' })
 export class DeliveryCharge extends BaseEntity {
@@ -88,6 +89,12 @@ export class DeliveryCharge extends BaseEntity {
     (remoteLocation) => remoteLocation.deliveryCharge,
   )
   remoteLocations: DeliveryCharge[];
+
+  @OneToMany(
+    () => CUSTOMER_ORDER_DELIVERY,
+    (custOrderDelivery) => custOrderDelivery.deliveryCharge,
+  )
+  customerOrderDeliveries: CUSTOMER_ORDER_DELIVERY[];
 
   @Exclude()
   @CreateDateColumn()

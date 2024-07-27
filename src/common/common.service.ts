@@ -75,39 +75,47 @@ export class CommonService {
   public async addDeliveryRemoteLocation(
     dto: DeliveryRemoteLocationDto,
   ): Promise<DELIVERY_REMOTE_LOCATION> {
-    const deliveryCharge = await this.delChargeRepository.findOne({
+    let deliveryCharge = await this.delChargeRepository.findOne({
       where: { id: dto.deliveryId },
     });
     if (!deliveryCharge) {
-      throw new BadRequestException('no valid dilvery id');
+      throw new BadRequestException('no valid delivery id');
     }
     deliveryCharge.hasRemoteCharge = true;
-    await this.delChargeRepository.save(deliveryCharge);
-    // const remoteDelCharge: DELIVERY_REMOTE_LOCATION =
-    //   new DELIVERY_REMOTE_LOCATION();
-    let remoteDelCharge: DELIVERY_REMOTE_LOCATION;
-    remoteDelCharge = await this.delRemoteChargeRepository.findOne({
-      where: {
-        postCode: dto.postCodePart,
-        deliveryCharge: { id: dto.deliveryId },
-      },
-    });
+    try {
+      deliveryCharge = await this.delChargeRepository.save(deliveryCharge);
+      // const remoteDelCharge: DELIVERY_REMOTE_LOCATION =
+      //   new DELIVERY_REMOTE_LOCATION();
 
-    if (!remoteDelCharge) {
-      remoteDelCharge = new DELIVERY_REMOTE_LOCATION();
+      let remoteDelCharge: DELIVERY_REMOTE_LOCATION;
+      remoteDelCharge = await this.delRemoteChargeRepository.findOne({
+        where: {
+          postCode: dto.postCodePart,
+          deliveryCharge: { id: dto.deliveryId },
+        },
+      });
+
+      if (!remoteDelCharge) {
+        remoteDelCharge = new DELIVERY_REMOTE_LOCATION();
+      }
+      remoteDelCharge.postCode = dto.postCodePart;
+      remoteDelCharge.remoteCharge = dto.remoteCharge;
+      remoteDelCharge.deliveryCharge = deliveryCharge;
+      remoteDelCharge.days = dto.days;
+      remoteDelCharge.surcharge = dto.surcharge;
+
+      const _remoteDelCharge = await this.delRemoteChargeRepository.save(
+        remoteDelCharge,
+        { reload: true },
+      );
+
+      return _remoteDelCharge;
+    } catch (err) {
+      this.logger.warn(`Could not update delivery charge ${deliveryCharge.id}`);
+      throw new BadRequestException(
+        `Could not update remoteLocation for ${deliveryCharge.courier.name}`,
+      );
     }
-    remoteDelCharge.postCode = dto.postCodePart;
-    remoteDelCharge.remoteCharge = dto.remoteCharge;
-    remoteDelCharge.deliveryCharge = deliveryCharge;
-    remoteDelCharge.days = dto.days;
-    remoteDelCharge.surcharge = dto.surcharge;
-
-    const _remoteDelCharge = await this.delRemoteChargeRepository.save(
-      remoteDelCharge,
-      { reload: true },
-    );
-
-    return _remoteDelCharge;
   }
 
   public async updateDeliveryRemoteLocation(
@@ -151,6 +159,8 @@ export class CommonService {
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
+    courier.shippingModule = dto.shippingModule;
+    await this.courierRepository.save(courier, { reload: false });
 
     const country = await this.countryRepository.findOne({
       where: { id: dto.countryId },
@@ -158,6 +168,7 @@ export class CommonService {
 
     delCharge.country = country;
     delCharge.courier = courier;
+
     delCharge.maxWeight = dto.maxWeight;
     delCharge.minWeight = dto.minWeight;
     delCharge.uom = dto.uom;
@@ -190,6 +201,9 @@ export class CommonService {
   public async updateDeliveyCharge(
     dto: DeliveryChargeDto,
   ): Promise<DeliveryCharge> {
+    this.logger.log(
+      `updateDeliveyCharge 205 called with ${JSON.stringify(dto, null, 2)}`,
+    );
     const deliveryCharge = await this.delChargeRepository.findOne({
       where: { id: dto.id },
     });
@@ -205,6 +219,17 @@ export class CommonService {
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
+    this.logger.log(`courier to update ${JSON.stringify(courier, null, 2)}`);
+    if (!courier) {
+      this.logger.error(`An invalid courier id supplied ${dto.courierId}`);
+      throw new BadRequestException(`An invalid courier id supplied`);
+    }
+    courier.shippingModule = dto.shippingModule;
+
+    const _courier = await this.courierRepository.save(courier, {
+      reload: true,
+    });
+    deliveryCharge.courier = _courier;
 
     const country = await this.countryRepository.findOne({
       where: { id: dto.countryId },
@@ -217,9 +242,16 @@ export class CommonService {
     deliveryCharge.courier = courier;
     deliveryCharge.country = country;
     deliveryCharge.vendor = vendor;
-    return await this.delChargeRepository.save(deliveryCharge, {
-      reload: true,
-    });
+    const _deliveryCharge = await this.delChargeRepository.save(
+      deliveryCharge,
+      {
+        reload: true,
+      },
+    );
+    this.logger.log(
+      `updated _deliveryCharge ${JSON.stringify(_deliveryCharge, null, 2)}`,
+    );
+    return _deliveryCharge;
   }
 
   public async getCountryNames(): Promise<Country[]> {

@@ -17,7 +17,7 @@ import { DeliveryCharge } from './delivery-charges.entity';
 import { boolean } from 'joi';
 
 @Entity({ name: 'delivery-remote_location' })
-@Index(['postCode', 'deliveryCharge'], { unique: true })
+@Index(['postCode', 'deliveryCharge', 'deletedOn'], { unique: true })
 export class DELIVERY_REMOTE_LOCATION extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
