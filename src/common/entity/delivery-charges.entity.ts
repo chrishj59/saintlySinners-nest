@@ -64,6 +64,7 @@ export class DeliveryCharge extends BaseEntity {
     precision: 8,
     scale: 2,
     default: 0,
+    nullable: true,
   })
   amount: number;
 
@@ -73,6 +74,7 @@ export class DeliveryCharge extends BaseEntity {
     precision: 8,
     scale: 2,
     default: 0,
+    nullable: true,
   })
   vatAmount: number;
 
@@ -82,6 +84,7 @@ export class DeliveryCharge extends BaseEntity {
     precision: 8,
     scale: 2,
     default: 0,
+    nullable: true,
   })
   totalAmount: number;
 
