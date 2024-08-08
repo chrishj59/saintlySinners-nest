@@ -58,8 +58,32 @@ export class DeliveryCharge extends BaseEntity {
   })
   maxWeight: number;
 
-  @Column({ name: 'charge', type: 'decimal', precision: 8, scale: 2 })
+  @Column({
+    name: 'amount',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
   amount: number;
+
+  @Column({
+    name: 'vat_amount',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  vatAmount: number;
+
+  @Column({
+    name: 'total_amount',
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    default: 0,
+  })
+  totalAmount: number;
 
   @Column({ name: 'min-days', type: 'smallint', nullable: true })
   minDays: number;

@@ -24,6 +24,7 @@ import { CUSTOMER_ORDER_LINE } from './customerOrderLine.entity';
 import { ONE_TIME_CUSTOMER } from './customerOrderCustomer.entity';
 import { CUSTOMER_ORDER_PRODUCT } from './customerOrderProduct.entity';
 import { Variant } from '../../edc/dtos/add-product.dto';
+import { CUSTOMER_ORDER_DELIVERY } from './customerOrderDelivery.entity';
 
 @Entity({ name: 'customer_order' })
 export class CUSTOMER_ORDER extends BaseEntity {
@@ -85,13 +86,29 @@ export class CUSTOMER_ORDER extends BaseEntity {
   })
   deliveryCost: number;
 
+  @Column({
+    name: 'delivery_vat',
+    type: 'double precision',
+    default: 0,
+    nullable: true,
+  })
+  deliveryVAT: number;
+
+  @Column({
+    name: 'delivery_total',
+    type: 'double precision',
+    default: 0,
+    nullable: true,
+  })
+  deliveryTotal: number;
+
   @Column({ name: 'currency_code', type: 'char', length: 3 })
   currencyCode: string;
 
   @Column({
     name: 'xtrader_confirm_order',
     type: 'varchar',
-    length: 10,
+    length: 20,
     nullable: true,
   })
   confirmOrder: string;
@@ -173,6 +190,10 @@ export class CUSTOMER_ORDER extends BaseEntity {
 
   @Column({ name: 'vendor-total', type: 'double precision', nullable: true })
   vendTotalPayable: number;
+
+  @OneToOne(() => CUSTOMER_ORDER_DELIVERY, { eager: true, nullable: true })
+  @JoinColumn()
+  delivery: CUSTOMER_ORDER_DELIVERY;
 
   @DeleteDateColumn()
   deletedOn: Date;

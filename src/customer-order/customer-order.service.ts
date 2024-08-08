@@ -46,6 +46,8 @@ import { url } from 'inspector';
 import { XTRADER_RESULT_INTERFACE } from 'src/common/interfaces/xtraderResult.interface';
 import { isIteratable } from 'src/utils/helpers';
 import { JSONCookie } from 'cookie-parser';
+import { CUSTOMER_ORDER_DELIVERY } from './entities/customerOrderDelivery.entity';
+import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 
@@ -79,8 +81,12 @@ export class CustomerOrderService {
     private userRepo: Repository<USER>,
     @InjectRepository(CUSTOMER_ORDER)
     private custOrderRepo: Repository<CUSTOMER_ORDER>,
-    @InjectRepository(CUSTOMER_ORDER_LINE)
-    private custOrderLineRepo: Repository<CUSTOMER_ORDER_LINE>,
+    // @InjectRepository(CUSTOMER_ORDER_LINE)
+    // private custOrderLineRepo: Repository<CUSTOMER_ORDER_LINE>,
+    @InjectRepository(DeliveryCharge)
+    private deliveryChargeRepo: Repository<DeliveryCharge>,
+    @InjectRepository(CUSTOMER_ORDER_DELIVERY)
+    private custDeliveryRepo: Repository<CUSTOMER_ORDER_DELIVERY>,
     @InjectAws(S3Client)
     private readonly s3: S3Client,
     private readonly configService: ConfigService,
@@ -127,24 +133,35 @@ export class CustomerOrderService {
   async saveOrder(
     dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
+    this.logger.log(`saveOrder dto ${JSON.stringify(dto, null, 2)}`);
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
 
-    // const prods = await this.prodRepo
-    //   .createQueryBuilder('edc_product')
-    //   .where('edc_product.artnr IN (:...artnr)', { artnr: dto.products })
-    //   .getMany();
+    const deliveryCharge = await this.deliveryChargeRepo.findOne({
+      where: { id: dto.customerDelivery.deliveryChargeId },
+    });
+
+    const custDelivery = new CUSTOMER_ORDER_DELIVERY();
+    custDelivery.deliveryCost = dto.customerDelivery.deliveryCost;
+    custDelivery.shippingModule = dto.customerDelivery.shippingModule;
+    custDelivery.deliveryCharge = deliveryCharge;
+    const _custDelivery = await this.custDeliveryRepo.save(custDelivery, {
+      reload: true,
+    });
 
     const inv_lines: CUSTOMER_ORDER_LINE[] = [];
+    const vatRate = Number(process.env.VAT_STD) / 100;
     let orderGoodsAmount: number = 0;
 
     /* VAT reg: not used yet */
-    let orderVAtAmount: number = 0;
+    let orderVatAmount: number = 0;
 
     let OrderPayable: number = 0;
 
     let vendorAmount: number = 0;
+    let vendorVat: number = 0;
+    let vendorTotal: number = 0;
 
     let deliveryCost: number = dto.delivery;
 
@@ -161,7 +178,6 @@ export class CustomerOrderService {
       })
       .getMany();
 
-    console.log(`prods found ${JSON.stringify(prods, null, 2)}`);
     if (prods) {
       prods.map((p: XTR_PRODUCT) => {
         const _prods = dto.products.find(
@@ -173,18 +189,18 @@ export class CustomerOrderService {
         const dtoProduct = dto.products.find(
           (dtoProd: Product) => dtoProd.model === p.model,
         );
-        console.log(`dto product found ${JSON.stringify(dtoProduct, null, 2)}`);
 
         const lineQuantity = dtoProduct.quantity;
         const delivery = dto.delivery;
-        console.log(`lineQuantity ${lineQuantity} delivery ${delivery}`);
+
         const _lineTotal = (
           Number(p.retailPrice) * Number(lineQuantity)
         ).toFixed(2);
-        console.log(
-          `retailPrice ${p.retailPrice} quantity ${_prods.quantity} LinePrice ${_lineTotal}`,
-        );
+
         vendorAmount = Number(vendorAmount) + Number(p.goodsPrice);
+        const vatAmount = vendorAmount * vatRate;
+        vendorVat = Number(vendorVat) + Number(vatAmount);
+        vendorTotal = vendorAmount + vendorVat;
         const invLine = new CUSTOMER_ORDER_LINE();
         invLine.description = p.name;
         invLine.xtraderProduct = p;
@@ -205,13 +221,14 @@ export class CustomerOrderService {
     inv_lines.map((line: CUSTOMER_ORDER_LINE) => {
       orderGoodsAmount += parseFloat(line.lineTotal);
       const vat = parseFloat(line.lineTotal) * line.vatRate;
-      orderVAtAmount += parseFloat(vat.toFixed());
+      orderVatAmount += parseFloat(vat.toFixed());
     });
 
     /** VAT reg - when registered add VAT to payable */
     const delivery = dto.delivery;
     OrderPayable = orderGoodsAmount + delivery;
-    const vendorPayable = Number(vendorAmount);
+
+    const vendorPayable = Number(vendorTotal);
 
     let country: Country;
     let customer: USER;
@@ -232,17 +249,20 @@ export class CustomerOrderService {
     const custOrder = new CUSTOMER_ORDER();
     custOrder.vendor = vend;
     custOrder.lines = inv_lines;
+    custOrder.vendGoodCost = vendorAmount;
+    custOrder.vendVat = vendorVat;
     custOrder.vendTotalPayable = vendorPayable;
     custOrder.stripeSession = dto.stripeSessionId;
     custOrder.oneTimeCustomer = dto.oneTimeCustomer;
     custOrder.goodsValue = orderGoodsAmount;
     custOrder.deliveryCost = deliveryCost;
-    custOrder.vendGoodCost = vendorAmount;
+
     custOrder.orderStatus = edcOrderStatusEnum.CREATED;
 
-    custOrder.tax = orderVAtAmount;
+    custOrder.tax = orderVatAmount;
     custOrder.total = OrderPayable;
     custOrder.currencyCode = dto.currencyCode;
+    custOrder.delivery = _custDelivery;
     if (dto.oneTimeCustomer) {
       const customerOneTime = new ONE_TIME_CUSTOMER();
 
@@ -416,11 +436,17 @@ export class CustomerOrderService {
   private async sendOrderToXtrader(
     customerOrder: CUSTOMER_ORDER,
   ): Promise<XTRADER_RESULT_INTERFACE> {
-    const vendorCode = process.env.XTRADER_CODE;
+    // const vendorCode = process.env.XTRADER_CODE;
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
-    const xtaderPassword = process.env.XTRADER_PASSWORD;
+    // const xtaderPassword = process.env.XTRADER_PASSWORD;
     const accountid = process.env.XTRADER_ACCOUNT_ID;
-
+    this.logger.log(
+      `sendOrderToXtrader customerOrder ${JSON.stringify(
+        customerOrder,
+        null,
+        2,
+      )}`,
+    );
     let productStr = '';
 
     const cust1Time = customerOrder.customerOneTime;
@@ -428,23 +454,33 @@ export class CustomerOrderService {
     if (isIteratable(customerOrder.orderLines)) {
       for (const line of customerOrder.orderLines) {
         const _attrStr = `${line.prodRef}${line.attributeStr}:${line.quantity}`;
+        let _productStr: string;
+        if (productStr.length == 0) {
+          _productStr = productStr.concat(_attrStr);
+        } else {
+          _productStr = productStr.concat('|', _attrStr);
+        }
 
-        productStr = _attrStr;
+        productStr = _productStr;
       }
     }
 
     productStr.trim();
+    const date = new Date();
+    const formattedDate = date.toISOString().split('T')[0].replace(/-/g, '');
 
+    const txCode = `${process.env.XTRADER_ACCOUNT_ID}-${formattedDate}-${customerOrder.id}`;
     const xtrData = {
       Type: 'ORDEREXTOC',
       testingmode: process.env.XTRADER_TEST_MODE,
       VendorCode: process.env.XTRADER_ACCOUNT_ID, //55922,
-      VendorTxCode: 'IDWEB-126284-TESTMODE-5628-20100304022456',
+      VendorTxCode: txCode,
       VenderPass: process.env.XTRADER_VENDOR_PASS, //5886106859,
       VenderSite: process.env.XTRADER_VENDOR_SITE, //'https://www.saintlysinners.co.uk',
       Venderserial: process.env.XTRADER_CODE,
       //'FkeOh0dx4EVrlXTn1TP%3D%3DgMwIzMxIjM5ADOwIDNyMVbWVXSGR2bZdFezpFWshTTU',
-      ShippingModule: 'tracked24',
+      ShippingModule: customerOrder.delivery.shippingModule,
+      // 'tracked24',
       postage: 1,
       customerFirstName: cust1Time.firstName,
       customerLastName: cust1Time.lastName,
@@ -465,15 +501,16 @@ export class CustomerOrderService {
       ProductCodes: 'MODEL',
       Products: productStr,
     };
-
+    this.logger.log(
+      `xtrData message to Xtrader ${JSON.stringify(xtrData, null, 2)}`,
+    );
     const rs = await axios.post<string>(`${process.env.XTRADER_URL}`, xtrData, {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     });
     const xtraderResult = rs.data;
-    // console.warn(`xtraderResponse ${typeof xtraderResponse}`);
 
     const deliveryUrl = `https://www.xtrader.co.uk/catalog/orderstatusxml_auth.php?accountid=${accountid}&accountpass=${vendorPass}`;
-    console.log(`deliveryUrl ${deliveryUrl}`);
+
     const { data } = await this.httpService.axiosRef.post<string>(deliveryUrl);
 
     const resultArry = xtraderResult.split('|');
@@ -517,16 +554,21 @@ export class CustomerOrderService {
     const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
     const pdfBuffer = Buffer.from(invPdf);
     try {
-      await this.notificationService.customerInvoiceEmail(
+      const custemailId = await this.notificationService.customerInvoiceEmail(
         custEmail,
         subject,
         body,
         pdfBuffer,
       );
-      orderUpdated.orderStatus = edcOrderStatusEnum.CUST_EMAILED;
+
+      customerOrder.orderStatus = edcOrderStatusEnum.CUST_EMAILED;
+
       const updatedCustInv: UpdateResult = await this.custOrderRepo.update(
         id,
-        orderUpdated,
+        customerOrder,
+      );
+      this.logger.log(
+        `updatedCustInv ${JSON.stringify(updatedCustInv, null, 2)}`,
       );
       if (updatedCustInv.affected !== 1) {
         this.logger.warn(
@@ -580,7 +622,7 @@ export class CustomerOrderService {
 
     return {
       status: resultstatus,
-      orderMessage: { orderId: id, rowsUpdated: result.affected },
+      orderMessage: { orderId: id, rowsUpdated: vendorResult.affected },
     };
   }
 
@@ -623,7 +665,7 @@ export class CustomerOrderService {
     let { data } = await this.httpService.axiosRef.post<string>(orderStatusUrl);
     const env = this.configService.get<string>('NODE_ENV'); //process.env.NODE_ENV;
     this.logger.warn(`Order status returns ${JSON.stringify(data, null, 2)}`);
-
+    this.logger.log(`env ${env}`);
     if (env === 'development') {
       data =
         //   '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your orderwas displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER><ORDER ID="f152567"><TRACKING> Your orderwas displatched by Royal mail Your tracking number is JW099911111GB</TRACKING></ORDER></ORDERS>';
@@ -634,21 +676,22 @@ export class CustomerOrderService {
     let numUpdates: number = 0;
     var parser = new xml2js.Parser();
     const result = await parser.parseStringPromise(data);
-
+    this.logger.log(`result ${JSON.stringify(result, null, 2)}`);
     const orders = result.ORDERS.ORDER;
     if (orders === null) {
       return numUpdates;
     } else if (isIteratable(orders)) {
       for (const item of orders) {
         const vendorOrderId = item.$.ID;
+        this.logger.log(`vendorOrderId ${vendorOrderId}`);
         const custOrder = await this.custOrderRepo.findOne({
           relations: ['customerOneTime'],
           where: { confirmOrder: vendorOrderId },
         });
-        console.log(`update custOrder ${JSON.stringify(custOrder, null, 2)}`);
+
         if (custOrder) {
           const tracking: string = item.TRACKING[0];
-          console.log(`tracking ${tracking}`);
+          this.logger.log(`tracking ${JSON.stringify(tracking, null, 2)}`);
           //TODO: If tracking is not on order send a tracking update
           if (custOrder.xtraderStatus.length < 1) {
             this.sendOrderDeliveryStatusEmail(
@@ -670,6 +713,7 @@ export class CustomerOrderService {
           const idx = tracking.lastIndexOf(' ');
           const trackingRef = tracking.substring(idx + 1);
           custOrder.trackingRef = trackingRef;
+          this.logger.log(``);
           const rc: UpdateResult = await this.custOrderRepo.update(
             custOrder.id,
             custOrder,

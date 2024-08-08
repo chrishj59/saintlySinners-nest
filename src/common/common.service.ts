@@ -111,7 +111,9 @@ export class CommonService {
 
       return _remoteDelCharge;
     } catch (err) {
-      this.logger.warn(`Could not update delivery charge ${deliveryCharge.id}`);
+      this.logger.warn(
+        `Could not update remote delivery charge ${deliveryCharge.id}`,
+      );
       throw new BadRequestException(
         `Could not update remoteLocation for ${deliveryCharge.courier.name}`,
       );
@@ -154,8 +156,14 @@ export class CommonService {
   public async addDeliveryCharge(
     dto: DeliveryChargeDto,
   ): Promise<DeliveryCharge> {
+    const vatRate = Number(process.env.VAT_STD) / 100;
+
     const delCharge = new DeliveryCharge();
-    delCharge.amount = dto.amount;
+
+    delCharge.amount = Number(dto.amount);
+    delCharge.vatAmount = delCharge.amount * vatRate;
+    delCharge.totalAmount = delCharge.amount + delCharge.vatAmount;
+
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
@@ -204,10 +212,16 @@ export class CommonService {
     this.logger.log(
       `updateDeliveyCharge 205 called with ${JSON.stringify(dto, null, 2)}`,
     );
+
+    const vatRate: number = Number(process.env.VAT_STD) / 100;
     const deliveryCharge = await this.delChargeRepository.findOne({
       where: { id: dto.id },
     });
-    deliveryCharge.amount = dto.amount;
+    deliveryCharge.amount = Number(dto.amount);
+    deliveryCharge.vatAmount = deliveryCharge.amount * vatRate;
+    deliveryCharge.totalAmount =
+      deliveryCharge.amount + deliveryCharge.vatAmount;
+
     deliveryCharge.maxWeight = dto.maxWeight;
     deliveryCharge.minWeight = dto.minWeight;
     deliveryCharge.uom = dto.uom;

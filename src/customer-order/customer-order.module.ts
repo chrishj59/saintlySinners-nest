@@ -16,6 +16,8 @@ import { CUSTOMER_ORDER_PRODUCT } from './entities/customerOrderProduct.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { HttpModule } from '@nestjs/axios';
 import { AwsModule } from 'src/aws/aws.module';
+import { CUSTOMER_ORDER_DELIVERY } from './entities/customerOrderDelivery.entity';
+import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { AwsModule } from 'src/aws/aws.module';
       PRODUCT_VENDOR,
       CUSTOMER_ORDER_LINE,
       CUSTOMER_ORDER_PRODUCT,
+      CUSTOMER_ORDER_DELIVERY,
+      DeliveryCharge,
       EDC_PRODUCT,
       Country,
       USER,

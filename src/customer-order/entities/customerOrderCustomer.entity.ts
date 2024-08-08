@@ -4,10 +4,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   VersionColumn,
 } from 'typeorm';
+import { CUSTOMER_ORDER_DELIVERY } from './customerOrderDelivery.entity';
 
 @Entity({ name: 'one-time-customer' })
 export class ONE_TIME_CUSTOMER extends BaseEntity {

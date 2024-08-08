@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as aws from '@aws-sdk/client-ses';
+
 import { SendEmailCommand } from '@aws-sdk/client-ses';
 import { InvoiceEmailDto, NotifyEmailDto } from '../dtos/notify-email.dtos';
 import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
@@ -86,10 +87,7 @@ export class NotificationService {
     subject: string,
     html: string,
     pdfData: Buffer,
-  ) {
-    this.logger.warn(
-      `customerInvoiceEmail called with pdfData length ${pdfData.byteLength}`,
-    );
+  ): Promise<string> {
     const ses = new aws.SES({
       apiVersion: '2010-12-01',
       region: 'eu-west-2',
@@ -117,9 +115,11 @@ export class NotificationService {
           },
         ],
       });
+
+      return status.messageId;
     } catch (e: any) {
       this.logger.warn(
-        `Could not send CustomerInvoceEmail email ${JSON.stringify(
+        `Notification service Could not send CustomerInvoceEmail email ${JSON.stringify(
           e,
           null,
           2,

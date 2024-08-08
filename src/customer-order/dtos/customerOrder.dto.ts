@@ -12,6 +12,7 @@ import {
 } from '@nestjs/class-validator';
 import { Type } from 'class-transformer';
 import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
+import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
 
 class Customer {
   @IsOptional()
@@ -97,6 +98,13 @@ export class Products {
   product: Product[];
 }
 
+export class CustomerDelivery {
+  id?: number;
+  deliveryCost: number;
+  shippingModule: string;
+  deliveryChargeId: string;
+}
+
 export class CustomerOrderDto {
   @IsNumber()
   vendorNumber: number;
@@ -133,11 +141,19 @@ export class CustomerOrderDto {
   deliveryCompany: string;
 
   @IsOptional()
+  @IsString()
+  DeliveryChargeId: string;
+
+  @IsOptional()
   @IsNumber()
   delivery: number;
 
   @Type(() => Products)
   products: Product[];
+
+  @Type(() => CustomerDelivery)
+  customerDelivery: CustomerDelivery;
+
   // @IsArray()
   // @ArrayNotEmpty()
   // @ArrayMinSize(1)
