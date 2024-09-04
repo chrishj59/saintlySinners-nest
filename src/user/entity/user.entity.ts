@@ -1,7 +1,13 @@
 import { CUSTOMER_ORDER } from 'src/customer-order/entities/customerOrder.entity';
-import { BaseEntity, Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
-@Entity('User')
+@Entity({ name: 'User1', schema: 'ss' })
 export class USER extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

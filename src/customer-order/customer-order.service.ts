@@ -48,6 +48,7 @@ import { isIteratable } from 'src/utils/helpers';
 import { JSONCookie } from 'cookie-parser';
 import { CUSTOMER_ORDER_DELIVERY } from './entities/customerOrderDelivery.entity';
 import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
+import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
 
 //import { S3Client } from '@aws-sdk/client-s3';
 
@@ -77,8 +78,8 @@ export class CustomerOrderService {
     private prodRepo: Repository<XTR_PRODUCT>,
     @InjectRepository(Country)
     private countryRepo: Repository<Country>,
-    @InjectRepository(USER)
-    private userRepo: Repository<USER>,
+    @InjectRepository(AUTHJS_USER)
+    private userRepo: Repository<AUTHJS_USER>,
     @InjectRepository(CUSTOMER_ORDER)
     private custOrderRepo: Repository<CUSTOMER_ORDER>,
     // @InjectRepository(CUSTOMER_ORDER_LINE)
@@ -231,7 +232,7 @@ export class CustomerOrderService {
     const vendorPayable = Number(vendorTotal);
 
     let country: Country;
-    let customer: USER;
+    let customer: AUTHJS_USER;
     if (dto.oneTimeCustomer) {
       country = await this.countryRepo.findOne({
         where: {

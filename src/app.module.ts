@@ -22,7 +22,7 @@ import { UserModule } from './user/user.module';
 import { VendorModule } from './vendor/vendor.module';
 import { NotificationModule } from './notification/notification.module';
 import { CategoryModule } from './category/category.module';
-import { CustSerrvModule } from './cust-serrv/cust-serrv.module';
+
 import { XtraderModule } from './xtrader/xtrader.module';
 import { XtraderCategoryModule } from './xtrader-category/xtrader-category.module';
 import { AwsModule } from './aws/aws.module';
@@ -79,7 +79,7 @@ import { AwsModule } from './aws/aws.module';
     CustomerOrderModule,
     NotificationModule,
     CategoryModule,
-    CustSerrvModule,
+
     XtraderModule,
     XtraderCategoryModule,
     AwsModule,

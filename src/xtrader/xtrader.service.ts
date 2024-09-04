@@ -926,6 +926,7 @@ export class XtraderService {
         'attributes.attributeValues',
         'category',
         'eans',
+        'likes',
       ],
       where: { id },
     });

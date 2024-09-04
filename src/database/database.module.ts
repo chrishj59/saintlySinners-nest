@@ -18,16 +18,17 @@ const fs = require('fs');
         password: configService.get('TYPEORM_PASSWORD'),
         database: configService.get('TYPEORM_DATABASE'),
         entities: [CUSTOMER_ORDER, CUSTOMER_ORDER_LINE],
-        synchronize: true,
+        synchronize: false, //configService.get('TYPEORM_SYNCHRONIZE'),
         schema: 'ss',
         autoLoadEntities: true,
-        logging: true,
-        ssl: {
-          rejectUnauthorized: false,
-          ca: fs
-            .readFileSync(`${process.cwd()}/src/database/ca-certificate-db.crt`)
-            .toString(),
-        },
+        logging: configService.get('TYPEORM_LOGGING') === 'true' ? true : false,
+        // Dev does not support ssl
+        // ssl: {
+        //   rejectUnauthorized: false,
+        //   ca: fs
+        //     .readFileSync(`${process.cwd()}/src/database/ca-certificate-db.crt`)
+        //     .toString(),
+        // },
       }),
     }),
   ],

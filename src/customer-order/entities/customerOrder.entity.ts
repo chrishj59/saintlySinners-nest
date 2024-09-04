@@ -25,6 +25,7 @@ import { ONE_TIME_CUSTOMER } from './customerOrderCustomer.entity';
 import { CUSTOMER_ORDER_PRODUCT } from './customerOrderProduct.entity';
 import { Variant } from '../../edc/dtos/add-product.dto';
 import { CUSTOMER_ORDER_DELIVERY } from './customerOrderDelivery.entity';
+import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
 
 @Entity({ name: 'customer_order' })
 export class CUSTOMER_ORDER extends BaseEntity {
@@ -134,9 +135,9 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({ name: 'status_date', type: 'date', nullable: true })
   statusDate: Date;
 
-  @ManyToOne(() => USER, (customer: USER) => customer.orders)
+  @ManyToOne(() => AUTHJS_USER, (customer: AUTHJS_USER) => customer.orders)
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })
-  customer: USER;
+  customer: AUTHJS_USER;
 
   @OneToMany(
     (_type) => CUSTOMER_ORDER_LINE,
