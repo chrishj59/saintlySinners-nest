@@ -18,7 +18,7 @@ const fs = require('fs');
         password: configService.get('TYPEORM_PASSWORD'),
         database: configService.get('TYPEORM_DATABASE'),
         entities: [CUSTOMER_ORDER, CUSTOMER_ORDER_LINE],
-        synchronize: false, //configService.get('TYPEORM_SYNCHRONIZE'),
+        synchronize: configService.get('TYPEORM_SYNCHRONIZE'),
         schema: 'ss',
         autoLoadEntities: true,
         logging: configService.get('TYPEORM_LOGGING') === 'true' ? true : false,

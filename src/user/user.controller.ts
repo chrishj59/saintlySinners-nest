@@ -8,6 +8,9 @@ import FindOneStringParams, {
 } from 'src/utils/findOneParamString';
 import { UserDetailsDto } from './dtos/user-details.dto';
 import { UserIdParam } from './interface/userIdParam';
+import { USER_ADDRESS } from './entity/userAddress.entity';
+import { UserAddressDto } from './dtos/userAddress.dto';
+import { AUTHJS_USER } from './entity/authJsUser.entity';
 
 @Controller()
 export class UserController {
@@ -25,6 +28,11 @@ export class UserController {
   //     file.originalname,
   //   );
   // }
+
+  @Get('/user')
+  public async getAllUsers(): Promise<AUTHJS_USER[]> {
+    return await this.userService.getAllUsers();
+  }
 
   @Post('/likeItem')
   public async likeItem(
@@ -46,5 +54,29 @@ export class UserController {
   ) {
     const userid = paramId.id;
     return await this.userService.updateUser(userid, userDetails);
+  }
+
+  @Get('/userAddress/:id')
+  public async getUserAddresses(
+    @Param() paramId: FindOneStringParams,
+  ): Promise<USER_ADDRESS[]> {
+    const userId = paramId.id;
+    return await this.userService.getUserAddress(userId);
+  }
+
+  @Post('/userAddress/:id')
+  public async addUserAddress(
+    @Param() userId: FindOneStringParams,
+    @Body() address: UserAddressDto,
+  ): Promise<USER_ADDRESS> {
+    return await this.userService.addUserAddress(userId.id, address);
+  }
+
+  @Patch('/userAddress/:id')
+  public async updateUserAddress(
+    @Param() userId: FindOneStringParams,
+    @Body() address: UserAddressDto,
+  ): Promise<USER_ADDRESS> {
+    return await this.userService.addUserAddress(userId.id, address);
   }
 }

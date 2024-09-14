@@ -19,6 +19,7 @@ import { AwsModule } from 'src/aws/aws.module';
 import { CUSTOMER_ORDER_DELIVERY } from './entities/customerOrderDelivery.entity';
 import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
 import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
+import { USER_ADDRESS } from 'src/user/entity/userAddress.entity';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
       Country,
       AUTHJS_USER,
       XTR_PRODUCT,
+      USER_ADDRESS,
     ]),
     RemoteFilesModule,
     NotificationModule,

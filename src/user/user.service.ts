@@ -18,6 +18,9 @@ import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { AUTHJS_USER } from './entity/authJsUser.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { UserDetailsDto } from './dtos/user-details.dto';
+import { USER_ADDRESS } from './entity/userAddress.entity';
+import { UserAddressDto } from './dtos/userAddress.dto';
+import { boolean } from 'joi';
 
 @Injectable()
 export class UserService {
@@ -27,6 +30,9 @@ export class UserService {
 
     @InjectRepository(AUTHJS_USER)
     private authJsUserRepo: Repository<AUTHJS_USER>,
+
+    @InjectRepository(USER_ADDRESS)
+    private addressRepo: Repository<USER_ADDRESS>,
 
     @InjectRepository(XTR_PRODUCT)
     private prodRepo: Repository<XTR_PRODUCT>,
@@ -52,6 +58,12 @@ export class UserService {
   allUsers = async (): Promise<USER[]> => {
     return await this.userRepository.find();
   };
+
+  async getAllUsers(): Promise<AUTHJS_USER[]> {
+    const users = await this.authJsUserRepo.find();
+
+    return users;
+  }
   async getById(id: string) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (user) {
@@ -61,6 +73,106 @@ export class UserService {
       'User with this id does not exist',
       HttpStatus.NOT_FOUND,
     );
+  }
+
+  public async getUserAddress(userId: string): Promise<USER_ADDRESS[]> {
+    const user = await this.authJsUserRepo.findOne({
+      where: { id: userId },
+      relations: ['addresses'],
+    });
+
+    if (!user) {
+      throw new BadRequestException(`No user found with id ${userId}`);
+    }
+    return user.addresses;
+  }
+
+  public async addUserAddress(
+    userId: string,
+    address: UserAddressDto,
+  ): Promise<USER_ADDRESS> {
+    const user = await this.authJsUserRepo.findOne({
+      where: { id: userId },
+      relations: ['addresses'],
+    });
+    if (!user) {
+      throw new BadRequestException(`User id is invalid`);
+    }
+    const userAddressList = user.addresses;
+
+    if (address.default) {
+      const defaultAddressList = userAddressList.filter(
+        (addr) => addr.default === true,
+      );
+      if (defaultAddressList) {
+        // set each to not default
+        defaultAddressList.forEach(async (addr) => {
+          await this.addressRepo.update({ id: addr.id }, { default: false });
+        });
+      }
+    }
+
+    const _address = new USER_ADDRESS();
+    _address.addressName = address.addressName;
+    _address.default = address.default;
+    _address.firstName = address.firstName;
+    _address.lastName = address.lastName;
+    _address.street = address.street;
+    _address.street2 = address.street2;
+    _address.town = address.town;
+    _address.county = address.county;
+    _address.postCode = address.postCode;
+    userAddressList.push(_address);
+    user.addresses = userAddressList;
+    await this.authJsUserRepo.save(user, { reload: true });
+
+    return _address;
+  }
+
+  public async updateUserAddress(
+    userId: string,
+    address: UserAddressDto,
+  ): Promise<USER_ADDRESS> {
+    const user = await this.authJsUserRepo.findOne({
+      where: { id: userId },
+      relations: ['addresses'],
+    });
+    if (!user) {
+      throw new BadRequestException(`User id is invalid`);
+    }
+
+    const addrList = user.addresses;
+    const _address = await this.addressRepo.findOne({ where: { id: userId } });
+
+    if (!_address) {
+      throw new BadRequestException('Could not find address for supplied id');
+    }
+
+    _address.addressName = address.addressName;
+    _address.county = address.county;
+    _address.default = address.default;
+    _address.firstName = address.firstName;
+    _address.lastName = address.lastName;
+    _address.postCode = address.postCode;
+    _address.street = address.street;
+    _address.street2 = address.street2;
+    _address.town = address.town;
+
+    const { affected } = await this.addressRepo.update(
+      { id: address.id },
+      _address,
+    );
+
+    if (affected !== 1) {
+      throw new BadRequestException(
+        `Could not update address with id ${address.id}  `,
+      );
+    }
+
+    const addrIdx = addrList.findIndex((addr) => addr.id === address.id);
+    addrList[addrIdx] = _address;
+
+    return _address;
   }
 
   async getUserLikedItems(userId: string): Promise<XTR_PRODUCT[] | unknown> {
