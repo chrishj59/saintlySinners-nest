@@ -21,6 +21,7 @@ import { UserDetailsDto } from './dtos/user-details.dto';
 import { USER_ADDRESS } from './entity/userAddress.entity';
 import { UserAddressDto } from './dtos/userAddress.dto';
 import { boolean } from 'joi';
+import { XTR_PRODUCT_REVIEW } from 'src/xtrader/entity/xtr-product-review.entity';
 
 @Injectable()
 export class UserService {
@@ -36,6 +37,9 @@ export class UserService {
 
     @InjectRepository(XTR_PRODUCT)
     private prodRepo: Repository<XTR_PRODUCT>,
+
+    @InjectRepository(XTR_PRODUCT_REVIEW)
+    private reviewRepo: Repository<XTR_PRODUCT_REVIEW>,
 
     private readonly filesService: RemoteFilesService,
     private stripeService: StripeService,
@@ -281,6 +285,10 @@ export class UserService {
 
     const _user = await this.authJsUserRepo.save(user, { reload: true });
     return _user;
+  }
+
+  async getUserReviews(id: string): Promise<XTR_PRODUCT_REVIEW[]> {
+    return await this.reviewRepo.find({ where: { user: { id } } });
   }
   // async addAvatar(userId: string, imageBuffer: Buffer, filename: string) {
   //   const user = await this.getById(userId);

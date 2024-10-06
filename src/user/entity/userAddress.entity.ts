@@ -53,11 +53,11 @@ export class USER_ADDRESS extends BaseEntity {
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })
   customer: AUTHJS_USER;
 
-  @OneToOne(
-    () => CUSTOMER_ORDER,
-    (order: CUSTOMER_ORDER) => order.deliveryAddress,
-  )
-  order: CUSTOMER_ORDER;
+  // @OneToOne(
+  //   () => CUSTOMER_ORDER,
+  //   (order: CUSTOMER_ORDER) => order.deliveryAddress,
+  // )
+  // order: CUSTOMER_ORDER;
 
   @Exclude()
   @DeleteDateColumn()

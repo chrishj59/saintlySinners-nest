@@ -6,6 +6,7 @@ import {
   Get,
   Logger,
   Param,
+  Patch,
   Post,
   Put,
   UseInterceptors,
@@ -121,5 +122,16 @@ export class CommonController {
   @Get('/courier')
   public async getCourier(): Promise<DeliveryCourier[]> {
     return await this.commonService.getCourier();
+  }
+
+  @Patch('/courier')
+  public async updateCourier(@Body() dto: CourierDto): Promise<number> {
+    return this.commonService.updateCourier(dto);
+  }
+
+  @Post('/courier')
+  public async addCourier(@Body() dto: any): Promise<DeliveryCourier> {
+    this.logger.log(`addCourier called with ${JSON.stringify(dto, null, 2)}`);
+    return this.commonService.addCourier(dto);
   }
 }

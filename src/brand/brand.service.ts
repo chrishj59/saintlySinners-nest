@@ -189,7 +189,7 @@ export class BrandService {
       //   .getMany();
 
       const products = await this.xtrProdRepo.find({
-        relations: { brand: true, category: true },
+        relations: { brand: true, category: true, reviews: true },
         where: { brand: { id: brandId } },
       });
 

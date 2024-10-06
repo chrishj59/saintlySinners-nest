@@ -98,6 +98,21 @@ export class Products {
   product: Product[];
 }
 
+export class OrderAddress {
+  firstName: string;
+  lastName: string;
+  street: string;
+  @IsOptional()
+  street2: string;
+  city: string;
+  @IsOptional()
+  houseNumber: number;
+  county: string;
+  country: number;
+  postCode: string;
+  email: string;
+  telephone: string;
+}
 export class CustomerDelivery {
   id?: number;
   deliveryCost: number;
@@ -116,9 +131,9 @@ export class CustomerOrderDto {
   @IsBoolean()
   oneTimeCustomer: boolean;
 
-  @IsOptional()
-  @Type(() => Customer)
-  customer: Customer;
+  // @IsOptional()
+  // @Type(() => Customer)
+  // customer: Customer;
 
   @IsOptional()
   @IsString()
@@ -153,6 +168,9 @@ export class CustomerOrderDto {
 
   @Type(() => CustomerDelivery)
   customerDelivery: CustomerDelivery;
+
+  @Type(() => OrderAddress)
+  orderAddress: OrderAddress;
 
   // @IsArray()
   // @ArrayNotEmpty()

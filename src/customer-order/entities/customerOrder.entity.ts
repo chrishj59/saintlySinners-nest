@@ -21,12 +21,14 @@ import {
 } from 'typeorm';
 
 import { CUSTOMER_ORDER_LINE } from './customerOrderLine.entity';
-import { ONE_TIME_CUSTOMER } from './customerOrderCustomer.entity';
+
 import { CUSTOMER_ORDER_PRODUCT } from './customerOrderProduct.entity';
 import { Variant } from '../../edc/dtos/add-product.dto';
 import { CUSTOMER_ORDER_DELIVERY } from './customerOrderDelivery.entity';
 import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
 import { USER_ADDRESS } from 'src/user/entity/userAddress.entity';
+import { DELIVERY_ADDRESS } from './deliveryAddress.entity';
+import { ORDER_CUSTOMER } from './OrderCustomer.entity';
 
 @Entity({ name: 'customer_order' })
 export class CUSTOMER_ORDER extends BaseEntity {
@@ -62,11 +64,11 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @Column({ name: 'oneTimeCustomer', default: false })
   oneTimeCustomer: boolean;
 
-  @OneToOne(() => ONE_TIME_CUSTOMER, {
-    cascade: ['insert', 'update', 'remove'],
-  })
-  @JoinColumn()
-  customerOneTime: ONE_TIME_CUSTOMER;
+  // @OneToOne(() => ORDER_CUSTOMER, {
+  //   cascade: ['insert', 'update', 'remove'],
+  // })
+  // @JoinColumn({ name: 'order_customer_id' })
+  // orderCustomer: ORDER_CUSTOMER;
 
   @ManyToOne(() => Country, (country: Country) => country.orders)
   country: Country;
@@ -140,9 +142,15 @@ export class CUSTOMER_ORDER extends BaseEntity {
   @JoinColumn({ name: 'customer_id', referencedColumnName: 'id' })
   customer: AUTHJS_USER;
 
-  @OneToOne(() => USER_ADDRESS, (deliveryAddress) => deliveryAddress.customer)
+  // @OneToOne(() => USER_ADDRESS, (deliveryAddress) => deliveryAddress.customer)
+  // @JoinColumn({ name: 'delivery_address_id' })
+  // deliveryAddress: USER_ADDRESS;
+
+  @OneToOne(() => DELIVERY_ADDRESS, (address) => address.order, {
+    cascade: ['insert', 'update'],
+  })
   @JoinColumn({ name: 'delivery_address_id' })
-  deliveryAddress: USER_ADDRESS;
+  address: DELIVERY_ADDRESS;
 
   @OneToMany(
     (_type) => CUSTOMER_ORDER_LINE,

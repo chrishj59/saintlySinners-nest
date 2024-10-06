@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { MoreThan, Repository } from 'typeorm';
@@ -167,8 +172,13 @@ export class CommonService {
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
-    courier.shippingModule = dto.shippingModule;
-    await this.courierRepository.save(courier, { reload: false });
+    this.logger.log(`courier found ${JSON.stringify(courier, null, 2)}`);
+
+    if (courier) {
+      courier.shippingModule = dto.shippingModule;
+      courier.cutoffTime = dto.cutoffTime;
+      await this.courierRepository.save(courier, { reload: false });
+    }
 
     const country = await this.countryRepository.findOne({
       where: { id: dto.countryId },
@@ -185,6 +195,8 @@ export class CommonService {
     delCharge.durationDescription = dto.durationDescription;
     delCharge.hasLostClaim = dto.hasLostClaim;
     delCharge.hasTracking = dto.hasTracking;
+    // delCharge.shippingModule = dto.shippingModule;
+
     const vendor = await this.vendorRepository.findOne({
       where: { id: dto.vendorId },
     });
@@ -230,6 +242,7 @@ export class CommonService {
     deliveryCharge.durationDescription = dto.durationDescription;
     deliveryCharge.hasLostClaim = dto.hasLostClaim;
     deliveryCharge.hasTracking = dto.hasTracking;
+
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
@@ -239,6 +252,7 @@ export class CommonService {
       throw new BadRequestException(`An invalid courier id supplied`);
     }
     courier.shippingModule = dto.shippingModule;
+    courier.cutoffTime = dto.cutoffTime;
 
     const _courier = await this.courierRepository.save(courier, {
       reload: true,
@@ -318,6 +332,28 @@ export class CommonService {
 
   public async getCourier(): Promise<DeliveryCourier[]> {
     return await this.courierRepository.find();
+  }
+
+  public async addCourier(courier: CourierDto): Promise<DeliveryCourier> {
+    this.logger.log(
+      `addCourier called with: ${JSON.stringify(courier, null, 2)}`,
+    );
+    const _courier = new DeliveryCourier();
+    _courier.name = courier.name;
+    _courier.shippingModule = courier.shippingModule;
+    _courier.cutoffTime = courier.cutOffTime;
+    return await this.courierRepository.save(_courier, { reload: true });
+  }
+
+  public async updateCourier(courier: CourierDto): Promise<number> {
+    const { affected } = await this.courierRepository.update(
+      { id: courier.id },
+      courier,
+    );
+    if (affected === 0) {
+      throw new NotFoundException(`Courier not updates. id: ${courier.id}`);
+    }
+    return affected;
   }
 
   async deleteRemoteDeliveryCharge(id: string): Promise<ResponseMessageDto> {

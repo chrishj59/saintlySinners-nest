@@ -10,6 +10,7 @@ import { UserService } from './user.service';
 import { AUTHJS_USER } from './entity/authJsUser.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { USER_ADDRESS } from './entity/userAddress.entity';
+import { XTR_PRODUCT_REVIEW } from 'src/xtrader/entity/xtr-product-review.entity';
 
 //import { StripeService } from '../stripe/stripe.service';
 
@@ -21,6 +22,7 @@ import { USER_ADDRESS } from './entity/userAddress.entity';
       AUTHJS_USER,
       XTR_PRODUCT,
       USER_ADDRESS,
+      XTR_PRODUCT_REVIEW,
     ]),
     RemoteFilesModule,
     StripeModule,

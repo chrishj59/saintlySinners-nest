@@ -24,6 +24,7 @@ import { XTR_PROD_ATTRIBUTE } from './xtr-prod-attribute.entity';
 import { XtrProdStockStatusEnum } from '../enum/xtrProd-status.enum';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
 import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
+import { XTR_PRODUCT_REVIEW } from './xtr-product-review.entity';
 
 @Entity({ name: 'xtr-product', schema: 'ss', orderBy: { id: 'ASC' } })
 export class XTR_PRODUCT extends BaseEntity {
@@ -362,6 +363,9 @@ export class XTR_PRODUCT extends BaseEntity {
 
   @Column({ name: 'num_likes', type: 'int', nullable: true })
   numLikes: number;
+
+  @OneToMany(() => XTR_PRODUCT_REVIEW, (review) => review.product)
+  reviews: XTR_PRODUCT_REVIEW[];
 
   @Exclude()
   @DeleteDateColumn()

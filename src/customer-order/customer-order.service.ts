@@ -40,7 +40,7 @@ import { edcOrderStatusEnum } from 'src/edc/enums/Edc-order-status.enum';
 import { getDay } from 'date-fns';
 import { isAfter } from 'date-fns';
 import { format, add } from 'date-fns';
-import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
+import { ORDER_CUSTOMER } from './entities/OrderCustomer.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { url } from 'inspector';
 import { XTRADER_RESULT_INTERFACE } from 'src/common/interfaces/xtraderResult.interface';
@@ -49,8 +49,10 @@ import { JSONCookie } from 'cookie-parser';
 import { CUSTOMER_ORDER_DELIVERY } from './entities/customerOrderDelivery.entity';
 import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
 import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
+import { DELIVERY_ADDRESS } from './entities/deliveryAddress.entity';
 
 //import { S3Client } from '@aws-sdk/client-s3';
+import { OrderAddress } from './dtos/customerOrder.dto';
 
 type prodLine = {
   artnr: string;
@@ -82,6 +84,8 @@ export class CustomerOrderService {
     private userRepo: Repository<AUTHJS_USER>,
     @InjectRepository(CUSTOMER_ORDER)
     private custOrderRepo: Repository<CUSTOMER_ORDER>,
+    @InjectRepository(ORDER_CUSTOMER)
+    private orderCustomerRepo: Repository<ORDER_CUSTOMER>,
     // @InjectRepository(CUSTOMER_ORDER_LINE)
     // private custOrderLineRepo: Repository<CUSTOMER_ORDER_LINE>,
     @InjectRepository(DeliveryCharge)
@@ -134,7 +138,6 @@ export class CustomerOrderService {
   async saveOrder(
     dto: CustomerOrderDto,
   ): Promise<ResponseMessageDto | EdcOrderCreatedResponseDto> {
-    this.logger.log(`saveOrder dto ${JSON.stringify(dto, null, 2)}`);
     const vend = await this.vendorRepository.findOne({
       where: { id: dto.vendorNumber },
     });
@@ -150,6 +153,19 @@ export class CustomerOrderService {
     const _custDelivery = await this.custDeliveryRepo.save(custDelivery, {
       reload: true,
     });
+
+    const orderAddress = new DELIVERY_ADDRESS();
+    orderAddress.firstName = dto.orderAddress.firstName;
+    orderAddress.lastName = dto.orderAddress.lastName;
+    orderAddress.city = dto.orderAddress.city;
+    orderAddress.country = dto.orderAddress.country;
+    orderAddress.email = dto.orderAddress.email;
+    orderAddress.houseNumber = dto.orderAddress.houseNumber;
+    orderAddress.postCode = dto.orderAddress.postCode;
+    orderAddress.street = dto.orderAddress.street;
+    orderAddress.street2 = dto.orderAddress.street2;
+    orderAddress.telephone = dto.orderAddress.telephone;
+    orderAddress.county = dto.orderAddress.county;
 
     const inv_lines: CUSTOMER_ORDER_LINE[] = [];
     const vatRate = Number(process.env.VAT_STD) / 100;
@@ -231,15 +247,13 @@ export class CustomerOrderService {
 
     const vendorPayable = Number(vendorTotal);
 
-    let country: Country;
+    const country = await this.countryRepo.findOne({
+      where: {
+        id: dto.orderAddress.country,
+      },
+    });
     let customer: AUTHJS_USER;
-    if (dto.oneTimeCustomer) {
-      country = await this.countryRepo.findOne({
-        where: {
-          id: dto.customer.country,
-        },
-      });
-
+    if (!dto.oneTimeCustomer) {
       customer = await this.userRepo.findOne({
         where: {
           id: dto.customerId,
@@ -256,7 +270,11 @@ export class CustomerOrderService {
     custOrder.stripeSession = dto.stripeSessionId;
     custOrder.oneTimeCustomer = dto.oneTimeCustomer;
     custOrder.goodsValue = orderGoodsAmount;
-    custOrder.deliveryCost = deliveryCost;
+    // custOrder.deliveryCost = deliveryCost;
+    custOrder.deliveryCost = deliveryCharge.amount;
+    custOrder.deliveryVAT = deliveryCharge.vatAmount;
+    custOrder.deliveryTotal = deliveryCharge.totalAmount;
+    custOrder.address = orderAddress;
 
     custOrder.orderStatus = edcOrderStatusEnum.CREATED;
 
@@ -264,27 +282,11 @@ export class CustomerOrderService {
     custOrder.total = OrderPayable;
     custOrder.currencyCode = dto.currencyCode;
     custOrder.delivery = _custDelivery;
-    if (dto.oneTimeCustomer) {
-      const customerOneTime = new ONE_TIME_CUSTOMER();
 
-      customerOneTime.title = dto.customer.title;
-      customerOneTime.firstName = dto.customer.firstName;
-      customerOneTime.lastName = dto.customer.lastName;
-      // custOrder.houseNumber = dto.customer.hous§eNumber;
-      // custOrder.houseName = dto.customer.houseName;
-      customerOneTime.street = dto.customer.street;
-      customerOneTime.street2 = dto.customer.street2;
-      customerOneTime.city = dto.customer.city;
-      customerOneTime.county = dto.customer.county;
-      customerOneTime.postCode = dto.customer.postCode;
-      // oneTimeCustomer.zip = dto.customer.zip;
-      customerOneTime.telephone = dto.customer.telephone;
-      customerOneTime.email = dto.customer.email;
-
-      custOrder.customerOneTime = customerOneTime;
-    } else {
+    if (customer) {
       custOrder.customer = customer;
     }
+
     custOrder.country = country;
     custOrder.orderLines = inv_lines;
 
@@ -441,16 +443,11 @@ export class CustomerOrderService {
     const vendorPass = process.env.XTRADER_VENDOR_PASS;
     // const xtaderPassword = process.env.XTRADER_PASSWORD;
     const accountid = process.env.XTRADER_ACCOUNT_ID;
-    this.logger.log(
-      `sendOrderToXtrader customerOrder ${JSON.stringify(
-        customerOrder,
-        null,
-        2,
-      )}`,
-    );
+
     let productStr = '';
 
-    const cust1Time = customerOrder.customerOneTime;
+    // const customer = customerOrder.orderCustomer;
+    const address = customerOrder.address;
 
     if (isIteratable(customerOrder.orderLines)) {
       for (const line of customerOrder.orderLines) {
@@ -483,13 +480,13 @@ export class CustomerOrderService {
       ShippingModule: customerOrder.delivery.shippingModule,
       // 'tracked24',
       postage: 1,
-      customerFirstName: cust1Time.firstName,
-      customerLastName: cust1Time.lastName,
-      deliveryAddress1: cust1Time.street,
-      deliveryAddress2: cust1Time.street2,
-      deliveryTown: cust1Time.city,
-      deliveryCounty: cust1Time.county,
-      deliveryPostcode: cust1Time.postCode,
+      customerFirstName: address.firstName,
+      customerLastName: address.lastName,
+      deliveryAddress1: address.street,
+      deliveryAddress2: address.street2,
+      deliveryTown: address.city,
+      deliveryCounty: address.county,
+      deliveryPostcode: address.postCode,
 
       // customerFirstName: 'Bob',
       // customerLastName: 'Smith',
@@ -502,9 +499,7 @@ export class CustomerOrderService {
       ProductCodes: 'MODEL',
       Products: productStr,
     };
-    this.logger.log(
-      `xtrData message to Xtrader ${JSON.stringify(xtrData, null, 2)}`,
-    );
+
     const rs = await axios.post<string>(`${process.env.XTRADER_URL}`, xtrData, {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     });
@@ -544,12 +539,12 @@ export class CustomerOrderService {
 
     const orderUpdated = await this.custOrderRepo.findOne({
       where: { id: id },
-      relations: ['customerOneTime', 'invoicePdf', 'orderLines'],
+      relations: ['address', 'invoicePdf', 'orderLines'],
     });
 
     const invPdf = await this.getCustomerInvoice(id);
 
-    const custEmail: string = orderUpdated.customerOneTime.email;
+    const custEmail: string = orderUpdated.address.email;
     const subject: string = 'Your SaintlySinners Invoice';
 
     const body = this.invHtml(orderUpdated.orderLines); //`<html> Your invoice </html>`;
@@ -568,9 +563,7 @@ export class CustomerOrderService {
         id,
         customerOrder,
       );
-      this.logger.log(
-        `updatedCustInv ${JSON.stringify(updatedCustInv, null, 2)}`,
-      );
+
       if (updatedCustInv.affected !== 1) {
         this.logger.warn(
           `Could not update order ${orderUpdated.orderNumber} status to customer emailed`,
@@ -581,7 +574,7 @@ export class CustomerOrderService {
         `Failed to send customer invoice email ${JSON.stringify(e, null, 2)}`,
       );
     }
-    this.logger.warn(`orderUpdated ${JSON.stringify(orderUpdated, null, 2)}`);
+
     const xtraderStatus = await this.sendOrderToXtrader(orderUpdated);
 
     if (xtraderStatus.status === 'DOSuccess') {
@@ -666,7 +659,7 @@ export class CustomerOrderService {
     let { data } = await this.httpService.axiosRef.post<string>(orderStatusUrl);
     const env = this.configService.get<string>('NODE_ENV'); //process.env.NODE_ENV;
     this.logger.warn(`Order status returns ${JSON.stringify(data, null, 2)}`);
-    this.logger.log(`env ${env}`);
+
     if (env === 'development') {
       data =
         //   '<?xml version="1.0" ?><ORDERS><ORDER ID="f152566"><TRACKING>Your orderwas displatched by Royal mail Your tracking number is JW0999999GB</TRACKING></ORDER><ORDER ID="f152567"><TRACKING> Your orderwas displatched by Royal mail Your tracking number is JW099911111GB</TRACKING></ORDER></ORDERS>';
@@ -677,33 +670,33 @@ export class CustomerOrderService {
     let numUpdates: number = 0;
     var parser = new xml2js.Parser();
     const result = await parser.parseStringPromise(data);
-    this.logger.log(`result ${JSON.stringify(result, null, 2)}`);
+
     const orders = result.ORDERS.ORDER;
     if (orders === null) {
       return numUpdates;
     } else if (isIteratable(orders)) {
       for (const item of orders) {
         const vendorOrderId = item.$.ID;
-        this.logger.log(`vendorOrderId ${vendorOrderId}`);
+
         const custOrder = await this.custOrderRepo.findOne({
-          relations: ['customerOneTime'],
+          // relations: ['customerOneTime'],
           where: { confirmOrder: vendorOrderId },
         });
 
         if (custOrder) {
           const tracking: string = item.TRACKING[0];
-          this.logger.log(`tracking ${JSON.stringify(tracking, null, 2)}`);
+
           //TODO: If tracking is not on order send a tracking update
           if (custOrder.xtraderStatus.length < 1) {
             this.sendOrderDeliveryStatusEmail(
-              custOrder.customerOneTime.email,
+              custOrder.address.email,
               custOrder.xtraderStatus,
             );
           } else {
             if (!tracking.localeCompare(custOrder.xtraderStatus)) {
               // Tracking changed
               this.sendOrderDeliveryStatusEmail(
-                custOrder.customerOneTime.email,
+                custOrder.address.email,
                 custOrder.xtraderStatus,
               );
             }
@@ -714,7 +707,7 @@ export class CustomerOrderService {
           const idx = tracking.lastIndexOf(' ');
           const trackingRef = tracking.substring(idx + 1);
           custOrder.trackingRef = trackingRef;
-          this.logger.log(``);
+
           const rc: UpdateResult = await this.custOrderRepo.update(
             custOrder.id,
             custOrder,
@@ -809,7 +802,7 @@ export class CustomerOrderService {
       //   ? order.houseName
       //   : null +
       // (order.houseNumber < 0 ? order.houseNumber : null) +
-      order.customerOneTime.street;
+      order.address.street;
 
     doc
       .fontSize(10)
@@ -827,19 +820,15 @@ export class CustomerOrderService {
       .font('Helvetica-Bold')
       .text('Sold to:', 50, this.customerInformationTop + 60)
       .text(
-        `${order.customerOneTime.firstName} ${order.customerOneTime.lastName}`,
+        `${order.address.firstName} ${order.address.lastName}`,
         50,
         this.customerInformationTop + 75,
       )
       .font('Helvetica')
       .text(address1, 50, this.customerInformationTop + 90)
-      .text(order.customerOneTime.city, 50, this.customerInformationTop + 105)
-      .text(order.customerOneTime.county, 50, this.customerInformationTop + 120)
-      .text(
-        order.customerOneTime.postCode,
-        50,
-        this.customerInformationTop + 135,
-      )
+      .text(order.address.city, 50, this.customerInformationTop + 105)
+      .text(order.address.county, 50, this.customerInformationTop + 120)
+      .text(order.address.postCode, 50, this.customerInformationTop + 135)
       .text(order.country.name, 50, this.customerInformationTop + 150)
       .moveDown();
   }

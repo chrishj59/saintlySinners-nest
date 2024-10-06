@@ -11,6 +11,7 @@ import { UserIdParam } from './interface/userIdParam';
 import { USER_ADDRESS } from './entity/userAddress.entity';
 import { UserAddressDto } from './dtos/userAddress.dto';
 import { AUTHJS_USER } from './entity/authJsUser.entity';
+import { XTR_PRODUCT_REVIEW } from 'src/xtrader/entity/xtr-product-review.entity';
 
 @Controller()
 export class UserController {
@@ -78,5 +79,11 @@ export class UserController {
     @Body() address: UserAddressDto,
   ): Promise<USER_ADDRESS> {
     return await this.userService.addUserAddress(userId.id, address);
+  }
+  @Get(`/userReviews/:id`)
+  public async getUserReviews(
+    @Param() userId: FindOneStringParams,
+  ): Promise<XTR_PRODUCT_REVIEW[]> {
+    return await this.userService.getUserReviews(userId.id);
   }
 }

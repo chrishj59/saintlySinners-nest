@@ -15,6 +15,7 @@ import {
 import { USER_ADDRESS } from './userAddress.entity';
 import { UserModule } from '../user.module';
 import { Exclude } from 'class-transformer';
+import { XTR_PRODUCT_REVIEW } from 'src/xtrader/entity/xtr-product-review.entity';
 
 @Entity({ name: 'User', schema: 'auth' })
 export class AUTHJS_USER extends BaseEntity {
@@ -78,6 +79,9 @@ export class AUTHJS_USER extends BaseEntity {
 
   @Column({ name: 'likes', type: 'int', default: 0, nullable: true })
   likes: number;
+
+  @OneToMany(() => XTR_PRODUCT_REVIEW, (review) => review.user)
+  reviews: XTR_PRODUCT_REVIEW[];
 
   @Column({ name: 'stripe_customer_id', nullable: true })
   public stripeCustomerId: string;
