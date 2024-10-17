@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoteFilesService } from 'src/remote-files/remote-files.service';
@@ -184,7 +185,6 @@ export class UserService {
       where: { id: userId },
       relations: ['likedProds'],
     });
-    this.logger.log(`user with likes ${JSON.stringify(user, null, 2)}`);
 
     if (!user) {
       throw new BadRequestException(`No user found for id ${userId}`);
@@ -192,9 +192,8 @@ export class UserService {
     return user.likedProds;
   }
   async addLikeItem(dto: UserLikeItemDto): Promise<ResponseMessageDto> {
-    this.logger.log(`likeItem called with ${JSON.stringify(dto, null, 2)}`);
     const newLiked = dto.liked;
-    this.logger.log(`newLiked:  ${newLiked}`);
+
     const user = await this.authJsUserRepo.findOne({
       where: { id: dto.userId },
     });
@@ -203,49 +202,33 @@ export class UserService {
       relations: ['likes'],
     });
 
-    this.logger.log(`found user ${JSON.stringify(user, null, 2)}`);
-    this.logger.log(`found product to like ${JSON.stringify(prod, null, 2)}`);
     let likes: AUTHJS_USER[] = [];
     if (!prod.likes || prod.likes.length === 0) {
-      this.logger.log(`empty likes ${JSON.stringify(prod.likes, null)}`);
       likes.push(user);
       prod.likes = likes;
       prod.numLikes = likes.length;
     } else {
-      this.logger.log(
-        `product has likes ${JSON.stringify(prod.likes, null, 2)}`,
-      );
       const prodLikes = prod.likes;
       const prodUserLikes = prodLikes.filter((l) => l.id === user.id);
 
-      this.logger.log(
-        `userLikes for product ${JSON.stringify(prodUserLikes, null, 2)}`,
-      );
-
       if (prodUserLikes.length > 0) {
         if (!newLiked) {
-          this.logger.log('need to remove from likes');
           const otherUserLikes = prodLikes.filter((l) => l.id !== user.id);
-          this.logger.log(
-            `otherUserLikes ${JSON.stringify(otherUserLikes, null, 2)}`,
-          );
+
           prod.likes = otherUserLikes;
           prod.numLikes = otherUserLikes.length;
         } else {
-          this.logger.log('need to add to product likes');
           prodLikes.push(user);
           prod.likes = prodLikes;
           prod.numLikes = prodLikes.length;
         }
       }
     }
-    this.logger.log(`likes ${JSON.stringify(likes, null, 2)}`);
+
     // prod.likes = likes;
     // prod.numLikes = likes.length;
     const _prod = await prod.save({ reload: true });
-    this.logger.log(
-      `updated product with likes ${JSON.stringify(_prod, null, 2)}`,
-    );
+
     return {
       status: MessageStatusEnum.SUCCESS,
       message: `Number of product likes ${JSON.stringify(
@@ -256,16 +239,65 @@ export class UserService {
     };
   }
 
+  async getUser(id: string): Promise<AUTHJS_USER | ResponseMessageDto> {
+    const user = await this.authJsUserRepo.findOne({
+      relations: ['addresses'],
+      where: { id, addresses: { default: true } },
+    });
+    if (!user) {
+      throw new BadRequestException(`No user with ID ${id}`);
+    }
+    return user;
+  }
+
   async updateUser(
     id: string,
     userDetails: UserDetailsDto,
   ): Promise<AUTHJS_USER | ResponseMessageDto> {
-    const user = await this.authJsUserRepo.findOne({ where: { id } });
+    const user = await this.authJsUserRepo.findOne({
+      where: { id },
+      relations: ['addresses'],
+    });
 
     if (!user) {
       throw new BadRequestException(`No user with ID ${id}`);
     }
+
     const birthDate = new Date(userDetails.birthDate);
+
+    let defaultAddress = await this.addressRepo.findOne({
+      where: { id: userDetails.addressId },
+    });
+
+    if (!defaultAddress) {
+      defaultAddress = new USER_ADDRESS();
+    }
+    defaultAddress.firstName = userDetails.firstName;
+    defaultAddress.lastName = userDetails.lastName;
+    defaultAddress.street = userDetails.street;
+    defaultAddress.street2 = userDetails.street2;
+    defaultAddress.town = userDetails.town;
+    defaultAddress.county = userDetails.county;
+    defaultAddress.postCode = userDetails.postCode;
+    defaultAddress.default = true;
+    if (!defaultAddress.id) {
+      defaultAddress = await this.addressRepo.save(defaultAddress, {
+        reload: true,
+      });
+    }
+    let userAddresses = user.addresses;
+    if (!userAddresses) {
+      userAddresses = [];
+    }
+    const addressIdx = userAddresses?.findIndex(
+      (a) => a.id === userDetails.addressId,
+    );
+    if (addressIdx === -1) {
+      // address not found
+      userAddresses.push(defaultAddress);
+    } else {
+      userAddresses[addressIdx] = defaultAddress;
+    }
     user.birthDate = birthDate;
 
     user.county = userDetails.county;
@@ -278,10 +310,6 @@ export class UserService {
     user.name = userDetails.mobPhone;
     user.postCode = userDetails.postCode;
     user.role = userDetails.role;
-    user.street = userDetails.street;
-    user.street2 = userDetails.street;
-    user.title = userDetails.title;
-    user.town = userDetails.town;
 
     const _user = await this.authJsUserRepo.save(user, { reload: true });
     return _user;
@@ -289,6 +317,35 @@ export class UserService {
 
   async getUserReviews(id: string): Promise<XTR_PRODUCT_REVIEW[]> {
     return await this.reviewRepo.find({ where: { user: { id } } });
+  }
+
+  async getUserOrders(id: string): Promise<AUTHJS_USER> {
+    const user = await this.authJsUserRepo.findOne({
+      relations: ['orders', 'orders.orderLines'],
+      order: {
+        orders: {
+          createdDate: 'DESC',
+        },
+      },
+      where: { id },
+    });
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    return user;
+  }
+
+  async getUserOverview(id: string): Promise<AUTHJS_USER> {
+    const user = await this.authJsUserRepo.findOne({
+      relations: ['likedProds', 'reviews', 'orders'],
+      where: { id },
+    });
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    return user;
   }
   // async addAvatar(userId: string, imageBuffer: Buffer, filename: string) {
   //   const user = await this.getById(userId);

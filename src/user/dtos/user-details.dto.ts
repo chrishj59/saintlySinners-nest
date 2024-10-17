@@ -35,6 +35,10 @@ export class UserDetailsDto {
 
   @IsOptional()
   @IsString()
+  addressId: string;
+
+  @IsOptional()
+  @IsString()
   street: string;
 
   @IsOptional()
