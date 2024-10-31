@@ -26,6 +26,7 @@ import { Repository, UpdateResult } from 'typeorm';
 import { EDC_PRODUCT } from '../edc/entities/edc-product';
 import {
   CustomerOrderDto,
+  CustomerOrderStatusDto,
   EditCustomerOrderDto,
   Product,
   Products,
@@ -516,6 +517,38 @@ export class CustomerOrderService {
     return { status: xtraderResultCode, value: valueArray[1] };
   }
 
+  async updateCustomerOrderStatus(
+    orderId: string,
+    custOrder: CustomerOrderStatusDto,
+  ): Promise<CustOrderUpdatedResponseDto> {
+    this.logger.log(
+      `order id: ${orderId} customerStatus ${JSON.stringify(
+        custOrder,
+        null,
+        2,
+      )}`,
+    );
+    const order = await this.custOrderRepo.findOne({ where: { id: orderId } });
+    if (!order) {
+      throw new BadRequestException(`No order with id ${orderId}`);
+    }
+    order.orderStatus = custOrder.orderStatus;
+    order.confirmOrder = custOrder.confirmOrder;
+    order.trackingRef = custOrder.trackingRef;
+    order.xtraderStatus = custOrder.xtraderStatus;
+    order.xtraderError = custOrder.xtraderError;
+
+    const result = await this.custOrderRepo.update(order.id, order);
+
+    const resultstatus =
+      result.affected === 1
+        ? MessageStatusEnum.SUCCESS
+        : MessageStatusEnum.WARNING;
+    return {
+      status: resultstatus,
+      orderMessage: { orderId, rowsUpdated: result.affected },
+    };
+  }
   async customerOrderPaid(
     id: string,
     custOrder: EditCustomerOrderDto,

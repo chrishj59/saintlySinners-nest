@@ -8,6 +8,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   ValidateNested,
 } from '@nestjs/class-validator';
 import { Type } from 'class-transformer';
@@ -176,6 +177,26 @@ export class CustomerOrderDto {
   // @ArrayNotEmpty()
   // @ArrayMinSize(1)
   // products:ProductList[] ;
+}
+
+export class CustomerOrderStatusDto {
+  @IsNumber()
+  orderNumber: number;
+
+  @IsNumber()
+  orderStatus: number;
+
+  @IsString()
+  confirmOrder: string;
+
+  @IsString()
+  trackingRef: string;
+
+  @IsString()
+  xtraderStatus: string;
+
+  @IsString()
+  xtraderError: string;
 }
 
 export class EditCustomerOrderDto {

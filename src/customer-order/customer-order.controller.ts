@@ -18,6 +18,7 @@ import FindOneStringParams, {
 import { CustomerOrderService } from './customer-order.service';
 import {
   CustomerOrderDto,
+  CustomerOrderStatusDto,
   EditCustomerOrderDto,
 } from './dtos/customerOrder.dto';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
@@ -43,14 +44,14 @@ export class CustomerOrderController {
 
   @Patch('/customerOrderPaid/:id')
   public async updateCustomerOrder(
-    @Param() paramId: FindOneStringParams,
+    @Param() { id }: FindOneStringParams,
     @Body() custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
-    console.log(`id is: ${JSON.stringify(paramId.id)}`);
+    console.log(`id is: ${JSON.stringify(id)}`);
     console.log(`body is ${JSON.stringify(custOrder)}`);
 
     const updatedOrder: CustOrderUpdatedResponseDto =
-      await this.customerService.customerOrderPaid(paramId.id, custOrder);
+      await this.customerService.customerOrderPaid(id, custOrder);
 
     return {
       status: updatedOrder.status,
@@ -58,20 +59,22 @@ export class CustomerOrderController {
     };
   }
 
-  // @Patch('/customerOrder/:id')
-  // public async updateCustomerOrder(
-  //   @Param() paramId: FindOneStringParams,
-  //   @Body() custOrder: EditCustomerOrderDto,
-  // ): Promise<CustOrderUpdatedResponseDto> {
-  //   console.log(`id is: ${JSON.stringify(paramId.id)}`);
-  //   const updatedOrder: CustOrderUpdatedResponseDto =
-  //     await this.customerService.updateCustomerOrder(paramId.id, custOrder);
+  @Patch('/customerOrderStatus/:id')
+  public async updateCustomerOrderStatus(
+    @Param() { id }: FindOneStringParams,
+    @Body() custOrder: CustomerOrderStatusDto,
+  ): Promise<CustOrderUpdatedResponseDto> {
+    console.log(`id is: ${JSON.stringify(id)}`);
+    const updatedOrder: CustOrderUpdatedResponseDto =
+      await this.customerService.updateCustomerOrderStatus(id, custOrder);
 
-  //   return {
-  //     status: updatedOrder.status,
-  //     orderMessage: updatedOrder.orderMessage,
-  //   };
-  // }
+    return {
+      status: MessageStatusEnum.SUCCESS,
+      orderMessage: { orderId: id, rowsUpdated: 1 },
+      // status: updatedOrder.status,
+      // orderMessage: updatedOrder.orderMessage,
+    };
+  }
 
   @Post('/customerInvoice')
   async createInvoicePdf() {
