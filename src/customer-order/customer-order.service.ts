@@ -521,13 +521,6 @@ export class CustomerOrderService {
     orderId: string,
     custOrder: CustomerOrderStatusDto,
   ): Promise<CustOrderUpdatedResponseDto> {
-    this.logger.log(
-      `order id: ${orderId} customerStatus ${JSON.stringify(
-        custOrder,
-        null,
-        2,
-      )}`,
-    );
     const order = await this.custOrderRepo.findOne({ where: { id: orderId } });
     if (!order) {
       throw new BadRequestException(`No order with id ${orderId}`);
@@ -920,7 +913,7 @@ export class CustomerOrderService {
       '',
       'Delivery',
       '',
-      this.formatCurrency(order.deliveryCost * 100),
+      this.formatCurrency(order.deliveryTotal * 100),
     );
 
     //   //VAT line

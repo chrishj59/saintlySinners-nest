@@ -111,7 +111,6 @@ export class UserController {
   public async getUserOrders(
     @Param() userId: FindOneStringParams,
   ): Promise<AUTHJS_USER> {
-    this.logger.log('called /userOrders/:id');
     return await this.userService.getUserOrders(userId.id);
   }
 }

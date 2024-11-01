@@ -76,9 +76,6 @@ export class CommonController {
 
   @Put('/deliveryCharge')
   public async updateDeliveryCharge(@Body() dto: DeliveryChargeDto) {
-    this.logger.log(
-      `put deliveryCharge called with ${JSON.stringify(dto, null, 2)} `,
-    );
     return await this.commonService.updateDeliveyCharge(dto);
   }
 
@@ -131,7 +128,6 @@ export class CommonController {
 
   @Post('/courier')
   public async addCourier(@Body() dto: any): Promise<DeliveryCourier> {
-    this.logger.log(`addCourier called with ${JSON.stringify(dto, null, 2)}`);
     return this.commonService.addCourier(dto);
   }
 }

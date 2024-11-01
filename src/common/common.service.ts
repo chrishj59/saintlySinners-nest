@@ -172,7 +172,6 @@ export class CommonService {
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
-    this.logger.log(`courier found ${JSON.stringify(courier, null, 2)}`);
 
     if (courier) {
       courier.shippingModule = dto.shippingModule;
@@ -221,10 +220,6 @@ export class CommonService {
   public async updateDeliveyCharge(
     dto: DeliveryChargeDto,
   ): Promise<DeliveryCharge> {
-    this.logger.log(
-      `updateDeliveyCharge 205 called with ${JSON.stringify(dto, null, 2)}`,
-    );
-
     const vatRate: number = Number(process.env.VAT_STD) / 100;
     const deliveryCharge = await this.delChargeRepository.findOne({
       where: { id: dto.id },
@@ -246,7 +241,7 @@ export class CommonService {
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
-    this.logger.log(`courier to update ${JSON.stringify(courier, null, 2)}`);
+
     if (!courier) {
       this.logger.error(`An invalid courier id supplied ${dto.courierId}`);
       throw new BadRequestException(`An invalid courier id supplied`);
@@ -276,9 +271,7 @@ export class CommonService {
         reload: true,
       },
     );
-    this.logger.log(
-      `updated _deliveryCharge ${JSON.stringify(_deliveryCharge, null, 2)}`,
-    );
+
     return _deliveryCharge;
   }
 
@@ -315,7 +308,6 @@ export class CommonService {
     });
   }
   public async saveCountry(dto: CountryUpdateDTO): Promise<number> {
-    this.logger.log(`saveCountry called with ${JSON.stringify(dto, null, 2)}`);
     const { affected } = await this.countryRepository.update(
       { id: dto.id },
       // { edcCountryCode: dto.edcCountryCode },
@@ -335,9 +327,6 @@ export class CommonService {
   }
 
   public async addCourier(courier: CourierDto): Promise<DeliveryCourier> {
-    this.logger.log(
-      `addCourier called with: ${JSON.stringify(courier, null, 2)}`,
-    );
     const _courier = new DeliveryCourier();
     _courier.name = courier.name;
     _courier.shippingModule = courier.shippingModule;

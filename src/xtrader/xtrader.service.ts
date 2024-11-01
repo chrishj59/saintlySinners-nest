@@ -919,7 +919,6 @@ export class XtraderService {
   }
 
   public async getProduct(id: number): Promise<XTR_PRODUCT> {
-    this.logger.log(`getProduct called with ${id}`);
     const prod = await this.prodRepo.findOne({
       relations: [
         'thumb',
@@ -945,7 +944,7 @@ export class XtraderService {
       ],
       where: { id },
     });
-    this.logger.log(`prod found ${JSON.stringify(prod)}`);
+
     return prod;
   }
   public async getProductIds(): Promise<number[]> {

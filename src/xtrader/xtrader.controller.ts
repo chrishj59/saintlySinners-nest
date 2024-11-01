@@ -47,7 +47,6 @@ export class XtraderController {
 
   @Get('/xtrBrandsHomePage')
   async getHomePageBrands(@Req() request: Request): Promise<XTR_BRAND[]> {
-    this.logger.log(`xtrBrandsHomePage called from ip ${request.ip}`);
     return await this.brandService.getHomePageBrands();
   }
 
