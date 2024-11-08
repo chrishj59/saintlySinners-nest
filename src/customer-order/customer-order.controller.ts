@@ -47,9 +47,6 @@ export class CustomerOrderController {
     @Param() { id }: FindOneStringParams,
     @Body() custOrder: EditCustomerOrderDto,
   ): Promise<CustOrderUpdatedResponseDto> {
-    console.log(`id is: ${JSON.stringify(id)}`);
-    console.log(`body is ${JSON.stringify(custOrder)}`);
-
     const updatedOrder: CustOrderUpdatedResponseDto =
       await this.customerService.customerOrderPaid(id, custOrder);
 

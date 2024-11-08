@@ -242,8 +242,10 @@ export class UserService {
   async getUser(id: string): Promise<AUTHJS_USER | ResponseMessageDto> {
     const user = await this.authJsUserRepo.findOne({
       relations: ['addresses'],
-      where: { id, addresses: { default: true } },
+      // where: { id, addresses: { default: true } },
+      where: { id },
     });
+
     if (!user) {
       throw new BadRequestException(`No user with ID ${id}`);
     }

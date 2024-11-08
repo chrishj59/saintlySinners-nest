@@ -398,11 +398,7 @@ export class RemoteFilesService {
       });
       try {
         const response = await client.send(command);
-        console.log(
-          `response status from AWS ${JSON.stringify(
-            response.$metadata.httpStatusCode,
-          )}`,
-        );
+
         if (response.$metadata.httpStatusCode !== 200) {
           throw new BadRequestException(`Could not save ${fileName} to AWS `);
         }

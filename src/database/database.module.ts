@@ -23,12 +23,12 @@ const fs = require('fs');
         autoLoadEntities: true,
         logging: configService.get('TYPEORM_LOGGING') === 'true' ? true : false,
         // Dev does not support ssl
-        // ssl: {
-        //   rejectUnauthorized: false,
-        //   ca: fs
-        //     .readFileSync(`${process.cwd()}/src/database/ca-certificate-db.crt`)
-        //     .toString(),
-        // },
+        ssl: {
+          rejectUnauthorized: false,
+          ca: fs
+            .readFileSync(`${process.cwd()}/src/database/ca-certificate-db.crt`)
+            .toString(),
+        },
       }),
     }),
   ],

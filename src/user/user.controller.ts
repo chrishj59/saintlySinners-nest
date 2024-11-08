@@ -69,6 +69,7 @@ export class UserController {
   @Get(`userDetails/:id`)
   public async getUser(@Param() paramId: FindOneStringParams) {
     const userid = paramId.id;
+
     return await this.userService.getUser(userid);
   }
 

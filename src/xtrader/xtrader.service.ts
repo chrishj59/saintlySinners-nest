@@ -742,7 +742,7 @@ export class XtraderService {
         const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
 
         const attrValues: AttributeValue[] = dto.attributes.attributeValues;
-        console.log(`attrValues ${JSON.stringify(attrValues, null, 2)}`);
+
         if (isIteratable(attrValues)) {
           for (const attrVal of attrValues) {
             let _attrValue = await this.attrValueRepo.findOne({
