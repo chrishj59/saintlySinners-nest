@@ -11,19 +11,23 @@ import { CustomerOrderController } from './customer-order.controller';
 import { CustomerOrderService } from './customer-order.service';
 import { CUSTOMER_ORDER } from './entities/customerOrder.entity';
 import { CUSTOMER_ORDER_LINE } from './entities/customerOrderLine.entity';
-import { ONE_TIME_CUSTOMER } from './entities/customerOrderCustomer.entity';
+import { ORDER_CUSTOMER } from './entities/OrderCustomer.entity';
 import { CUSTOMER_ORDER_PRODUCT } from './entities/customerOrderProduct.entity';
 import { XTR_PRODUCT } from 'src/xtrader/entity/xtr-product.entity';
 import { HttpModule } from '@nestjs/axios';
 import { AwsModule } from 'src/aws/aws.module';
 import { CUSTOMER_ORDER_DELIVERY } from './entities/customerOrderDelivery.entity';
 import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
+import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
+import { USER_ADDRESS } from 'src/user/entity/userAddress.entity';
+import { DELIVERY_ADDRESS } from './entities/deliveryAddress.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       CUSTOMER_ORDER,
-      ONE_TIME_CUSTOMER,
+      ORDER_CUSTOMER,
+      DELIVERY_ADDRESS,
       PRODUCT_VENDOR,
       CUSTOMER_ORDER_LINE,
       CUSTOMER_ORDER_PRODUCT,
@@ -31,8 +35,9 @@ import { DeliveryCharge } from 'src/common/entity/delivery-charges.entity';
       DeliveryCharge,
       EDC_PRODUCT,
       Country,
-      USER,
+      AUTHJS_USER,
       XTR_PRODUCT,
+      USER_ADDRESS,
     ]),
     RemoteFilesModule,
     NotificationModule,

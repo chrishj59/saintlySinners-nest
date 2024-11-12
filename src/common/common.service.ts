@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MessageStatusEnum } from 'src/enums/Message-status.enum';
 import { MoreThan, Repository } from 'typeorm';
@@ -167,8 +172,12 @@ export class CommonService {
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
-    courier.shippingModule = dto.shippingModule;
-    await this.courierRepository.save(courier, { reload: false });
+
+    if (courier) {
+      courier.shippingModule = dto.shippingModule;
+      courier.cutoffTime = dto.cutoffTime;
+      await this.courierRepository.save(courier, { reload: false });
+    }
 
     const country = await this.countryRepository.findOne({
       where: { id: dto.countryId },
@@ -185,6 +194,8 @@ export class CommonService {
     delCharge.durationDescription = dto.durationDescription;
     delCharge.hasLostClaim = dto.hasLostClaim;
     delCharge.hasTracking = dto.hasTracking;
+    // delCharge.shippingModule = dto.shippingModule;
+
     const vendor = await this.vendorRepository.findOne({
       where: { id: dto.vendorId },
     });
@@ -209,10 +220,6 @@ export class CommonService {
   public async updateDeliveyCharge(
     dto: DeliveryChargeDto,
   ): Promise<DeliveryCharge> {
-    this.logger.log(
-      `updateDeliveyCharge 205 called with ${JSON.stringify(dto, null, 2)}`,
-    );
-
     const vatRate: number = Number(process.env.VAT_STD) / 100;
     const deliveryCharge = await this.delChargeRepository.findOne({
       where: { id: dto.id },
@@ -230,15 +237,17 @@ export class CommonService {
     deliveryCharge.durationDescription = dto.durationDescription;
     deliveryCharge.hasLostClaim = dto.hasLostClaim;
     deliveryCharge.hasTracking = dto.hasTracking;
+
     const courier = await this.courierRepository.findOne({
       where: { id: dto.courierId },
     });
-    this.logger.log(`courier to update ${JSON.stringify(courier, null, 2)}`);
+
     if (!courier) {
       this.logger.error(`An invalid courier id supplied ${dto.courierId}`);
       throw new BadRequestException(`An invalid courier id supplied`);
     }
     courier.shippingModule = dto.shippingModule;
+    courier.cutoffTime = dto.cutoffTime;
 
     const _courier = await this.courierRepository.save(courier, {
       reload: true,
@@ -262,9 +271,7 @@ export class CommonService {
         reload: true,
       },
     );
-    this.logger.log(
-      `updated _deliveryCharge ${JSON.stringify(_deliveryCharge, null, 2)}`,
-    );
+
     return _deliveryCharge;
   }
 
@@ -301,7 +308,6 @@ export class CommonService {
     });
   }
   public async saveCountry(dto: CountryUpdateDTO): Promise<number> {
-    this.logger.log(`saveCountry called with ${JSON.stringify(dto, null, 2)}`);
     const { affected } = await this.countryRepository.update(
       { id: dto.id },
       // { edcCountryCode: dto.edcCountryCode },
@@ -318,6 +324,25 @@ export class CommonService {
 
   public async getCourier(): Promise<DeliveryCourier[]> {
     return await this.courierRepository.find();
+  }
+
+  public async addCourier(courier: CourierDto): Promise<DeliveryCourier> {
+    const _courier = new DeliveryCourier();
+    _courier.name = courier.name;
+    _courier.shippingModule = courier.shippingModule;
+    _courier.cutoffTime = courier.cutOffTime;
+    return await this.courierRepository.save(_courier, { reload: true });
+  }
+
+  public async updateCourier(courier: CourierDto): Promise<number> {
+    const { affected } = await this.courierRepository.update(
+      { id: courier.id },
+      courier,
+    );
+    if (affected === 0) {
+      throw new NotFoundException(`Courier not updates. id: ${courier.id}`);
+    }
+    return affected;
   }
 
   async deleteRemoteDeliveryCharge(id: string): Promise<ResponseMessageDto> {

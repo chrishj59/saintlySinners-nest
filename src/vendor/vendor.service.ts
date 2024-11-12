@@ -16,7 +16,6 @@ export class VendorService {
   }
 
   public async postVendor(dto: CreateVendorDto): Promise<PRODUCT_VENDOR> {
-    console.log(`Post vendor received param ${JSON.stringify(dto, null, 2)}`);
     const vendor = new PRODUCT_VENDOR();
     vendor.name = dto.name;
 

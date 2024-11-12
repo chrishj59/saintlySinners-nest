@@ -29,6 +29,8 @@ import { ProductRestrictedDto } from './dtos/xtr-prod-restricted.dto';
 import { restrProdRespType } from 'src/xtrader/types/xtrRestrictedProdResponse.type';
 import { request } from 'http';
 import { Request } from 'express';
+import { XtrReviewDto } from './dtos/xtr-rating.dto';
+import { XTR_PRODUCT_REVIEW } from './entity/xtr-product-review.entity';
 
 @Controller()
 export class XtraderController {
@@ -45,7 +47,6 @@ export class XtraderController {
 
   @Get('/xtrBrandsHomePage')
   async getHomePageBrands(@Req() request: Request): Promise<XTR_BRAND[]> {
-    this.logger.log(`xtrBrandsHomePage called from ip ${request.ip}`);
     return await this.brandService.getHomePageBrands();
   }
 
@@ -87,6 +88,7 @@ export class XtraderController {
 
   @Get('/xtrProd/:id')
   async getProduct(@Param() { id }: FindOneNumberParams): Promise<XTR_PRODUCT> {
+    this.logger.warn(`/xtrProd/:id called with id: ${id}`);
     return await this.productService.getProduct(parseInt(id));
   }
 
@@ -98,5 +100,17 @@ export class XtraderController {
   @Get('/xtrProductFiltered')
   async getProductFiltered(@Query() searchParam: XtrProductFilterDto) {
     return this.productService.getProductsFiltered(searchParam);
+  }
+
+  @Get('/xtrProdctReview/:id')
+  async getProductReviews(
+    @Param() { id: prodId }: FindOneNumberParams,
+  ): Promise<XTR_PRODUCT_REVIEW[]> {
+    return this.productService.getProuctReviews(parseInt(prodId));
+  }
+
+  @Post('/xtrProdctReview')
+  async saveRatinng(@Body() dto: XtrReviewDto): Promise<XTR_PRODUCT_REVIEW> {
+    return await this.productService.addProductReview(dto);
   }
 }

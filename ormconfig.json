@@ -2,7 +2,7 @@
   "type": "postgres",
   "url": "process.env.DATABASE_URL",
 
-  "synchronize": true,
+  "synchronize": false,
   "logging": false,
   "entities": ["src/entity/**/*.ts"],
   "migrations": ["src/migration/**/*.ts"],

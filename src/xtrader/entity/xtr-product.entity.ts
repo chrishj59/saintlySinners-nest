@@ -23,8 +23,10 @@ import { XTR_PROD_ATTRIBUTE_EAN } from './xtr-prod-attribute-ean.entity';
 import { XTR_PROD_ATTRIBUTE } from './xtr-prod-attribute.entity';
 import { XtrProdStockStatusEnum } from '../enum/xtrProd-status.enum';
 import { CUSTOMER_ORDER_LINE } from 'src/customer-order/entities/customerOrderLine.entity';
+import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
+import { XTR_PRODUCT_REVIEW } from './xtr-product-review.entity';
 
-@Entity({ name: 'xtr-product', orderBy: { id: 'ASC' } })
+@Entity({ name: 'xtr-product', schema: 'ss', orderBy: { id: 'ASC' } })
 export class XTR_PRODUCT extends BaseEntity {
   @PrimaryColumn({ name: 'id', type: 'integer' })
   id: number;
@@ -350,6 +352,20 @@ export class XTR_PRODUCT extends BaseEntity {
     nullable: true,
   })
   stripeRestricted: boolean;
+
+  @ManyToMany(() => AUTHJS_USER, (user) => user.likedProds)
+  @JoinTable({
+    name: 'product_likes_map',
+    joinColumn: { name: 'product_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'authjs_user_id', referencedColumnName: 'id' },
+  })
+  likes: AUTHJS_USER[];
+
+  @Column({ name: 'num_likes', type: 'int', nullable: true })
+  numLikes: number;
+
+  @OneToMany(() => XTR_PRODUCT_REVIEW, (review) => review.product)
+  reviews: XTR_PRODUCT_REVIEW[];
 
   @Exclude()
   @DeleteDateColumn()

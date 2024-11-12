@@ -8,6 +8,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   ValidateNested,
 } from '@nestjs/class-validator';
 import { Type } from 'class-transformer';
@@ -98,6 +99,21 @@ export class Products {
   product: Product[];
 }
 
+export class OrderAddress {
+  firstName: string;
+  lastName: string;
+  street: string;
+  @IsOptional()
+  street2: string;
+  city: string;
+  @IsOptional()
+  houseNumber: number;
+  county: string;
+  country: number;
+  postCode: string;
+  email: string;
+  telephone: string;
+}
 export class CustomerDelivery {
   id?: number;
   deliveryCost: number;
@@ -116,9 +132,9 @@ export class CustomerOrderDto {
   @IsBoolean()
   oneTimeCustomer: boolean;
 
-  @IsOptional()
-  @Type(() => Customer)
-  customer: Customer;
+  // @IsOptional()
+  // @Type(() => Customer)
+  // customer: Customer;
 
   @IsOptional()
   @IsString()
@@ -154,10 +170,33 @@ export class CustomerOrderDto {
   @Type(() => CustomerDelivery)
   customerDelivery: CustomerDelivery;
 
+  @Type(() => OrderAddress)
+  orderAddress: OrderAddress;
+
   // @IsArray()
   // @ArrayNotEmpty()
   // @ArrayMinSize(1)
   // products:ProductList[] ;
+}
+
+export class CustomerOrderStatusDto {
+  @IsNumber()
+  orderNumber: number;
+
+  @IsNumber()
+  orderStatus: number;
+
+  @IsString()
+  confirmOrder: string;
+
+  @IsString()
+  trackingRef: string;
+
+  @IsString()
+  xtraderStatus: string;
+
+  @IsString()
+  xtraderError: string;
 }
 
 export class EditCustomerOrderDto {

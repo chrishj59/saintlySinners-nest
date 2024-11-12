@@ -27,6 +27,9 @@ export class DeliveryCourier extends BaseEntity {
   })
   shippingModule: string;
 
+  @Column({ name: 'cutoff-time', type: 'time', nullable: true })
+  cutoffTime: string;
+
   @OneToMany(() => DeliveryCharge, (charge) => charge.courier)
   deliveryCharges: DeliveryCharge[];
 

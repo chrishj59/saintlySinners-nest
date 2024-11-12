@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsMilitaryTime,
   IsNumber,
   IsNumberString,
   IsOptional,
@@ -11,6 +12,7 @@ export class DeliveryChargeDto {
   @IsString()
   id?: string;
 
+  @IsOptional()
   @IsNumber()
   vendorId: number;
 
@@ -49,4 +51,8 @@ export class DeliveryChargeDto {
 
   @IsNumber()
   amount: number;
+
+  @IsOptional()
+  @IsMilitaryTime()
+  cutoffTime: string;
 }

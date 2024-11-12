@@ -33,6 +33,9 @@ import { DtoEanType } from './types/dto.ean.type';
 import { ProductRestrictedDto } from './dtos/xtr-prod-restricted.dto';
 import { restrProdRespType } from 'src/xtrader/types/xtrRestrictedProdResponse.type';
 import isThisISOWeek from 'date-fns/isThisISOWeek/index';
+import { XTR_PRODUCT_REVIEW } from './entity/xtr-product-review.entity';
+import { XtrReviewDto } from './dtos/xtr-rating.dto';
+import { AUTHJS_USER } from 'src/user/entity/authJsUser.entity';
 
 @Injectable()
 export class XtraderService {
@@ -41,14 +44,24 @@ export class XtraderService {
     private catRepo: Repository<XTR_CATEGORY>,
     @InjectRepository(XTR_BRAND)
     private brandRepo: Repository<XTR_BRAND>,
+
     @InjectRepository(XTR_PRODUCT)
     private prodRepo: Repository<XTR_PRODUCT>,
+
     @InjectRepository(XTR_PROD_ATTRIBUTE)
     private attrRepo: Repository<XTR_PROD_ATTRIBUTE>,
+
     @InjectRepository(XTR_ATTRIBUTE_VALUE)
     private attrValueRepo: Repository<XTR_ATTRIBUTE_VALUE>,
-    @InjectRepository(XTR_PROD_ATTRIBUTE_EAN)
-    private prodEanRepo: Repository<XTR_PROD_ATTRIBUTE_EAN>,
+
+    // getProduct// private prodEanRepo: Repository<XTR_PROD_ATTRIBUTE_EAN>,
+
+    @InjectRepository(AUTHJS_USER)
+    private userRepo: Repository<AUTHJS_USER>,
+
+    @InjectRepository(XTR_PRODUCT_REVIEW)
+    private reviewRepo: Repository<XTR_PRODUCT_REVIEW>,
+
     private readonly filesService: RemoteFilesService,
     private readonly httpService: HttpService,
   ) {}
@@ -729,7 +742,7 @@ export class XtraderService {
         const attrValuesArray: XTR_ATTRIBUTE_VALUE[] = [];
 
         const attrValues: AttributeValue[] = dto.attributes.attributeValues;
-        console.log(`attrValues ${JSON.stringify(attrValues, null, 2)}`);
+
         if (isIteratable(attrValues)) {
           for (const attrVal of attrValues) {
             let _attrValue = await this.attrValueRepo.findOne({
@@ -926,6 +939,8 @@ export class XtraderService {
         'attributes.attributeValues',
         'category',
         'eans',
+        'likes',
+        'reviews',
       ],
       where: { id },
     });
@@ -1131,5 +1146,24 @@ export class XtraderService {
       quantity: updated,
     };
     return restrResponse;
+  }
+
+  public async getProuctReviews(prodId: number): Promise<XTR_PRODUCT_REVIEW[]> {
+    return await this.reviewRepo.find({ where: { product: { id: prodId } } });
+  }
+
+  public async addProductReview(
+    dto: XtrReviewDto,
+  ): Promise<XTR_PRODUCT_REVIEW> {
+    const review = new XTR_PRODUCT_REVIEW();
+    const prod = await this.prodRepo.findOne({ where: { id: dto.productId } });
+    const user = await this.userRepo.findOne({ where: { id: dto.userId } });
+    review.body = dto.reviewBody;
+    review.product = prod;
+    review.rating = dto.rating;
+    review.title = dto.title;
+    review.user = user;
+
+    return await this.reviewRepo.save(review, { reload: true });
   }
 }
